@@ -1,3 +1,11 @@
+<!-- PWA SCaD v2.1 (Landing instalable SIN redirección automática)
+     Propósito: Mantener app.scad.mx como pantalla "instalable" (Android/Escritorio) y
+     dar acceso a Wix (e-learning) mediante botón. En iOS muestra instrucción mínima.
+     Datos: fijos. Usa localStorage solo para recordar si ya mostró el branding.
+     
+     Reemplazo TOTAL: Sustituye TODO tu archivo index.html por este.
+-->
+
 <!doctype html>
 <html lang="es">
 <head>
@@ -13,7 +21,7 @@
   <meta name="apple-mobile-web-app-title" content="SCaD">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-  <meta name="description" content="SCaD • Acceso rápido a tu plataforma e-learning." />
+  <meta name="description" content="SCaD • Instala la app y entra a tu plataforma e-learning." />
 
   <style>
     :root{
@@ -31,6 +39,9 @@
       --good:#22c55e;
       --goodBg:rgba(34,197,94,.16);
       --goodBorder:rgba(34,197,94,.35);
+
+      --subtleBg: rgba(255,255,255,.08);
+      --subtleBorder: rgba(255,255,255,.14);
     }
 
     *{ box-sizing:border-box; }
@@ -110,44 +121,22 @@
       font-size: 13.5px;
     }
 
-    .loaderRow{
+    .msg{
       margin-top: 14px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color: rgba(255,255,255,.80);
-      font-size: 13px;
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid var(--subtleBorder);
+      background: var(--subtleBg);
+      color: rgba(255,255,255,.84);
+      font-size: 12.8px;
+      line-height: 1.45;
     }
 
-    .dot{
-      width:10px; height:10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.22);
-      animation: pulse 1.2s infinite ease-in-out;
-    }
-    .dot:nth-child(2){ animation-delay: .15s; }
-    .dot:nth-child(3){ animation-delay: .3s; }
-
-    @keyframes pulse{
-      0%, 100% { transform: translateY(0); opacity: .55; }
-      50% { transform: translateY(-2px); opacity: 1; }
-    }
-
-    .installBar{
+    .actions{
       margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,.10);
       display:flex;
-      align-items:center;
-      justify-content:space-between;
       gap:12px;
       flex-wrap:wrap;
-    }
-
-    .installHint{
-      margin:0;
-      font-size: 12.5px;
-      color: rgba(255,255,255,.72);
     }
 
     .btn{
@@ -163,32 +152,50 @@
       gap:10px;
       transition: transform .08s ease, opacity .12s ease, box-shadow .12s ease;
       user-select:none;
-      min-width: 170px;
+      min-width: 220px;
     }
     .btn:active{ transform: translateY(1px); opacity:.94; }
+
+    .primary{
+      background: var(--btn);
+      color: var(--btnText);
+      box-shadow: 0 12px 24px rgba(0,0,0,.25);
+    }
 
     .installBtn{
       background: var(--goodBg);
       color: #eafff3;
       border: 1px solid var(--goodBorder);
+      min-width: 180px;
     }
 
-    .iosBox{
-      margin-top: 16px;
-      padding: 12px 12px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      color: rgba(255,255,255,.84);
-      font-size: 12.8px;
-      line-height: 1.4;
+    .ghost{
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      min-width: 180px;
+    }
+
+    .row{
+      margin-top: 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .hint{
+      margin:0;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.72);
     }
 
     .hidden{ display:none !important; }
 
     @media (max-width:520px){
       .btn{ width:100%; min-width: unset; }
-      .installBar{ align-items:stretch; }
+      .row{ align-items:stretch; }
     }
   </style>
 </head>
@@ -204,53 +211,67 @@
         </div>
         <div>
           <h1>SCaD</h1>
-          <p id="subtitle">Preparando tu plataforma…</p>
+          <p>Instala la app para acceder rápido a tu plataforma.</p>
         </div>
       </div>
 
-      <div class="loaderRow" id="loaderRow">
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span class="dot" aria-hidden="true"></span>
-        <span id="statusText">Redirigiendo al e-learning…</span>
+      <div class="msg" id="deviceMsg">
+        En Android y Escritorio puedes instalar con un toque. En iPhone/iPad: <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
       </div>
 
-      <!-- Instalación (solo cuando aplica, sin texto técnico) -->
-      <div class="installBar hidden" id="installBar">
-        <p class="installHint" id="installHint">Puedes instalar SCaD en este dispositivo.</p>
-        <button class="btn installBtn" id="installBtn" type="button">Instalar SCaD</button>
+      <div class="actions">
+        <!-- Aparece solo si el navegador entrega beforeinstallprompt -->
+        <button class="btn installBtn hidden" id="installBtn" type="button">Instalar SCaD</button>
+
+        <!-- Siempre visible: acceso a Wix Programas -->
+        <button class="btn primary" id="enterBtn" type="button">
+          Entrar a la plataforma
+          <span aria-hidden="true">→</span>
+        </button>
+
+        <!-- Opcional: abrir en navegador (útil en desktop si quieren otra pestaña) -->
+        <button class="btn ghost" id="openNewTabBtn" type="button">Abrir en navegador</button>
       </div>
 
-      <!-- iOS: instrucción mínima -->
-      <div class="iosBox hidden" id="iosBox">
-        En iPhone/iPad: abre en <b>Safari</b> y usa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
+      <div class="row">
+        <p class="hint" id="installHint">Si tu dispositivo permite instalación, verás el botón <b>Instalar SCaD</b>.</p>
       </div>
     </div>
   </div>
 
   <script>
-    // PWA SCaD v2.0 (flujo SaaS)
-    // Destino (Programas / e-learning)
+    // --- Configuración
     const TARGET_URL = "https://www.scad.mx/e-learning";
 
-    // Branding: solo la primera vez
-    const BRAND_KEY = "scad_brand_shown_v1";
-    const BRAND_MS = 1200;
-
+    // --- Detección de entorno
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
 
-    // Detectar si ya corre como instalada
     const isStandalone =
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
       window.navigator.standalone === true;
 
-    // Mostrar hint iOS (solo si es Safari/iOS)
-    const iosBox = document.getElementById("iosBox");
-    if (isIOS && isSafari) iosBox.classList.remove("hidden");
+    // --- UI
+    const installBtn = document.getElementById("installBtn");
+    const enterBtn = document.getElementById("enterBtn");
+    const openNewTabBtn = document.getElementById("openNewTabBtn");
+    const installHint = document.getElementById("installHint");
+    const deviceMsg = document.getElementById("deviceMsg");
 
-    // Registrar Service Worker (mantiene instalabilidad + cache mínimo)
+    // Mensaje iOS un poco más directo
+    if (isIOS && isSafari) {
+      deviceMsg.innerHTML = 'En iPhone/iPad: abre en <b>Safari</b> y usa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.';
+      installHint.textContent = "En iOS la instalación es manual (Safari → Compartir → Añadir a pantalla de inicio).";
+    }
+
+    // Si ya está instalada, ocultar botón de instalar si llegara a mostrarse
+    if (isStandalone) {
+      installHint.textContent = "SCaD ya está instalada. ✅";
+      installBtn.classList.add("hidden");
+    }
+
+    // --- Service Worker (para instalabilidad)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
@@ -261,80 +282,58 @@
       });
     }
 
-    // Instalación Android/desktop: requiere gesto del usuario para abrir prompt.
-    // Mostramos un botón mínimo solo cuando el navegador nos da el evento.
+    // --- Instalación Android/Escritorio (Chrome/Edge)
     let deferredPrompt = null;
-    const installBar = document.getElementById("installBar");
-    const installBtn = document.getElementById("installBtn");
-    const installHint = document.getElementById("installHint");
-    const statusText = document.getElementById("statusText");
-
-    if (isStandalone) {
-      // Si ya está instalada, no mostramos instalación
-      if (installBar) installBar.classList.add("hidden");
-    }
 
     window.addEventListener("beforeinstallprompt", (e) => {
-      // Evita el mini-infobar automático; guardamos el evento
       e.preventDefault();
       deferredPrompt = e;
 
-      // No mostramos instalación en iOS (no aplica)
+      // En iOS no aplica
       if (isIOS) return;
 
-      installBar.classList.remove("hidden");
-      installHint.textContent = "Puedes instalar SCaD en este dispositivo.";
+      if (!isStandalone) {
+        installBtn.classList.remove("hidden");
+        installHint.textContent = "Puedes instalar SCaD en este dispositivo.";
+      }
     });
 
     window.addEventListener("appinstalled", () => {
-      if (installBar) installBar.classList.add("hidden");
+      installBtn.classList.add("hidden");
+      installHint.textContent = "SCaD instalada. ✅";
+      deferredPrompt = null;
     });
 
-    installBtn?.addEventListener("click", async () => {
+    installBtn.addEventListener("click", async () => {
       if (!deferredPrompt) return;
-      installBtn.disabled = true;
 
+      installBtn.disabled = true;
       try {
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
 
-        if (choice && choice.outcome === "accepted") {
-          // ok
-          installBar.classList.add("hidden");
-        } else {
-          // Si canceló, re-habilitamos
+        if (choice && choice.outcome === "dismissed") {
+          // Si canceló, permitimos intentar de nuevo
           installBtn.disabled = false;
+          installHint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
         }
       } catch (err) {
         console.warn(err);
         installBtn.disabled = false;
+        installHint.textContent = "No se pudo abrir el instalador en este navegador.";
       } finally {
         deferredPrompt = null;
       }
     });
 
-    // Redirección SaaS:
-    // - Primera vez: muestra branding breve y luego redirige.
-    // - Siguientes veces: redirección casi inmediata.
-    function goToPlatform() {
-      // Usamos replace para que "atrás" no regrese a la pantalla de splash
-      window.location.replace(TARGET_URL);
-    }
+    // --- Navegación a Wix Programas (NO redirigimos automáticamente)
+    enterBtn.addEventListener("click", () => {
+      window.location.href = TARGET_URL;
+    });
 
-    const hasShownBrand = localStorage.getItem(BRAND_KEY) === "1";
-
-    // Si el usuario entra desde navegador sin instalar, igual queremos llevarlo rápido a e-learning,
-    // pero dejando oportunidad de instalar (botón aparece si aplica).
-    // La redirección no bloquea el botón; si el prompt aparece tarde, el usuario puede volver e instalar,
-    // pero usualmente el navegador también ofrece "Instalar" en su UI.
-    if (!hasShownBrand) {
-      localStorage.setItem(BRAND_KEY, "1");
-      setTimeout(goToPlatform, BRAND_MS);
-    } else {
-      // Siguientes aperturas: mínimo delay para renderizar (evita pantalla en blanco en algunos dispositivos)
-      statusText.textContent = "Accediendo…";
-      setTimeout(goToPlatform, 120);
-    }
+    openNewTabBtn.addEventListener("click", () => {
+      window.open(TARGET_URL, "_blank", "noopener,noreferrer");
+    });
   </script>
 </body>
 </html>
