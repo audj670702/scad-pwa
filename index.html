@@ -13,33 +13,38 @@
   <meta name="apple-mobile-web-app-title" content="SCaD">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-  <!-- SEO mínimo -->
-  <meta name="description" content="Acceso rápido a SCaD. Instala la app y entra a la plataforma." />
+  <meta name="description" content="SCaD • Acceso rápido a tu plataforma e-learning." />
 
   <style>
     :root{
       --bg:#0b0b0c;
-      --card:#111113;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.12);
       --text:#ffffff;
       --muted:rgba(255,255,255,.72);
-      --border:rgba(255,255,255,.12);
-      --shadow: 0 16px 50px rgba(0,0,0,.40);
-      --radius: 24px;
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --radius: 26px;
+
       --btn:#ffffff;
       --btnText:#111111;
-      --btn2: rgba(255,255,255,.10);
-      --btn2Text:#ffffff;
+
+      --good:#22c55e;
+      --goodBg:rgba(34,197,94,.16);
+      --goodBorder:rgba(34,197,94,.35);
     }
+
     *{ box-sizing:border-box; }
     html, body{
       height:100%;
       margin:0;
       font-family: system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,.14), transparent 55%),
-                  radial-gradient(900px 500px at 10% 10%, rgba(255,255,255,.10), transparent 60%),
-                  var(--bg);
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,.14), transparent 55%),
+        radial-gradient(900px 500px at 10% 10%, rgba(255,255,255,.10), transparent 60%),
+        var(--bg);
       color: var(--text);
     }
+
     .wrap{
       min-height:100%;
       display:flex;
@@ -47,9 +52,10 @@
       justify-content:center;
       padding: 22px;
     }
+
     .card{
       width:min(560px, 94vw);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -57,6 +63,7 @@
       position:relative;
       overflow:hidden;
     }
+
     .glow{
       position:absolute;
       inset:-120px -140px auto -140px;
@@ -65,44 +72,84 @@
       filter: blur(10px);
       pointer-events:none;
     }
+
     .brand{
       display:flex;
       align-items:center;
       gap:14px;
-      margin-bottom: 14px;
     }
+
     .logo{
-      width:54px;
-      height:54px;
-      border-radius: 16px;
+      width:56px;
+      height:56px;
+      border-radius: 18px;
       background: rgba(255,255,255,.10);
       border: 1px solid rgba(255,255,255,.14);
       display:grid;
       place-items:center;
       overflow:hidden;
+      flex: 0 0 auto;
     }
     .logo img{
       width:100%;
       height:100%;
-      object-fit:cover;
+      object-fit:contain;
+      display:block;
     }
+
     h1{
-      font-size: 24px;
+      font-size: 22px;
       margin:0;
       letter-spacing: .2px;
+      line-height:1.15;
     }
     p{
-      margin: 8px 0 0 0;
+      margin: 6px 0 0 0;
       color: var(--muted);
       line-height: 1.45;
-      font-size: 14px;
+      font-size: 13.5px;
     }
-    .actions{
+
+    .loaderRow{
+      margin-top: 14px;
       display:flex;
+      align-items:center;
+      gap:10px;
+      color: rgba(255,255,255,.80);
+      font-size: 13px;
+    }
+
+    .dot{
+      width:10px; height:10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+    .dot:nth-child(2){ animation-delay: .15s; }
+    .dot:nth-child(3){ animation-delay: .3s; }
+
+    @keyframes pulse{
+      0%, 100% { transform: translateY(0); opacity: .55; }
+      50% { transform: translateY(-2px); opacity: 1; }
+    }
+
+    .installBar{
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       gap:12px;
-      margin-top: 18px;
       flex-wrap:wrap;
     }
+
+    .installHint{
+      margin:0;
+      font-size: 12.5px;
+      color: rgba(255,255,255,.72);
+    }
+
     .btn{
       appearance:none;
       border:none;
@@ -116,197 +163,178 @@
       gap:10px;
       transition: transform .08s ease, opacity .12s ease, box-shadow .12s ease;
       user-select:none;
+      min-width: 170px;
     }
     .btn:active{ transform: translateY(1px); opacity:.94; }
-    .primary{
-      background: var(--btn);
-      color: var(--btnText);
-      box-shadow: 0 12px 24px rgba(0,0,0,.25);
-      min-width: 220px;
+
+    .installBtn{
+      background: var(--goodBg);
+      color: #eafff3;
+      border: 1px solid var(--goodBorder);
     }
-    .secondary{
-      background: var(--btn2);
-      color: var(--btn2Text);
-      border: 1px solid rgba(255,255,255,.14);
-    }
-    .pill{
-      margin-top: 14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      color: rgba(255,255,255,.78);
-      font-size: 12.5px;
-    }
-    .tag{
-      padding: 8px 10px;
-      border-radius: 999px;
+
+    .iosBox{
+      margin-top: 16px;
+      padding: 12px 12px;
+      border-radius: 18px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.84);
+      font-size: 12.8px;
+      line-height: 1.4;
     }
-    .small{
-      margin-top: 14px;
-      font-size: 12.5px;
-      color: rgba(255,255,255,.66);
-    }
-    .small a{
-      color: rgba(255,255,255,.86);
-      text-decoration: none;
-      border-bottom: 1px dotted rgba(255,255,255,.35);
-    }
-    .installRow{
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255,255,255,.10);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .installHint{
-      margin:0;
-      font-size: 12.5px;
-      color: rgba(255,255,255,.72);
-    }
-    .installBtn{
-      min-width: 180px;
-      background: rgba(34,197,94,.16);
-      color: #eafff3;
-      border: 1px solid rgba(34,197,94,.35);
-    }
+
     .hidden{ display:none !important; }
 
     @media (max-width:520px){
-      .primary, .installBtn{ width:100%; }
-      .secondary{ width:100%; }
+      .btn{ width:100%; min-width: unset; }
+      .installBar{ align-items:stretch; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" role="main" aria-live="polite">
       <div class="glow"></div>
 
       <div class="brand">
         <div class="logo" aria-hidden="true">
-          <!-- Si subes /icons/icon-192.png, esto muestra el ícono -->
           <img src="/icons/icon-192.png" alt="">
         </div>
         <div>
           <h1>SCaD</h1>
-          <p>Instala la app para acceder rápido a la plataforma de cursos.</p>
+          <p id="subtitle">Preparando tu plataforma…</p>
         </div>
       </div>
 
-      <div class="actions">
-        <button class="btn primary" id="enterBtn" type="button">
-          Entrar a la plataforma
-          <span aria-hidden="true">→</span>
-        </button>
-
-        <button class="btn secondary" id="openSiteBtn" type="button">
-          Abrir en navegador
-        </button>
+      <div class="loaderRow" id="loaderRow">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="dot" aria-hidden="true"></span>
+        <span class="dot" aria-hidden="true"></span>
+        <span id="statusText">Redirigiendo al e-learning…</span>
       </div>
 
-      <div class="pill" aria-label="Características">
-        <span class="tag">Acceso con un toque</span>
-        <span class="tag">Modo app (standalone)</span>
-        <span class="tag">Android + Escritorio</span>
-        <span class="tag">iOS: manual</span>
+      <!-- Instalación (solo cuando aplica, sin texto técnico) -->
+      <div class="installBar hidden" id="installBar">
+        <p class="installHint" id="installHint">Puedes instalar SCaD en este dispositivo.</p>
+        <button class="btn installBtn" id="installBtn" type="button">Instalar SCaD</button>
       </div>
 
-      <div class="installRow">
-        <p class="installHint" id="installHint">
-          Tip: En Android/Chrome o Desktop/Edge, cuando esté disponible podrás instalar desde aquí.
-        </p>
-        <button class="btn installBtn hidden" id="installBtn" type="button">
-          Instalar SCaD
-        </button>
-      </div>
-
-      <div class="small">
-        ¿Estás en iPhone/iPad? En Safari usa: <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
+      <!-- iOS: instrucción mínima -->
+      <div class="iosBox hidden" id="iosBox">
+        En iPhone/iPad: abre en <b>Safari</b> y usa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
       </div>
     </div>
   </div>
 
   <script>
-    // --- Navegación principal (Opción C)
-    const TARGET_URL = "https://www.scad.mx";
+    // PWA SCaD v2.0 (flujo SaaS)
+    // Destino (Programas / e-learning)
+    const TARGET_URL = "https://www.scad.mx/e-learning";
 
-    document.getElementById("enterBtn").addEventListener("click", () => {
-      // Dentro de PWA/standalone, navegar directo
-      window.location.href = TARGET_URL;
-    });
+    // Branding: solo la primera vez
+    const BRAND_KEY = "scad_brand_shown_v1";
+    const BRAND_MS = 1200;
 
-    document.getElementById("openSiteBtn").addEventListener("click", () => {
-      window.open(TARGET_URL, "_blank", "noopener,noreferrer");
-    });
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
 
-    // --- Registro del Service Worker
+    // Detectar si ya corre como instalada
+    const isStandalone =
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true;
+
+    // Mostrar hint iOS (solo si es Safari/iOS)
+    const iosBox = document.getElementById("iosBox");
+    if (isIOS && isSafari) iosBox.classList.remove("hidden");
+
+    // Registrar Service Worker (mantiene instalabilidad + cache mínimo)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
           await navigator.serviceWorker.register("/sw.js", { scope: "/" });
         } catch (e) {
-          // Sin ruido en UI; si falla, igual funciona como sitio normal
           console.warn("SW no registrado:", e);
         }
       });
     }
 
-    // --- Botón de instalación (Android/Chrome/Edge/desktop)
+    // Instalación Android/desktop: requiere gesto del usuario para abrir prompt.
+    // Mostramos un botón mínimo solo cuando el navegador nos da el evento.
     let deferredPrompt = null;
+    const installBar = document.getElementById("installBar");
     const installBtn = document.getElementById("installBtn");
     const installHint = document.getElementById("installHint");
-
-    // Si ya está instalada, ocultamos el bloque de instalación
-    const isStandalone =
-      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-      window.navigator.standalone === true;
+    const statusText = document.getElementById("statusText");
 
     if (isStandalone) {
-      installHint.textContent = "La app ya está instalada. ✅";
-      installBtn.classList.add("hidden");
+      // Si ya está instalada, no mostramos instalación
+      if (installBar) installBar.classList.add("hidden");
     }
 
     window.addEventListener("beforeinstallprompt", (e) => {
-      // Evita el mini-infobar automático
+      // Evita el mini-infobar automático; guardamos el evento
       e.preventDefault();
       deferredPrompt = e;
-      installBtn.classList.remove("hidden");
-      installHint.textContent = "¡Listo! Puedes instalar SCaD en tu dispositivo.";
+
+      // No mostramos instalación en iOS (no aplica)
+      if (isIOS) return;
+
+      installBar.classList.remove("hidden");
+      installHint.textContent = "Puedes instalar SCaD en este dispositivo.";
     });
 
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
+    window.addEventListener("appinstalled", () => {
+      if (installBar) installBar.classList.add("hidden");
+    });
 
+    installBtn?.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
       installBtn.disabled = true;
+
       try {
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
-        // choice.outcome: 'accepted' | 'dismissed'
+
         if (choice && choice.outcome === "accepted") {
-          installHint.textContent = "Instalación iniciada. ✅";
+          // ok
+          installBar.classList.add("hidden");
         } else {
-          installHint.textContent = "Instalación cancelada. Puedes intentarlo después.";
+          // Si canceló, re-habilitamos
           installBtn.disabled = false;
         }
       } catch (err) {
         console.warn(err);
-        installHint.textContent = "No se pudo abrir el instalador en este navegador.";
         installBtn.disabled = false;
       } finally {
         deferredPrompt = null;
       }
     });
 
-    window.addEventListener("appinstalled", () => {
-      installHint.textContent = "SCaD instalada. ✅";
-      installBtn.classList.add("hidden");
-    });
+    // Redirección SaaS:
+    // - Primera vez: muestra branding breve y luego redirige.
+    // - Siguientes veces: redirección casi inmediata.
+    function goToPlatform() {
+      // Usamos replace para que "atrás" no regrese a la pantalla de splash
+      window.location.replace(TARGET_URL);
+    }
+
+    const hasShownBrand = localStorage.getItem(BRAND_KEY) === "1";
+
+    // Si el usuario entra desde navegador sin instalar, igual queremos llevarlo rápido a e-learning,
+    // pero dejando oportunidad de instalar (botón aparece si aplica).
+    // La redirección no bloquea el botón; si el prompt aparece tarde, el usuario puede volver e instalar,
+    // pero usualmente el navegador también ofrece "Instalar" en su UI.
+    if (!hasShownBrand) {
+      localStorage.setItem(BRAND_KEY, "1");
+      setTimeout(goToPlatform, BRAND_MS);
+    } else {
+      // Siguientes aperturas: mínimo delay para renderizar (evita pantalla en blanco en algunos dispositivos)
+      statusText.textContent = "Accediendo…";
+      setTimeout(goToPlatform, 120);
+    }
   </script>
 </body>
 </html>
