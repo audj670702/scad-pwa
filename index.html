@@ -1,8 +1,9 @@
-<!-- PWA SCaD v2.1 (Landing instalable SIN redirección automática)
-     Propósito: Mantener app.scad.mx como pantalla "instalable" (Android/Escritorio) y
-     dar acceso a Wix (e-learning) mediante botón. En iOS muestra instrucción mínima.
-     Datos: fijos. Usa localStorage solo para recordar si ya mostró el branding.
-     
+<!-- Script PWA SCaD v2.1 (Landing instalable + acceso a Wix en nueva pestaña en modo navegador)
+     Propósito: Mantener app.scad.mx como “shell” instalable (Android/Escritorio) SIN redirección automática,
+     y abrir Wix Programas (www.scad.mx/e-learning) en NUEVA pestaña cuando el usuario está en navegador normal.
+     En modo standalone (app instalada), “Entrar a la plataforma” abre directo en la misma ventana.
+     Datos: fijos. Sin dependencias externas.
+
      Reemplazo TOTAL: Sustituye TODO tu archivo index.html por este.
 -->
 
@@ -155,6 +156,7 @@
       min-width: 220px;
     }
     .btn:active{ transform: translateY(1px); opacity:.94; }
+    .btn[disabled]{ opacity:.65; cursor:not-allowed; }
 
     .primary{
       background: var(--btn);
@@ -166,13 +168,6 @@
       background: var(--goodBg);
       color: #eafff3;
       border: 1px solid var(--goodBorder);
-      min-width: 180px;
-    }
-
-    .ghost{
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.14);
       min-width: 180px;
     }
 
@@ -216,21 +211,19 @@
       </div>
 
       <div class="msg" id="deviceMsg">
-        En Android y Escritorio puedes instalar con un toque. En iPhone/iPad: <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
+        <b>Recomendado:</b> usa <b>Google Chrome</b> en Android/Computadora para instalar con un toque.
+        En iPhone/iPad: instala desde <b>Safari</b>.
       </div>
 
       <div class="actions">
         <!-- Aparece solo si el navegador entrega beforeinstallprompt -->
         <button class="btn installBtn hidden" id="installBtn" type="button">Instalar SCaD</button>
 
-        <!-- Siempre visible: acceso a Wix Programas -->
+        <!-- CTA único -->
         <button class="btn primary" id="enterBtn" type="button">
           Entrar a la plataforma
           <span aria-hidden="true">→</span>
         </button>
-
-        <!-- Opcional: abrir en navegador (útil en desktop si quieren otra pestaña) -->
-        <button class="btn ghost" id="openNewTabBtn" type="button">Abrir en navegador</button>
       </div>
 
       <div class="row">
@@ -255,17 +248,23 @@
     // --- UI
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
-    const openNewTabBtn = document.getElementById("openNewTabBtn");
     const installHint = document.getElementById("installHint");
     const deviceMsg = document.getElementById("deviceMsg");
 
-    // Mensaje iOS un poco más directo
-    if (isIOS && isSafari) {
-      deviceMsg.innerHTML = 'En iPhone/iPad: abre en <b>Safari</b> y usa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.';
-      installHint.textContent = "En iOS la instalación es manual (Safari → Compartir → Añadir a pantalla de inicio).";
+    // Mensajes por plataforma
+    if (isIOS) {
+      // iOS: instalación manual (solo Safari)
+      deviceMsg.innerHTML =
+        'En <b>iPhone/iPad</b>: abre en <b>Safari</b> y toca <b>Compartir</b> (cuadro con flecha) → <b>Añadir a pantalla de inicio</b>.';
+      installHint.textContent =
+        "En iOS la instalación es manual (Safari → Compartir → Añadir a pantalla de inicio).";
+    } else {
+      // Android/Escritorio
+      deviceMsg.innerHTML =
+        '<b>Recomendado:</b> usa <b>Google Chrome</b> en Android/Computadora para instalar con un toque.';
     }
 
-    // Si ya está instalada, ocultar botón de instalar si llegara a mostrarse
+    // Si ya está instalada, ajustar copy
     if (isStandalone) {
       installHint.textContent = "SCaD ya está instalada. ✅";
       installBtn.classList.add("hidden");
@@ -300,7 +299,7 @@
 
     window.addEventListener("appinstalled", () => {
       installBtn.classList.add("hidden");
-      installHint.textContent = "SCaD instalada. ✅";
+      installHint.textContent = "SCaD instalada. ✅ Busca el ícono en tu pantalla de inicio / escritorio.";
       deferredPrompt = null;
     });
 
@@ -313,9 +312,11 @@
         const choice = await deferredPrompt.userChoice;
 
         if (choice && choice.outcome === "dismissed") {
-          // Si canceló, permitimos intentar de nuevo
           installBtn.disabled = false;
           installHint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
+        } else {
+          // Si aceptó, appinstalled se encargará del mensaje final.
+          installHint.textContent = "Instalando SCaD…";
         }
       } catch (err) {
         console.warn(err);
@@ -326,13 +327,22 @@
       }
     });
 
-    // --- Navegación a Wix Programas (NO redirigimos automáticamente)
+    // --- Navegación a Wix Programas (Opción 1)
+    // En navegador normal: abrir en nueva pestaña para NO perder el contexto instalable de app.scad.mx.
+    // En modo standalone: abrir directo en la misma ventana (modo app).
     enterBtn.addEventListener("click", () => {
-      window.location.href = TARGET_URL;
-    });
+      if (isStandalone) {
+        window.location.href = TARGET_URL;
+        return;
+      }
 
-    openNewTabBtn.addEventListener("click", () => {
-      window.open(TARGET_URL, "_blank", "noopener,noreferrer");
+      const w = window.open(TARGET_URL, "_blank", "noopener,noreferrer");
+      if (w) {
+        installHint.textContent = "La plataforma se abrió en otra pestaña. Vuelve aquí para instalar SCaD si lo deseas.";
+      } else {
+        // Si el navegador bloquea popups, caemos a navegación normal
+        window.location.href = TARGET_URL;
+      }
     });
   </script>
 </body>
