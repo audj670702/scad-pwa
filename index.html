@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0b0b0c" />
   <title>SCaD</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -17,11 +16,9 @@
     :root{
       --bg:#060607;
       --card:rgba(255,255,255,.08);
-      --card2:rgba(255,255,255,.06);
       --border:rgba(255,255,255,.14);
       --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.72);
-      --muted2:rgba(255,255,255,.55);
+      --muted:rgba(255,255,255,.70);
       --btn:#ffffff;
       --btnText:#0b0b0c;
       --btn2:rgba(255,255,255,.10);
@@ -46,10 +43,7 @@
       box-shadow: 0 30px 80px rgba(0,0,0,.55);
       padding:28px;
     }
-    .top{
-      display:flex; gap:16px; align-items:center;
-      padding-bottom:14px;
-    }
+    .top{display:flex; gap:16px; align-items:center;}
     .logoWrap{
       width:64px; height:64px; border-radius:18px;
       background:rgba(255,255,255,.08);
@@ -58,64 +52,68 @@
       overflow:hidden;
     }
     .logoWrap img{width:46px; height:46px; object-fit:contain}
-    h1{margin:0; font-size:40px; letter-spacing:.2px}
+    h1{margin:0; font-size:40px;}
     .subtitle{margin:2px 0 0 0; color:var(--muted); font-size:18px}
 
-    .hint{
-      margin-top:12px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      padding:14px 16px;
-      border-radius:16px;
-      color:var(--muted);
-      font-size:16px;
-      line-height:1.35;
-    }
-
-    .actions{
-      display:flex; gap:14px; flex-wrap:wrap;
-      margin-top:18px;
-      align-items:center;
-    }
-    a.btn, button.btn{
-      border:0;
-      border-radius:999px;
+    .actions{display:flex; gap:14px; flex-wrap:wrap; margin-top:18px; align-items:center;}
+    button.btn, a.btn{
+      border:0; border-radius:999px;
       padding:16px 22px;
       font-size:18px;
-      font-weight:700;
+      font-weight:800;
       cursor:pointer;
       text-decoration:none;
       display:inline-flex; align-items:center; justify-content:center;
       gap:10px;
-      user-select:none;
     }
     .primary{ background:var(--btn); color:var(--btnText); }
     .secondary{ background:var(--btn2); color:var(--text); border:1px solid rgba(255,255,255,.16); }
-    .ghost{
-      background:transparent; color:var(--muted2);
+
+    /* Toast */
+    .toast{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.12);
-      padding:12px 16px;
-      font-weight:600;
-      font-size:16px;
+      color:var(--muted);
+      display:none;
+      line-height:1.3;
     }
 
-    .row{
-      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-      margin-top:10px;
+    /* Modal iOS */
+    .backdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none; align-items:center; justify-content:center;
+      padding:20px;
     }
-    .small{font-size:14px; color:var(--muted2); margin-top:10px}
-
-    /* Ocultos por defecto */
-    #installBtn{ display:none; }
-    #iosHelp{ display:none; }
+    .modal{
+      width:min(520px, 100%);
+      border-radius:22px;
+      background:rgba(20,20,22,.92);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 30px 80px rgba(0,0,0,.65);
+      padding:18px 18px 16px;
+    }
+    .modal h2{margin:0 0 6px 0; font-size:18px}
+    .modal p{margin:0; color:var(--muted); font-size:16px}
+    .modal .row{display:flex; gap:10px; justify-content:flex-end; margin-top:14px;}
+    .smallBtn{
+      padding:10px 14px; border-radius:999px;
+      font-weight:700; font-size:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+    }
   </style>
 </head>
 
 <body>
   <main class="card">
     <div class="top">
-      <div class="logoWrap" aria-hidden="true">
-        <!-- Pon aquí tu icono 192 o 512 -->
+      <div class="logoWrap">
         <img src="/icons/icon-192.png" alt="SCaD" />
       </div>
       <div>
@@ -124,99 +122,100 @@
       </div>
     </div>
 
-    <!-- Mensaje mínimo dinámico -->
-    <div id="hint" class="hint">Cargando…</div>
-
     <div class="actions">
-      <!-- Botón instalación (solo aparece si aplica) -->
-      <button id="installBtn" class="btn primary" type="button">Instalar SCaD</button>
+      <!-- ÚNICO botón de intención -->
+      <button id="installMain" class="btn primary" type="button">Instalar SCaD</button>
 
-      <!-- CTA principal (siempre visible) -->
       <a class="btn secondary" href="https://www.scad.mx/e-learning" rel="noopener">Entrar a la plataforma →</a>
-
-      <!-- Opcional: abrir en navegador (mismo link, por claridad) -->
-      <a class="btn ghost" href="https://www.scad.mx/e-learning" rel="noopener">Abrir en navegador</a>
     </div>
 
-    <!-- iOS: instrucciones cortas -->
-    <div id="iosHelp" class="row">
-      <span class="small">
-        En iPhone/iPad (Safari): <strong>Compartir</strong> → <strong>Añadir a pantalla de inicio</strong>.
-      </span>
-    </div>
+    <div id="toast" class="toast"></div>
   </main>
 
+  <!-- Modal iOS -->
+  <div id="backdrop" class="backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2>Instalar en iPhone/iPad</h2>
+      <p>En Safari: <strong>Compartir</strong> → <strong>Añadir a pantalla de inicio</strong>.</p>
+      <div class="row">
+        <button id="closeModal" class="smallBtn" type="button">Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ======= CONFIG =======
     const PLATFORM_URL = "https://www.scad.mx/e-learning";
 
-    // ======= HELPERS =======
+    const installMain = document.getElementById("installMain");
+    const toast = document.getElementById("toast");
+    const backdrop = document.getElementById("backdrop");
+    const closeModal = document.getElementById("closeModal");
+
+    let deferredPrompt = null;
+
     const isIOS = () => {
       const ua = navigator.userAgent || "";
       const iOS = /iPad|iPhone|iPod/.test(ua);
-      // iPadOS 13+ se reporta como Mac; detecta touch
       const iPadOS = (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       return iOS || iPadOS;
     };
 
-    const hintEl = document.getElementById("hint");
-    const installBtn = document.getElementById("installBtn");
-    const iosHelp = document.getElementById("iosHelp");
+    const showToast = (msg) => {
+      toast.textContent = msg;
+      toast.style.display = "block";
+    };
 
-    // ======= SERVICE WORKER =======
+    const showIOSModal = () => {
+      backdrop.style.display = "flex";
+    };
+
+    closeModal.addEventListener("click", () => {
+      backdrop.style.display = "none";
+    });
+
+    // Service Worker
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       });
     }
 
-    // ======= UI LOGIC =======
-    let deferredPrompt = null;
-
-    // iOS: no beforeinstallprompt, instalación manual
-    if (isIOS()) {
-      hintEl.textContent = "En iPhone/iPad la instalación es manual (Safari).";
-      iosHelp.style.display = "flex";
-    } else {
-      hintEl.textContent = "Si tu navegador lo permite, podrás instalar SCaD aquí.";
-    }
-
-    // Android / Desktop: captura el evento de instalación
+    // Captura disponibilidad real de instalación (Android/desktop)
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-
-      // Mostrar sólo cuando realmente está disponible
-      installBtn.style.display = "inline-flex";
-      hintEl.textContent = "Listo. Puedes instalar SCaD con un toque.";
     });
 
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
+    installMain.addEventListener("click", async () => {
+      toast.style.display = "none";
 
-      // Muestra el prompt nativo
-      deferredPrompt.prompt();
-
-      // Espera el resultado
-      try {
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-
-        // Oculta botón si el usuario ya resolvió
-        installBtn.style.display = "none";
-
-        // Mensaje mínimo post-acción
-        hintEl.textContent = (outcome === "accepted")
-          ? "Instalación iniciada. Abre SCaD desde tu dispositivo."
-          : "Instalación cancelada. Puedes entrar a la plataforma.";
-      } catch {
-        // Silencioso
+      // iOS: solo instrucciones
+      if (isIOS()) {
+        showIOSModal();
+        return;
       }
-    });
 
-    // Si ya está instalada (standalone), puedes llevarlo directo al portal si quieres:
-    // (NO redirigimos automático por tu instrucción)
-    // const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+      // Android/Desktop: si el navegador permite, lanzamos prompt nativo
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try {
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+
+          if (outcome === "accepted") {
+            showToast("Listo. Busca SCaD en tu pantalla de inicio o apps.");
+          } else {
+            showToast("Instalación cancelada. Puedes entrar a la plataforma.");
+          }
+        } catch {
+          // silencioso
+        }
+        return;
+      }
+
+      // No disponible: explicación mínima y accionable
+      showToast("Aquí no está disponible la instalación. Prueba en Chrome/Edge o usa “Entrar a la plataforma”.");
+    });
   </script>
 </body>
 </html>
