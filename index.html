@@ -1,339 +1,222 @@
-<!-- PWA SCaD v2.1 (Landing instalable SIN redirección automática)
-     Propósito: Mantener app.scad.mx como pantalla "instalable" (Android/Escritorio) y
-     dar acceso a Wix (e-learning) mediante botón. En iOS muestra instrucción mínima.
-     Datos: fijos. Usa localStorage solo para recordar si ya mostró el branding.
-     
-     Reemplazo TOTAL: Sustituye TODO tu archivo index.html por este.
--->
-
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0b0c" />
   <title>SCaD</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#111111">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SCaD">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
-  <meta name="description" content="SCaD • Instala la app y entra a tu plataforma e-learning." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <style>
     :root{
-      --bg:#0b0b0c;
-      --card:rgba(255,255,255,.06);
-      --border:rgba(255,255,255,.12);
-      --text:#ffffff;
+      --bg:#060607;
+      --card:rgba(255,255,255,.08);
+      --card2:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.14);
+      --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.72);
-      --shadow: 0 18px 55px rgba(0,0,0,.45);
-      --radius: 26px;
-
+      --muted2:rgba(255,255,255,.55);
       --btn:#ffffff;
-      --btnText:#111111;
-
-      --good:#22c55e;
-      --goodBg:rgba(34,197,94,.16);
-      --goodBorder:rgba(34,197,94,.35);
-
-      --subtleBg: rgba(255,255,255,.08);
-      --subtleBorder: rgba(255,255,255,.14);
+      --btnText:#0b0b0c;
+      --btn2:rgba(255,255,255,.10);
     }
-
-    *{ box-sizing:border-box; }
-    html, body{
-      height:100%;
-      margin:0;
-      font-family: system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
       background:
-        radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,.14), transparent 55%),
-        radial-gradient(900px 500px at 10% 10%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(1200px 700px at 30% 20%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 500px at 70% 35%, rgba(255,255,255,.07), transparent 60%),
         var(--bg);
-      color: var(--text);
+      display:flex; align-items:center; justify-content:center;
+      padding:24px;
     }
-
-    .wrap{
-      min-height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 22px;
-    }
-
     .card{
-      width:min(560px, 94vw);
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      position:relative;
+      width:min(980px, 100%);
+      border-radius:28px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--border);
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      padding:28px;
+    }
+    .top{
+      display:flex; gap:16px; align-items:center;
+      padding-bottom:14px;
+    }
+    .logoWrap{
+      width:64px; height:64px; border-radius:18px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      display:flex; align-items:center; justify-content:center;
       overflow:hidden;
     }
+    .logoWrap img{width:46px; height:46px; object-fit:contain}
+    h1{margin:0; font-size:40px; letter-spacing:.2px}
+    .subtitle{margin:2px 0 0 0; color:var(--muted); font-size:18px}
 
-    .glow{
-      position:absolute;
-      inset:-120px -140px auto -140px;
-      height:220px;
-      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.18), transparent 60%);
-      filter: blur(10px);
-      pointer-events:none;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:14px;
-    }
-
-    .logo{
-      width:56px;
-      height:56px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.14);
-      display:grid;
-      place-items:center;
-      overflow:hidden;
-      flex: 0 0 auto;
-    }
-    .logo img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-
-    h1{
-      font-size: 22px;
-      margin:0;
-      letter-spacing: .2px;
-      line-height:1.15;
-    }
-    p{
-      margin: 6px 0 0 0;
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 13.5px;
-    }
-
-    .msg{
-      margin-top: 14px;
-      padding: 12px 12px;
-      border-radius: 18px;
-      border: 1px solid var(--subtleBorder);
-      background: var(--subtleBg);
-      color: rgba(255,255,255,.84);
-      font-size: 12.8px;
-      line-height: 1.45;
+    .hint{
+      margin-top:12px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      padding:14px 16px;
+      border-radius:16px;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.35;
     }
 
     .actions{
-      margin-top: 16px;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .btn{
-      appearance:none;
-      border:none;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-weight: 800;
-      cursor:pointer;
-      display:inline-flex;
+      display:flex; gap:14px; flex-wrap:wrap;
+      margin-top:18px;
       align-items:center;
-      justify-content:center;
+    }
+    a.btn, button.btn{
+      border:0;
+      border-radius:999px;
+      padding:16px 22px;
+      font-size:18px;
+      font-weight:700;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex; align-items:center; justify-content:center;
       gap:10px;
-      transition: transform .08s ease, opacity .12s ease, box-shadow .12s ease;
       user-select:none;
-      min-width: 220px;
     }
-    .btn:active{ transform: translateY(1px); opacity:.94; }
-
-    .primary{
-      background: var(--btn);
-      color: var(--btnText);
-      box-shadow: 0 12px 24px rgba(0,0,0,.25);
-    }
-
-    .installBtn{
-      background: var(--goodBg);
-      color: #eafff3;
-      border: 1px solid var(--goodBorder);
-      min-width: 180px;
-    }
-
+    .primary{ background:var(--btn); color:var(--btnText); }
+    .secondary{ background:var(--btn2); color:var(--text); border:1px solid rgba(255,255,255,.16); }
     .ghost{
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.14);
-      min-width: 180px;
+      background:transparent; color:var(--muted2);
+      border:1px solid rgba(255,255,255,.12);
+      padding:12px 16px;
+      font-weight:600;
+      font-size:16px;
     }
 
     .row{
-      margin-top: 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      margin-top:10px;
     }
+    .small{font-size:14px; color:var(--muted2); margin-top:10px}
 
-    .hint{
-      margin:0;
-      font-size: 12.5px;
-      color: rgba(255,255,255,.72);
-    }
-
-    .hidden{ display:none !important; }
-
-    @media (max-width:520px){
-      .btn{ width:100%; min-width: unset; }
-      .row{ align-items:stretch; }
-    }
+    /* Ocultos por defecto */
+    #installBtn{ display:none; }
+    #iosHelp{ display:none; }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="card" role="main" aria-live="polite">
-      <div class="glow"></div>
-
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <img src="/icons/icon-192.png" alt="">
-        </div>
-        <div>
-          <h1>SCaD</h1>
-          <p>Instala la app para acceder rápido a tu plataforma.</p>
-        </div>
+  <main class="card">
+    <div class="top">
+      <div class="logoWrap" aria-hidden="true">
+        <!-- Pon aquí tu icono 192 o 512 -->
+        <img src="/icons/icon-192.png" alt="SCaD" />
       </div>
-
-      <div class="msg" id="deviceMsg">
-        En Android y Escritorio puedes instalar con un toque. En iPhone/iPad: <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.
-      </div>
-
-      <div class="actions">
-        <!-- Aparece solo si el navegador entrega beforeinstallprompt -->
-        <button class="btn installBtn hidden" id="installBtn" type="button">Instalar SCaD</button>
-
-        <!-- Siempre visible: acceso a Wix Programas -->
-        <button class="btn primary" id="enterBtn" type="button">
-          Entrar a la plataforma
-          <span aria-hidden="true">→</span>
-        </button>
-
-        <!-- Opcional: abrir en navegador (útil en desktop si quieren otra pestaña) -->
-        <button class="btn ghost" id="openNewTabBtn" type="button">Abrir en navegador</button>
-      </div>
-
-      <div class="row">
-        <p class="hint" id="installHint">Si tu dispositivo permite instalación, verás el botón <b>Instalar SCaD</b>.</p>
+      <div>
+        <h1>SCaD</h1>
+        <p class="subtitle">Acceso rápido a tu plataforma.</p>
       </div>
     </div>
-  </div>
+
+    <!-- Mensaje mínimo dinámico -->
+    <div id="hint" class="hint">Cargando…</div>
+
+    <div class="actions">
+      <!-- Botón instalación (solo aparece si aplica) -->
+      <button id="installBtn" class="btn primary" type="button">Instalar SCaD</button>
+
+      <!-- CTA principal (siempre visible) -->
+      <a class="btn secondary" href="https://www.scad.mx/e-learning" rel="noopener">Entrar a la plataforma →</a>
+
+      <!-- Opcional: abrir en navegador (mismo link, por claridad) -->
+      <a class="btn ghost" href="https://www.scad.mx/e-learning" rel="noopener">Abrir en navegador</a>
+    </div>
+
+    <!-- iOS: instrucciones cortas -->
+    <div id="iosHelp" class="row">
+      <span class="small">
+        En iPhone/iPad (Safari): <strong>Compartir</strong> → <strong>Añadir a pantalla de inicio</strong>.
+      </span>
+    </div>
+  </main>
 
   <script>
-    // --- Configuración
-    const TARGET_URL = "https://www.scad.mx/e-learning";
+    // ======= CONFIG =======
+    const PLATFORM_URL = "https://www.scad.mx/e-learning";
 
-    // --- Detección de entorno
-    const ua = navigator.userAgent || "";
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    // ======= HELPERS =======
+    const isIOS = () => {
+      const ua = navigator.userAgent || "";
+      const iOS = /iPad|iPhone|iPod/.test(ua);
+      // iPadOS 13+ se reporta como Mac; detecta touch
+      const iPadOS = (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      return iOS || iPadOS;
+    };
 
-    const isStandalone =
-      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-      window.navigator.standalone === true;
-
-    // --- UI
+    const hintEl = document.getElementById("hint");
     const installBtn = document.getElementById("installBtn");
-    const enterBtn = document.getElementById("enterBtn");
-    const openNewTabBtn = document.getElementById("openNewTabBtn");
-    const installHint = document.getElementById("installHint");
-    const deviceMsg = document.getElementById("deviceMsg");
+    const iosHelp = document.getElementById("iosHelp");
 
-    // Mensaje iOS un poco más directo
-    if (isIOS && isSafari) {
-      deviceMsg.innerHTML = 'En iPhone/iPad: abre en <b>Safari</b> y usa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.';
-      installHint.textContent = "En iOS la instalación es manual (Safari → Compartir → Añadir a pantalla de inicio).";
-    }
-
-    // Si ya está instalada, ocultar botón de instalar si llegara a mostrarse
-    if (isStandalone) {
-      installHint.textContent = "SCaD ya está instalada. ✅";
-      installBtn.classList.add("hidden");
-    }
-
-    // --- Service Worker (para instalabilidad)
+    // ======= SERVICE WORKER =======
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
-        try {
-          await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-        } catch (e) {
-          console.warn("SW no registrado:", e);
-        }
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
       });
     }
 
-    // --- Instalación Android/Escritorio (Chrome/Edge)
+    // ======= UI LOGIC =======
     let deferredPrompt = null;
 
+    // iOS: no beforeinstallprompt, instalación manual
+    if (isIOS()) {
+      hintEl.textContent = "En iPhone/iPad la instalación es manual (Safari).";
+      iosHelp.style.display = "flex";
+    } else {
+      hintEl.textContent = "Si tu navegador lo permite, podrás instalar SCaD aquí.";
+    }
+
+    // Android / Desktop: captura el evento de instalación
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
 
-      // En iOS no aplica
-      if (isIOS) return;
-
-      if (!isStandalone) {
-        installBtn.classList.remove("hidden");
-        installHint.textContent = "Puedes instalar SCaD en este dispositivo.";
-      }
-    });
-
-    window.addEventListener("appinstalled", () => {
-      installBtn.classList.add("hidden");
-      installHint.textContent = "SCaD instalada. ✅";
-      deferredPrompt = null;
+      // Mostrar sólo cuando realmente está disponible
+      installBtn.style.display = "inline-flex";
+      hintEl.textContent = "Listo. Puedes instalar SCaD con un toque.";
     });
 
     installBtn.addEventListener("click", async () => {
       if (!deferredPrompt) return;
 
-      installBtn.disabled = true;
-      try {
-        deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
+      // Muestra el prompt nativo
+      deferredPrompt.prompt();
 
-        if (choice && choice.outcome === "dismissed") {
-          // Si canceló, permitimos intentar de nuevo
-          installBtn.disabled = false;
-          installHint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
-        }
-      } catch (err) {
-        console.warn(err);
-        installBtn.disabled = false;
-        installHint.textContent = "No se pudo abrir el instalador en este navegador.";
-      } finally {
+      // Espera el resultado
+      try {
+        const { outcome } = await deferredPrompt.userChoice;
         deferredPrompt = null;
+
+        // Oculta botón si el usuario ya resolvió
+        installBtn.style.display = "none";
+
+        // Mensaje mínimo post-acción
+        hintEl.textContent = (outcome === "accepted")
+          ? "Instalación iniciada. Abre SCaD desde tu dispositivo."
+          : "Instalación cancelada. Puedes entrar a la plataforma.";
+      } catch {
+        // Silencioso
       }
     });
 
-    // --- Navegación a Wix Programas (NO redirigimos automáticamente)
-    enterBtn.addEventListener("click", () => {
-      window.location.href = TARGET_URL;
-    });
-
-    openNewTabBtn.addEventListener("click", () => {
-      window.open(TARGET_URL, "_blank", "noopener,noreferrer");
-    });
+    // Si ya está instalada (standalone), puedes llevarlo directo al portal si quieres:
+    // (NO redirigimos automático por tu instrucción)
+    // const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
   </script>
 </body>
 </html>
