@@ -17,10 +17,7 @@
   <style>
     :root{
       --bg:#F7F8FC;
-      --bg2:#FFFFFF;
-
       --card:#FFFFFF;
-      --card2:#F3F5FA;
       --border: rgba(15, 23, 42, .10);
 
       --text:#0F172A;
@@ -63,7 +60,6 @@
       gap:14px;
     }
 
-    /* Topbar */
     .topbar{
       display:flex;
       align-items:center;
@@ -147,7 +143,6 @@
     }
     .help:active{ transform: translateY(1px); opacity:.92; }
 
-    /* Main card */
     .card{
       background: var(--card);
       border: 1px solid rgba(15,23,42,.10);
@@ -203,6 +198,7 @@
       user-select:none;
       min-width: 230px;
       letter-spacing:.1px;
+      white-space: nowrap;
     }
     .btn:active{ transform: translateY(1px); opacity:.95; }
     .btn[disabled]{ opacity:.65; cursor:not-allowed; }
@@ -222,6 +218,12 @@
       font-weight: 850;
     }
 
+    .btnIcon{
+      font-size: 16px;
+      line-height: 1;
+      opacity: .95;
+    }
+
     .hint{
       margin: 10px 0 0 0;
       font-size: 12.5px;
@@ -229,7 +231,6 @@
       line-height: 1.35;
     }
 
-    /* Launcher grid */
     .grid{
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -253,6 +254,7 @@
       gap:10px;
     }
     .tile:active{ transform: translateY(1px); }
+
     .tileTitle{
       font-weight: 900;
       font-size: 13.5px;
@@ -316,7 +318,12 @@
 
             <div class="actions">
               <button class="btn btnPrimary hidden" id="installBtn" type="button">Instalar App SCaD</button>
-              <button class="btn btnGhost" id="enterBtn" type="button">Entrar a SCaD →</button>
+
+              <!-- Entrar a SCaD (HOME) -->
+              <button class="btn btnGhost" id="enterBtn" type="button">
+                <span class="btnIcon" aria-hidden="true">🌐</span>
+                Entrar a SCaD →
+              </button>
             </div>
 
             <p class="hint" id="hint"></p>
@@ -332,27 +339,27 @@
             </div>
           </div>
 
+          <div class="tile" id="tileCPC" role="button" tabindex="0">
+            <div class="tileIcon">🧑‍🏫</div>
+            <div>
+              <p class="tileTitle">Centro Privado de Capacitación</p>
+              <p class="tileDesc">Información institucional y oferta.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tilePricing" role="button" tabindex="0">
+            <div class="tileIcon">💳</div>
+            <div>
+              <p class="tileTitle">Planes y precios</p>
+              <p class="tileDesc">Consulta opciones y suscripción.</p>
+            </div>
+          </div>
+
           <div class="tile" id="tileSoporte" role="button" tabindex="0">
             <div class="tileIcon">💬</div>
             <div>
               <p class="tileTitle">Soporte</p>
-              <p class="tileDesc">Ayuda rápida por WhatsApp o correo.</p>
-            </div>
-          </div>
-
-          <div class="tile" id="tileTutorial" role="button" tabindex="0">
-            <div class="tileIcon">▶</div>
-            <div>
-              <p class="tileTitle">Tutorial iPhone/iPad</p>
-              <p class="tileDesc">Cómo instalar SCaD en iOS (Safari).</p>
-            </div>
-          </div>
-
-          <div class="tile" id="tileWeb" role="button" tabindex="0">
-            <div class="tileIcon">🌐</div>
-            <div>
-              <p class="tileTitle">Abrir SCaD en web</p>
-              <p class="tileDesc">Ir al sitio principal.</p>
+              <p class="tileDesc">Contacto y ayuda rápida.</p>
             </div>
           </div>
 
@@ -364,11 +371,11 @@
             </div>
           </div>
 
-          <div class="tile" id="tileInfo" role="button" tabindex="0">
-            <div class="tileIcon">ℹ️</div>
+          <div class="tile" id="tileTutorial" role="button" tabindex="0">
+            <div class="tileIcon">▶</div>
             <div>
-              <p class="tileTitle">Información</p>
-              <p class="tileDesc">¿Qué es SCaD y cómo usarlo?</p>
+              <p class="tileTitle">Tutorial iPhone/iPad</p>
+              <p class="tileDesc">Cómo instalar SCaD en iOS (Safari).</p>
             </div>
           </div>
         </div>
@@ -378,9 +385,13 @@
   </div>
 
   <script>
-    // --- Configuración
-    const TARGET_URL = "https://www.scad.mx/e-learning";
-    const WEB_URL = "https://www.scad.mx";
+    // --- URLs
+    const URL_HOME = "https://www.scad.mx";
+    const URL_CURSOS = "https://www.scad.mx/e-learning";
+    const URL_CONTACT = "https://www.scad.mx/contact";
+    const URL_NOVEDADES = "https://www.scad.mx/novedades";
+    const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
+    const URL_CPC = "https://www.scad.mx/cpc";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
 
     // --- Detección
@@ -401,51 +412,46 @@
     const heroSub = document.getElementById("heroSub");
     const hint = document.getElementById("hint");
 
+    // Tiles
     const tileCursos = document.getElementById("tileCursos");
     const tileSoporte = document.getElementById("tileSoporte");
     const tileTutorial = document.getElementById("tileTutorial");
-    const tileWeb = document.getElementById("tileWeb");
     const tileNovedades = document.getElementById("tileNovedades");
-    const tileInfo = document.getElementById("tileInfo");
+    const tilePricing = document.getElementById("tilePricing");
+    const tileCPC = document.getElementById("tileCPC");
 
-    function openTarget(newTab=true){
+    function openUrl(url){
       if (isStandalone) {
-        window.location.href = TARGET_URL;
+        window.location.href = url;
         return;
       }
-      if (newTab) {
-        const w = window.open(TARGET_URL, "_blank", "noopener,noreferrer");
-        if (!w) window.location.href = TARGET_URL;
-      } else {
-        window.location.href = TARGET_URL;
-      }
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) window.location.href = url;
     }
 
-    // Accesos launcher
-    tileCursos.addEventListener("click", () => openTarget(true));
-    tileWeb.addEventListener("click", () => window.open(WEB_URL, "_blank", "noopener,noreferrer"));
-    tileTutorial.addEventListener("click", () => window.open(IOS_TUTORIAL_URL, "_blank", "noopener,noreferrer"));
+    // Launcher actions
+    tileCursos.addEventListener("click", () => openUrl(URL_CURSOS));
+    tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
+    tileTutorial.addEventListener("click", () => openUrl(IOS_TUTORIAL_URL));
+    tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
+    tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
+    tileCPC.addEventListener("click", () => openUrl(URL_CPC));
 
-    // Soporte (ajústalo a tus datos reales cuando quieras)
-    tileSoporte.addEventListener("click", () => {
-      // Dejo un placeholder neutral para no inventar contactos aquí:
-      // Puedes cambiarlo por WhatsApp/mailto cuando lo definas.
-      alert("Soporte: integra aquí tu WhatsApp/correo de SCaD.");
-    });
-
-    tileNovedades.addEventListener("click", () => alert("Novedades: aquí puedes mostrar cambios o enlazar a una página."));
-    tileInfo.addEventListener("click", () => alert("Información: aquí puedes explicar brevemente SCaD o enlazar a un recurso."));
+    // Entrar a SCaD -> HOME
+    enterBtn.addEventListener("click", () => openUrl(URL_HOME));
 
     // --- Estado inicial
     if (isStandalone) {
       pill.textContent = "Instalada ✅";
       heroTitle.textContent = "SCaD está lista";
-      heroSub.textContent = "Abre tu plataforma directamente como app.";
+      heroSub.textContent = "Abre SCaD desde tu pantalla de inicio.";
       hint.textContent = "";
       installBtn.classList.add("hidden");
     } else if (isIOS) {
       pill.textContent = isSafari ? "iOS (Safari)" : "iOS";
       helpVideo.classList.remove("hidden");
+      helpVideo.href = IOS_TUTORIAL_URL;
+
       heroTitle.textContent = "Instala SCaD en iPhone/iPad";
       if (isSafari) {
         heroSub.innerHTML = "Safari → <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.";
@@ -463,7 +469,7 @@
       installBtn.classList.add("hidden"); // se mostrará solo si llega beforeinstallprompt
     }
 
-    // --- Service Worker (instalabilidad)
+    // --- Service Worker
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
@@ -483,7 +489,6 @@
 
       if (isIOS || isStandalone) return;
 
-      // Aquí SÍ es instalable
       installBtn.classList.remove("hidden");
       pill.textContent = "Instalable ✅";
       heroSub.textContent = "Instala SCaD para abrirla como app en este dispositivo.";
@@ -495,7 +500,7 @@
       installBtn.classList.add("hidden");
       pill.textContent = "Instalada ✅";
       heroTitle.textContent = "SCaD está lista";
-      heroSub.textContent = "Abre tu plataforma directamente como app.";
+      heroSub.textContent = "Abre SCaD desde tu pantalla de inicio.";
       hint.textContent = "Busca el ícono en tu pantalla de inicio / escritorio.";
     });
 
@@ -521,7 +526,7 @@
       }
     });
 
-    // Si no aparece beforeinstallprompt, avisar disponibilidad (neutral)
+    // Si no aparece beforeinstallprompt, aviso neutral
     setTimeout(() => {
       if (isIOS || isStandalone) return;
       const installVisible = !installBtn.classList.contains("hidden");
@@ -530,9 +535,6 @@
         hint.textContent = "La instalación de la app no está disponible en este navegador.";
       }
     }, 1500);
-
-    // --- Entrar a SCaD
-    enterBtn.addEventListener("click", () => openTarget(true));
 
     // Accesibilidad teclado (tiles)
     document.querySelectorAll(".tile").forEach(el => {
