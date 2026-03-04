@@ -7,42 +7,33 @@
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#0B1020">
+  <meta name="theme-color" content="#F7F8FC">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="SCaD">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
   <meta name="description" content="SCaD • Instala la app y entra a tu plataforma e-learning." />
 
   <style>
     :root{
-      /* Fondo moderno (no negro puro) */
-      --bg0:#070A12;
-      --bg1:#0B1020;
+      --bg:#F7F8FC;
+      --bg2:#FFFFFF;
 
-      /* Glass */
-      --card: rgba(255,255,255,.12);
-      --card2: rgba(255,255,255,.06);
-      --border: rgba(255,255,255,.14);
-      --border2: rgba(255,255,255,.10);
+      --card:#FFFFFF;
+      --card2:#F3F5FA;
+      --border: rgba(15, 23, 42, .10);
 
-      /* Texto */
-      --text:#F3F5FF;
-      --muted: rgba(243,245,255,.70);
+      --text:#0F172A;
+      --muted: rgba(15, 23, 42, .68);
 
-      /* Acento SCaD */
-      --accent:#4C7DFF;
-      --accent2:#7AA2FF;
+      --accent:#2F6BFF;
+      --accent2:#1E4BD8;
 
-      /* Status */
-      --good:#22C55E;
-      --warn:#F59E0B;
+      --shadow: 0 18px 55px rgba(2, 6, 23, .10);
+      --shadow2: 0 10px 25px rgba(2, 6, 23, .08);
 
-      /* Sombra premium */
-      --shadow: 0 24px 90px rgba(0,0,0,.55);
-
-      --radius: 26px;
+      --radius: 22px;
+      --radius2: 16px;
     }
 
     *{ box-sizing:border-box; }
@@ -52,10 +43,9 @@
       font-family: system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       color: var(--text);
       background:
-        radial-gradient(900px 500px at 20% 10%, rgba(76,125,255,.22), transparent 55%),
-        radial-gradient(700px 420px at 85% 20%, rgba(34,197,94,.14), transparent 60%),
-        radial-gradient(900px 600px at 50% 120%, rgba(122,162,255,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg0));
+        radial-gradient(900px 520px at 15% 5%, rgba(47,107,255,.14), transparent 55%),
+        radial-gradient(900px 520px at 85% 15%, rgba(34,197,94,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg), #EEF1FA);
     }
 
     .wrap{
@@ -66,130 +56,142 @@
       padding: 22px;
     }
 
-    .card{
-      width:min(560px, 94vw);
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px;
-      position:relative;
-      overflow:hidden;
-
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+    .shell{
+      width:min(780px, 96vw);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
     }
 
-    .glow{
-      position:absolute;
-      inset:-160px -160px auto -160px;
-      height:260px;
-      background:
-        radial-gradient(circle at 30% 40%, rgba(76,125,255,.28), transparent 60%),
-        radial-gradient(circle at 70% 30%, rgba(34,197,94,.16), transparent 62%);
-      filter: blur(10px);
-      pointer-events:none;
-      opacity:.95;
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.70);
+      border: 1px solid rgba(15,23,42,.08);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .brand{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:12px;
+      min-width: 220px;
     }
 
     .logo{
-      width:56px;
-      height:56px;
-      border-radius:18px;
-      background: linear-gradient(180deg, rgba(76,125,255,.22), rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.18);
+      width:44px;
+      height:44px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(47,107,255,.14), rgba(255,255,255,1));
+      border: 1px solid rgba(15,23,42,.10);
       display:grid;
       place-items:center;
       overflow:hidden;
       flex:0 0 auto;
     }
-    .logo img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
+    .logo img{ width:100%; height:100%; object-fit:contain; display:block; }
 
-    h1{
-      font-size:24px;
+    .brand h1{
+      font-size:18px;
       margin:0;
-      letter-spacing:.2px;
       line-height:1.1;
+      letter-spacing:.2px;
     }
-    #subtitle{
-      margin:6px 0 0 0;
-      font-size:13.5px;
+    .brand p{
+      margin:4px 0 0 0;
+      font-size:12.8px;
       color: var(--muted);
-      line-height: 1.45;
+      line-height:1.25;
     }
 
-    /* Bloque estado */
-    .msg{
-      position: relative;
-      margin-top: 18px;
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--border2);
-      background: rgba(0,0,0,.18);
+    .status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .pill{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding: 6px 10px;
+      padding: 8px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 900;
-      color: rgba(243,245,255,.92);
-      background: rgba(76,125,255,.14);
-      border: 1px solid rgba(76,125,255,.28);
-      margin-bottom: 10px;
+      font-weight: 800;
+      color: rgba(15,23,42,.86);
+      background: rgba(15,23,42,.04);
+      border: 1px solid rgba(15,23,42,.10);
     }
 
-    .msgBody{
-      color: rgba(243,245,255,.90);
-      font-size: 13px;
-      line-height: 1.45;
-      padding-right: 44px; /* espacio para el icono */
-    }
-
-    .helpVideo{
-      position:absolute;
-      right:12px;
-      top:12px;
+    .help{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
       width:34px;
       height:34px;
       border-radius: 999px;
-      display:grid;
-      place-items:center;
       text-decoration:none;
-      color: rgba(243,245,255,.95);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(15,23,42,.80);
+      background: rgba(255,255,255,.85);
+      border: 1px solid rgba(15,23,42,.10);
       transition: transform .08s ease, opacity .12s ease;
     }
-    .helpVideo:active{ transform: translateY(1px); opacity:.92; }
+    .help:active{ transform: translateY(1px); opacity:.92; }
 
-    /* Acciones */
+    /* Main card */
+    .card{
+      background: var(--card);
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow:hidden;
+    }
+
+    .hero{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      padding: 4px 2px 14px 2px;
+    }
+
+    .heroTitle{
+      font-size: 22px;
+      margin:0;
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+
+    .heroSub{
+      margin:8px 0 0 0;
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.4;
+      max-width: 560px;
+    }
+
     .actions{
-      margin-top: 18px;
       display:flex;
       gap:12px;
       flex-wrap:wrap;
+      margin-top: 14px;
     }
 
     .btn{
       appearance:none;
       border:none;
       border-radius: 999px;
-      height: 48px;
+      height: 46px;
       padding: 0 18px;
       font-weight: 900;
       cursor:pointer;
@@ -199,161 +201,266 @@
       gap:10px;
       transition: transform .08s ease, opacity .12s ease, box-shadow .12s ease, background .12s ease;
       user-select:none;
-      min-width: 220px;
-      letter-spacing: .1px;
+      min-width: 230px;
+      letter-spacing:.1px;
     }
     .btn:active{ transform: translateY(1px); opacity:.95; }
     .btn[disabled]{ opacity:.65; cursor:not-allowed; }
 
-    /* Primario = Instalar (cuando exista) */
-    .primary{
-      background: linear-gradient(180deg, rgba(76,125,255,1), rgba(76,125,255,.82));
-      color: #06102B;
-      border: 1px solid rgba(255,255,255,.20);
-      box-shadow: 0 14px 28px rgba(76,125,255,.22);
+    .btnPrimary{
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color: white;
+      box-shadow: 0 14px 26px rgba(47,107,255,.18);
+      border: 1px solid rgba(0,0,0,.04);
     }
 
-    /* Secundario = Entrar */
-    .secondary{
-      background: rgba(255,255,255,.06);
-      color: rgba(243,245,255,.92);
-      border: 1px solid rgba(255,255,255,.14);
+    .btnGhost{
+      background: rgba(15,23,42,.04);
+      color: rgba(15,23,42,.88);
+      border: 1px solid rgba(15,23,42,.10);
       box-shadow: none;
       font-weight: 850;
     }
 
-    .row{
-      margin-top: 12px;
-    }
     .hint{
-      margin:0;
-      font-size: 12px;
-      color: rgba(243,245,255,.65);
+      margin: 10px 0 0 0;
+      font-size: 12.5px;
+      color: rgba(15,23,42,.62);
       line-height: 1.35;
+    }
+
+    /* Launcher grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .tile{
+      border-radius: var(--radius2);
+      border: 1px solid rgba(15,23,42,.10);
+      background: linear-gradient(180deg, rgba(15,23,42,.03), rgba(255,255,255,1));
+      padding: 14px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+      box-shadow: none;
+      min-height: 92px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .tile:active{ transform: translateY(1px); }
+    .tileTitle{
+      font-weight: 900;
+      font-size: 13.5px;
+      margin:0;
+      letter-spacing:.1px;
+    }
+    .tileDesc{
+      margin:0;
+      font-size: 12.5px;
+      color: rgba(15,23,42,.62);
+      line-height: 1.3;
+    }
+    .tileIcon{
+      font-size: 18px;
+      color: rgba(15,23,42,.76);
     }
 
     .hidden{ display:none !important; }
 
-    @media (max-width:520px){
+    @media (max-width: 740px){
+      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .btn{ width:100%; min-width: unset; }
+      .topbar{ padding: 12px; }
+    }
+    @media (max-width: 430px){
+      .grid{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="card" role="main" aria-live="polite">
-      <div class="glow"></div>
+    <div class="shell">
 
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <img src="/icons/icon-192.png" alt="">
-        </div>
-        <div>
-          <h1>SCaD</h1>
-          <p id="subtitle">Acceso rápido a tu plataforma.</p>
-        </div>
-      </div>
-
-      <div class="msg" id="deviceMsg">
-        <div class="pill" id="pill">Estado</div>
-        <div class="msgBody" id="msgBody">
-          Si tu navegador lo permite, verás el botón <b>Instalar App SCaD</b>.
+      <!-- Topbar -->
+      <div class="topbar" role="banner">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <img src="/icons/icon-192.png" alt="">
+          </div>
+          <div>
+            <h1>SCaD</h1>
+            <p>Acceso rápido a tu plataforma.</p>
+          </div>
         </div>
 
-        <a class="helpVideo hidden" id="helpVideo"
-           href="https://app.scad.mx/tutorial-ios/"
-           target="_blank" rel="noopener noreferrer"
-           aria-label="Ver tutorial de instalación en iOS">▶</a>
+        <div class="status">
+          <span class="pill" id="pill">Estado</span>
+          <a class="help hidden" id="helpVideo" href="https://app.scad.mx/tutorial-ios/" target="_blank" rel="noopener noreferrer" aria-label="Tutorial iOS">▶</a>
+        </div>
       </div>
 
-      <div class="actions">
-        <!-- Botón principal (solo si hay instalador / o si decidimos mostrarlo) -->
-        <button class="btn primary hidden" id="installBtn" type="button">Instalar App SCaD</button>
+      <!-- Main -->
+      <div class="card" role="main" aria-live="polite">
+        <div class="hero">
+          <div>
+            <h2 class="heroTitle" id="heroTitle">Bienvenido a SCaD</h2>
+            <p class="heroSub" id="heroSub">
+              Instala la app para abrir SCaD como una aplicación y acceder más rápido.
+            </p>
 
-        <!-- Botón secundario (si no hay instalación disponible, se convertirá a primario) -->
-        <button class="btn secondary" id="enterBtn" type="button">
-          Entrar a SCaD <span aria-hidden="true">→</span>
-        </button>
+            <div class="actions">
+              <button class="btn btnPrimary hidden" id="installBtn" type="button">Instalar App SCaD</button>
+              <button class="btn btnGhost" id="enterBtn" type="button">Entrar a SCaD →</button>
+            </div>
+
+            <p class="hint" id="hint"></p>
+          </div>
+        </div>
+
+        <div class="grid" id="grid">
+          <div class="tile" id="tileCursos" role="button" tabindex="0">
+            <div class="tileIcon">🎓</div>
+            <div>
+              <p class="tileTitle">Mis cursos</p>
+              <p class="tileDesc">Accede directo a tu plataforma e-learning.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tileSoporte" role="button" tabindex="0">
+            <div class="tileIcon">💬</div>
+            <div>
+              <p class="tileTitle">Soporte</p>
+              <p class="tileDesc">Ayuda rápida por WhatsApp o correo.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tileTutorial" role="button" tabindex="0">
+            <div class="tileIcon">▶</div>
+            <div>
+              <p class="tileTitle">Tutorial iPhone/iPad</p>
+              <p class="tileDesc">Cómo instalar SCaD en iOS (Safari).</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tileWeb" role="button" tabindex="0">
+            <div class="tileIcon">🌐</div>
+            <div>
+              <p class="tileTitle">Abrir SCaD en web</p>
+              <p class="tileDesc">Ir al sitio principal.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tileNovedades" role="button" tabindex="0">
+            <div class="tileIcon">✨</div>
+            <div>
+              <p class="tileTitle">Novedades</p>
+              <p class="tileDesc">Actualizaciones y mejoras.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tileInfo" role="button" tabindex="0">
+            <div class="tileIcon">ℹ️</div>
+            <div>
+              <p class="tileTitle">Información</p>
+              <p class="tileDesc">¿Qué es SCaD y cómo usarlo?</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="row">
-        <p class="hint" id="installHint"></p>
-      </div>
     </div>
   </div>
 
   <script>
     // --- Configuración
     const TARGET_URL = "https://www.scad.mx/e-learning";
+    const WEB_URL = "https://www.scad.mx";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
 
-    // --- Detección de entorno
+    // --- Detección
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-
     const isStandalone =
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
       window.navigator.standalone === true;
 
     // --- UI refs
     const installBtn = document.getElementById("installBtn");
-    const enterBtn   = document.getElementById("enterBtn");
-    const installHint= document.getElementById("installHint");
-    const pill       = document.getElementById("pill");
-    const msgBody    = document.getElementById("msgBody");
-    const helpVideo  = document.getElementById("helpVideo");
+    const enterBtn = document.getElementById("enterBtn");
+    const pill = document.getElementById("pill");
+    const helpVideo = document.getElementById("helpVideo");
 
-    function setPrimaryOnEnter(isPrimary) {
-      if (isPrimary) {
-        enterBtn.classList.remove("secondary");
-        enterBtn.classList.add("primary");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroSub = document.getElementById("heroSub");
+    const hint = document.getElementById("hint");
+
+    const tileCursos = document.getElementById("tileCursos");
+    const tileSoporte = document.getElementById("tileSoporte");
+    const tileTutorial = document.getElementById("tileTutorial");
+    const tileWeb = document.getElementById("tileWeb");
+    const tileNovedades = document.getElementById("tileNovedades");
+    const tileInfo = document.getElementById("tileInfo");
+
+    function openTarget(newTab=true){
+      if (isStandalone) {
+        window.location.href = TARGET_URL;
+        return;
+      }
+      if (newTab) {
+        const w = window.open(TARGET_URL, "_blank", "noopener,noreferrer");
+        if (!w) window.location.href = TARGET_URL;
       } else {
-        enterBtn.classList.remove("primary");
-        enterBtn.classList.add("secondary");
+        window.location.href = TARGET_URL;
       }
     }
 
-    function showInstallButton(show) {
-      if (show) installBtn.classList.remove("hidden");
-      else installBtn.classList.add("hidden");
-    }
+    // Accesos launcher
+    tileCursos.addEventListener("click", () => openTarget(true));
+    tileWeb.addEventListener("click", () => window.open(WEB_URL, "_blank", "noopener,noreferrer"));
+    tileTutorial.addEventListener("click", () => window.open(IOS_TUTORIAL_URL, "_blank", "noopener,noreferrer"));
 
-    // --- Estado inicial (sin depender aún de beforeinstallprompt)
+    // Soporte (ajústalo a tus datos reales cuando quieras)
+    tileSoporte.addEventListener("click", () => {
+      // Dejo un placeholder neutral para no inventar contactos aquí:
+      // Puedes cambiarlo por WhatsApp/mailto cuando lo definas.
+      alert("Soporte: integra aquí tu WhatsApp/correo de SCaD.");
+    });
+
+    tileNovedades.addEventListener("click", () => alert("Novedades: aquí puedes mostrar cambios o enlazar a una página."));
+    tileInfo.addEventListener("click", () => alert("Información: aquí puedes explicar brevemente SCaD o enlazar a un recurso."));
+
+    // --- Estado inicial
     if (isStandalone) {
-      pill.textContent = "Instalada";
-      msgBody.textContent = "SCaD ya está instalada en tu dispositivo.";
-      installHint.textContent = "";
-      showInstallButton(false);
-      helpVideo.classList.add("hidden");
-      setPrimaryOnEnter(true); // ya instalada => entrar es principal
+      pill.textContent = "Instalada ✅";
+      heroTitle.textContent = "SCaD está lista";
+      heroSub.textContent = "Abre tu plataforma directamente como app.";
+      hint.textContent = "";
+      installBtn.classList.add("hidden");
     } else if (isIOS) {
-      pill.textContent = "Instalación en iOS";
-      helpVideo.href = IOS_TUTORIAL_URL;
+      pill.textContent = isSafari ? "iOS (Safari)" : "iOS";
       helpVideo.classList.remove("hidden");
-
+      heroTitle.textContent = "Instala SCaD en iPhone/iPad";
       if (isSafari) {
-        msgBody.innerHTML = "Safari → <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>";
-        installHint.textContent = "Consejo: si no ves “Añadir…”, desplázate en el menú de compartir.";
+        heroSub.innerHTML = "Safari → <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.";
+        hint.textContent = "Tip: si no ves “Añadir…”, desplázate en el menú de compartir.";
       } else {
-        msgBody.innerHTML = "Para instalar la app en iPhone/iPad, abre esta página en <b>Safari</b>.";
-        installHint.textContent = "Luego: Safari → Compartir → Añadir a pantalla de inicio.";
+        heroSub.innerHTML = "Para instalar la app en iOS, abre esta página en <b>Safari</b>.";
+        hint.textContent = "Luego: Safari → Compartir → Añadir a pantalla de inicio.";
       }
-
-      showInstallButton(false);      // en iOS no usamos beforeinstallprompt
-      setPrimaryOnEnter(true);       // en iOS, entrar es principal (instalación es manual)
+      installBtn.classList.add("hidden"); // iOS no usa beforeinstallprompt
     } else {
-      // Android / Desktop (aún no sabemos si instalable)
       pill.textContent = "Instalación";
-      msgBody.innerHTML = "Si tu navegador lo permite, podrás instalar con el botón <b>Instalar App SCaD</b>.";
-      installHint.textContent = "";
-      helpVideo.classList.add("hidden");
-
-      // Por defecto: priorizamos instalar SOLO cuando realmente se pueda (beforeinstallprompt).
-      // Mientras tanto, “Entrar” queda como primario para no dejar al usuario atorado.
-      showInstallButton(false);
-      setPrimaryOnEnter(true);
+      heroTitle.textContent = "Instala la app SCaD";
+      heroSub.textContent = "Si tu navegador lo permite, podrás instalar la app con un toque.";
+      hint.textContent = "";
+      installBtn.classList.add("hidden"); // se mostrará solo si llega beforeinstallprompt
     }
 
     // --- Service Worker (instalabilidad)
@@ -376,23 +483,20 @@
 
       if (isIOS || isStandalone) return;
 
-      // Aquí SÍ podemos instalar: mostrar botón y hacerlo primario
-      showInstallButton(true);
-      setPrimaryOnEnter(false);
-
-      pill.textContent = "Instalable";
-      msgBody.textContent = "Puedes instalar la app en este dispositivo.";
-      installHint.textContent = "Si lo prefieres, también puedes entrar sin instalar.";
+      // Aquí SÍ es instalable
+      installBtn.classList.remove("hidden");
+      pill.textContent = "Instalable ✅";
+      heroSub.textContent = "Instala SCaD para abrirla como app en este dispositivo.";
+      hint.textContent = "Si lo prefieres, también puedes entrar sin instalar.";
     });
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
-      showInstallButton(false);
-      setPrimaryOnEnter(true);
-
-      pill.textContent = "Instalada";
-      msgBody.textContent = "SCaD ya está instalada en tu dispositivo.";
-      installHint.textContent = "Busca el ícono en tu pantalla de inicio / escritorio. ✅";
+      installBtn.classList.add("hidden");
+      pill.textContent = "Instalada ✅";
+      heroTitle.textContent = "SCaD está lista";
+      heroSub.textContent = "Abre tu plataforma directamente como app.";
+      hint.textContent = "Busca el ícono en tu pantalla de inicio / escritorio.";
     });
 
     installBtn.addEventListener("click", async () => {
@@ -402,48 +506,39 @@
       try {
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
-
         if (choice && choice.outcome === "dismissed") {
-          installHint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
+          hint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
           installBtn.disabled = false;
         } else {
-          installHint.textContent = "Instalando SCaD…";
-          // appinstalled ajustará el estado final
+          hint.textContent = "Instalando SCaD…";
         }
       } catch (err) {
         console.warn(err);
-        installHint.textContent = "No se pudo abrir el instalador en este navegador.";
+        hint.textContent = "No se pudo abrir el instalador en este navegador.";
         installBtn.disabled = false;
       } finally {
         deferredPrompt = null;
       }
     });
 
-    // --- Heurística: si no apareció beforeinstallprompt, avisar “no disponible” (sin sonar fatal)
-    // (No aplica para iOS/standalone)
+    // Si no aparece beforeinstallprompt, avisar disponibilidad (neutral)
     setTimeout(() => {
       if (isIOS || isStandalone) return;
-
       const installVisible = !installBtn.classList.contains("hidden");
       if (!installVisible) {
-        pill.textContent = "No disponible";
-        msgBody.textContent = "La instalación de la app no está disponible en este navegador.";
-        installHint.textContent = "Puedes entrar a SCaD sin instalar.";
-        setPrimaryOnEnter(true);
+        pill.textContent = "Web";
+        hint.textContent = "La instalación de la app no está disponible en este navegador.";
       }
     }, 1500);
 
-    // --- Navegación a Wix Programas
-    // En navegador normal: abrir en nueva pestaña para NO perder el contexto instalable de app.scad.mx.
-    // En modo standalone: abrir directo en la misma ventana (modo app).
-    enterBtn.addEventListener("click", () => {
-      if (isStandalone) {
-        window.location.href = TARGET_URL;
-        return;
-      }
+    // --- Entrar a SCaD
+    enterBtn.addEventListener("click", () => openTarget(true));
 
-      const w = window.open(TARGET_URL, "_blank", "noopener,noreferrer");
-      if (!w) window.location.href = TARGET_URL;
+    // Accesibilidad teclado (tiles)
+    document.querySelectorAll(".tile").forEach(el => {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") el.click();
+      });
     });
   </script>
 </body>
