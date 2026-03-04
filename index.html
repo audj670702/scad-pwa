@@ -420,7 +420,11 @@
     const tilePricing = document.getElementById("tilePricing");
     const tileCPC = document.getElementById("tileCPC");
 
-    function openUrl(url){
+// Ocultar tutorial iOS cuando la app ya está instalada
+if (isStandalone || !isIOS) {
+  tileTutorial.classList.add("hidden");
+  helpVideo.classList.add("hidden");
+}    function openUrl(url){
       if (isStandalone) {
         window.location.href = url;
         return;
