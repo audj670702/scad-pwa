@@ -339,6 +339,14 @@
             </div>
           </div>
 
+<div class="tile" id="tileMiPlan" role="button" tabindex="0">
+  <div class="tileIcon">🏋️</div>
+  <div>
+    <p class="tileTitle">Mi entrenamiento</p>
+    <p class="tileDesc">Accede directo a tu plan de entrenamiento.</p>
+  </div>
+</div>
+
           <div class="tile" id="tileCPC" role="button" tabindex="0">
             <div class="tileIcon">🧑‍🏫</div>
             <div>
@@ -393,6 +401,7 @@
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
     const URL_CPC = "https://www.scad.mx/cpc";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
+const URL_MIPLAN = "https://www.scad.mx/miplan?rc=test-site";
 
     // --- Detección
     const ua = navigator.userAgent || "";
@@ -419,6 +428,7 @@
     const tileNovedades = document.getElementById("tileNovedades");
     const tilePricing = document.getElementById("tilePricing");
     const tileCPC = document.getElementById("tileCPC");
+const tileMiPlan = document.getElementById("tileMiPlan");
 
 // Ocultar tutorial iOS cuando la app ya está instalada
 if (isStandalone || !isIOS) {
@@ -440,6 +450,7 @@ if (isStandalone || !isIOS) {
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
     tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
     tileCPC.addEventListener("click", () => openUrl(URL_CPC));
+tileMiPlan.addEventListener("click", () => openUrl(URL_MIPLAN));
 
     // Entrar a SCaD -> HOME
     enterBtn.addEventListener("click", () => openUrl(URL_HOME));
