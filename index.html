@@ -242,34 +242,85 @@
       border-radius: var(--radius2);
       border: 1px solid rgba(15,23,42,.10);
       background: linear-gradient(180deg, rgba(15,23,42,.03), rgba(255,255,255,1));
-      padding: 14px;
+      padding: 14px 16px;
       cursor:pointer;
       user-select:none;
       transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
       box-shadow: none;
       min-height: 92px;
       display:flex;
-      flex-direction:column;
+      align-items:center;
       justify-content:space-between;
-      gap:10px;
+      gap:14px;
     }
     .tile:active{ transform: translateY(1px); }
+
+    .tileBody{
+      min-width:0;
+      flex:1 1 auto;
+    }
 
     .tileTitle{
       font-weight: 900;
       font-size: 13.5px;
       margin:0;
       letter-spacing:.1px;
+      line-height: 1.25;
     }
     .tileDesc{
-      margin:0;
+      margin:4px 0 0 0;
       font-size: 12.5px;
       color: rgba(15,23,42,.62);
       line-height: 1.3;
     }
     .tileIcon{
-      font-size: 18px;
+      font-size: 22px;
       color: rgba(15,23,42,.76);
+      flex:0 0 auto;
+      width: 28px;
+      text-align:center;
+      align-self:center;
+    }
+
+    .sectionToggle{
+      width:100%;
+      margin-top: 14px;
+      appearance:none;
+      border:none;
+      border-radius: 999px;
+      height: 42px;
+      padding: 0 16px;
+      font-weight: 850;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color: rgba(15,23,42,.82);
+      background: rgba(15,23,42,.04);
+      border: 1px solid rgba(15,23,42,.10);
+    }
+
+    .sectionToggleLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+
+    .sectionToggleIcon{
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .sectionToggleChevron{
+      font-size: 14px;
+      line-height: 1;
+      opacity: .72;
+    }
+
+    .resourcePanel{
+      margin-top: 12px;
     }
 
     .hidden{ display:none !important; }
@@ -332,75 +383,85 @@
 
         <div class="grid" id="grid">
           <div class="tile" id="tileCursos" role="button" tabindex="0">
-            <div class="tileIcon">🎓</div>
-            <div>
+            <div class="tileBody">
               <p class="tileTitle">Mis cursos</p>
               <p class="tileDesc">Accede directo a tu plataforma e-learning.</p>
             </div>
+            <div class="tileIcon">🎓</div>
           </div>
 
-<div class="tile" id="tileMiPlan" role="button" tabindex="0">
-  <div class="tileIcon">🏋️</div>
-  <div>
-    <p class="tileTitle">Mi entrenamiento</p>
-    <p class="tileDesc">Accede directo a tu plan de entrenamiento.</p>
-  </div>
-</div>
-
-          <div class="tile" id="tilePDE" role="button" tabindex="0">
-            <div class="tileIcon">🧭</div>
-            <div>
-              <p class="tileTitle">Panel de Entrenador</p>
-              <p class="tileDesc">Acceso para usuarios con rol de entrenador.</p>
+          <div class="tile" id="tileMiPlan" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Mi entrenamiento</p>
+              <p class="tileDesc">Accede directo a tu plan de entrenamiento.</p>
             </div>
-          </div>
-
-          <div class="tile" id="tilePDO" role="button" tabindex="0">
-            <div class="tileIcon">🔐</div>
-            <div>
-              <p class="tileTitle">Panel ODIN</p>
-              <p class="tileDesc">Acceso al panel ODIN.</p>
-            </div>
-          </div>
-
-          <div class="tile" id="tileCPC" role="button" tabindex="0">
-            <div class="tileIcon">🧑‍🏫</div>
-            <div>
-              <p class="tileTitle">Centro Privado de Capacitación</p>
-              <p class="tileDesc">Información institucional y oferta.</p>
-            </div>
-          </div>
-
-          <div class="tile" id="tilePricing" role="button" tabindex="0">
-            <div class="tileIcon">💳</div>
-            <div>
-              <p class="tileTitle">Planes y precios</p>
-              <p class="tileDesc">Consulta opciones y suscripción.</p>
-            </div>
-          </div>
-
-          <div class="tile" id="tileSoporte" role="button" tabindex="0">
-            <div class="tileIcon">💬</div>
-            <div>
-              <p class="tileTitle">Soporte</p>
-              <p class="tileDesc">Contacto y ayuda rápida.</p>
-            </div>
+            <div class="tileIcon">🏋️</div>
           </div>
 
           <div class="tile" id="tileNovedades" role="button" tabindex="0">
-            <div class="tileIcon">✨</div>
-            <div>
+            <div class="tileBody">
               <p class="tileTitle">Novedades</p>
               <p class="tileDesc">Actualizaciones y mejoras.</p>
             </div>
+            <div class="tileIcon">✨</div>
+          </div>
+
+          <div class="tile" id="tileCPC" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Centro Privado de Capacitación</p>
+              <p class="tileDesc">Información institucional y oferta.</p>
+            </div>
+            <div class="tileIcon">🧑‍🏫</div>
+          </div>
+
+          <div class="tile" id="tilePricing" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Planes y precios</p>
+              <p class="tileDesc">Consulta opciones y suscripción.</p>
+            </div>
+            <div class="tileIcon">💳</div>
+          </div>
+
+          <div class="tile" id="tileSoporte" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Soporte</p>
+              <p class="tileDesc">Contacto y ayuda rápida.</p>
+            </div>
+            <div class="tileIcon">💬</div>
           </div>
 
           <div class="tile" id="tileTutorial" role="button" tabindex="0">
-            <div class="tileIcon">▶</div>
-            <div>
+            <div class="tileBody">
               <p class="tileTitle">Tutorial iPhone/iPad</p>
               <p class="tileDesc">Cómo instalar SCaD en iOS (Safari).</p>
             </div>
+            <div class="tileIcon">▶</div>
+          </div>
+        </div>
+
+        <button class="sectionToggle" id="resourcesToggle" type="button" aria-expanded="false" aria-controls="resourcesPanel">
+          <span class="sectionToggleLeft">
+            <span class="sectionToggleIcon" aria-hidden="true">🗂️</span>
+            <span>Recursos</span>
+          </span>
+          <span class="sectionToggleChevron" id="resourcesChevron" aria-hidden="true">▾</span>
+        </button>
+
+        <div class="grid resourcePanel hidden" id="resourcesPanel">
+          <div class="tile" id="tilePDE" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Panel de Entrenador</p>
+              <p class="tileDesc">Acceso para usuarios con rol de entrenador.</p>
+            </div>
+            <div class="tileIcon">🧭</div>
+          </div>
+
+          <div class="tile" id="tilePDO" role="button" tabindex="0">
+            <div class="tileBody">
+              <p class="tileTitle">Panel ODIN</p>
+              <p class="tileDesc">Acceso al panel ODIN.</p>
+            </div>
+            <div class="tileIcon">🔐</div>
           </div>
         </div>
       </div>
@@ -450,6 +511,10 @@
     const tilePDE = document.getElementById("tilePDE");
     const tilePDO = document.getElementById("tilePDO");
 
+    const resourcesToggle = document.getElementById("resourcesToggle");
+    const resourcesPanel = document.getElementById("resourcesPanel");
+    const resourcesChevron = document.getElementById("resourcesChevron");
+
 // Ocultar tutorial iOS cuando la app ya está instalada
 if (isStandalone || !isIOS) {
   tileTutorial.classList.add("hidden");
@@ -462,6 +527,18 @@ if (isStandalone || !isIOS) {
       const w = window.open(url, "_blank", "noopener,noreferrer");
       if (!w) window.location.href = url;
     }
+
+        function toggleResources(forceOpen){
+      const shouldOpen = typeof forceOpen === "boolean"
+        ? forceOpen
+        : resourcesPanel.classList.contains("hidden");
+
+      resourcesPanel.classList.toggle("hidden", !shouldOpen);
+      resourcesToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      resourcesChevron.textContent = shouldOpen ? "▴" : "▾";
+    }
+
+    resourcesToggle.addEventListener("click", () => toggleResources());
 
     // Launcher actions
     tileCursos.addEventListener("click", () => openUrl(URL_CURSOS));
