@@ -347,6 +347,22 @@
   </div>
 </div>
 
+          <div class="tile" id="tilePDE" role="button" tabindex="0">
+            <div class="tileIcon">🧭</div>
+            <div>
+              <p class="tileTitle">Panel de Entrenador</p>
+              <p class="tileDesc">Acceso para usuarios con rol de entrenador.</p>
+            </div>
+          </div>
+
+          <div class="tile" id="tilePDO" role="button" tabindex="0">
+            <div class="tileIcon">🔐</div>
+            <div>
+              <p class="tileTitle">Panel ODIN</p>
+              <p class="tileDesc">Acceso al panel ODIN.</p>
+            </div>
+          </div>
+
           <div class="tile" id="tileCPC" role="button" tabindex="0">
             <div class="tileIcon">🧑‍🏫</div>
             <div>
@@ -401,7 +417,9 @@
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
     const URL_CPC = "https://www.scad.mx/cpc";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
-const URL_MIPLAN = "https://www.scad.mx/registrogym?rc=test-site";
+    const URL_MIPLAN = "https://www.scad.mx/registrogym?rc=test-site";
+    const URL_PDE = "https://www.scad.mx/hub-pde";
+    const URL_PDO = "https://www.scad.mx/hub-odin";
 
     // --- Detección
     const ua = navigator.userAgent || "";
@@ -428,7 +446,9 @@ const URL_MIPLAN = "https://www.scad.mx/registrogym?rc=test-site";
     const tileNovedades = document.getElementById("tileNovedades");
     const tilePricing = document.getElementById("tilePricing");
     const tileCPC = document.getElementById("tileCPC");
-const tileMiPlan = document.getElementById("tileMiPlan");
+    const tileMiPlan = document.getElementById("tileMiPlan");
+    const tilePDE = document.getElementById("tilePDE");
+    const tilePDO = document.getElementById("tilePDO");
 
 // Ocultar tutorial iOS cuando la app ya está instalada
 if (isStandalone || !isIOS) {
@@ -450,7 +470,9 @@ if (isStandalone || !isIOS) {
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
     tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
     tileCPC.addEventListener("click", () => openUrl(URL_CPC));
-tileMiPlan.addEventListener("click", () => openUrl(URL_MIPLAN));
+    tileMiPlan.addEventListener("click", () => openUrl(URL_MIPLAN));
+    tilePDE.addEventListener("click", () => openUrl(URL_PDE));
+    tilePDO.addEventListener("click", () => openUrl(URL_PDO));
 
     // Entrar a SCaD -> HOME
     enterBtn.addEventListener("click", () => openUrl(URL_HOME));
