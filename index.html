@@ -476,7 +476,7 @@
   <script>
     // --- URLs
     const URL_HOME = "https://www.scad.mx";
-    const URL_CURSOS = "https://www.scad.mx/e-learning";
+ const URL_MIS_CURSOS = "https://www.scad.mx/account/my-programs";
     const URL_CONTACT = "https://www.scad.mx/contact";
     const URL_NOVEDADES = "https://www.scad.mx/novedades";
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
@@ -558,7 +558,9 @@ if (isStandalone || !isIOS) {
     resourcesToggle.addEventListener("click", () => toggleResources());
 
     // Launcher actions
-    tileCursos.addEventListener("click", () => openUrl(URL_CURSOS));
+tileCursos.addEventListener("click", () => {
+  openUrl(withFreshParam(URL_MIS_CURSOS, { target: "mis-cursos" }));
+});
     tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
     tileTutorial.addEventListener("click", () => openUrl(IOS_TUTORIAL_URL));
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
