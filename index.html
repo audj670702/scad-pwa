@@ -418,6 +418,14 @@
             <div class="tileIcon">🧑‍🏫</div>
           </div>
 
+          <div class="tile" id="tileFacturacion" role="button" tabindex="0">
+  <div class="tileBody">
+    <p class="tileTitle">Servicio de Facturación</p>
+    <p class="tileDesc">Acceso exclusivo para inscritos al programa de facturación.</p>
+  </div>
+  <div class="tileIcon">🧾</div>
+</div>
+
           <div class="tile" id="tilePricing" role="button" tabindex="0">
             <div class="tileBody">
               <p class="tileTitle">Planes y precios</p>
@@ -481,6 +489,7 @@ const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
     const URL_NOVEDADES = "https://www.scad.mx/novedades";
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
     const URL_CPC = "https://www.scad.mx/cpc";
+    const URL_FACT_GESTION = "https://www.scad.mx/fact";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
 const URL_MIPLAN = "https://www.scad.mx/registrogym";
     const URL_PDE = "https://www.scad.mx/hub-pde";
@@ -511,6 +520,7 @@ const URL_MIPLAN = "https://www.scad.mx/registrogym";
     const tileNovedades = document.getElementById("tileNovedades");
     const tilePricing = document.getElementById("tilePricing");
     const tileCPC = document.getElementById("tileCPC");
+    const tileFacturacion = document.getElementById("tileFacturacion");
     const tileMiPlan = document.getElementById("tileMiPlan");
     const tilePDE = document.getElementById("tilePDE");
     const tilePDO = document.getElementById("tilePDO");
@@ -566,6 +576,14 @@ tileCursos.addEventListener("click", () => {
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
     tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
     tileCPC.addEventListener("click", () => openUrl(URL_CPC));
+    tileFacturacion.addEventListener("click", () => {
+  openUrl(
+    withFreshParam(URL_FACT_GESTION, {
+      target: "facturacion",
+      program: "Ⓟ SERVICIO DE FACTURACIÓN"
+    })
+  );
+});
 tileMiPlan.addEventListener("click", () => {
   openUrl(withFreshParam(URL_MIPLAN, { target: "mi-entrenamiento" }));
 });
