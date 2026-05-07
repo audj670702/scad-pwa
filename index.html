@@ -475,6 +475,14 @@
             </div>
             <div class="tileIcon">🔐</div>
           </div>
+
+          <div class="tile" id="tileDespachoFiscal" role="button" tabindex="0">
+  <div class="tileBody">
+    <p class="tileTitle">Despacho Fiscal</p>
+    <p class="tileDesc">Acceso administrativo al servicio de facturación.</p>
+  </div>
+  <div class="tileIcon">🏢</div>
+</div>
         </div>
       </div>
 
@@ -494,6 +502,7 @@ const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
 const URL_MIPLAN = "https://www.scad.mx/registrogym";
     const URL_PDE = "https://www.scad.mx/hub-pde";
     const URL_PDO = "https://www.scad.mx/hub-odin";
+    const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact";
 
     // --- Detección
     const ua = navigator.userAgent || "";
@@ -524,6 +533,7 @@ const URL_MIPLAN = "https://www.scad.mx/registrogym";
     const tileMiPlan = document.getElementById("tileMiPlan");
     const tilePDE = document.getElementById("tilePDE");
     const tilePDO = document.getElementById("tilePDO");
+    const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
 
     const resourcesToggle = document.getElementById("resourcesToggle");
     const resourcesPanel = document.getElementById("resourcesPanel");
@@ -589,6 +599,16 @@ tileMiPlan.addEventListener("click", () => {
 });
     tilePDE.addEventListener("click", () => openUrl(URL_PDE));
     tilePDO.addEventListener("click", () => openUrl(URL_PDO));
+
+    tileDespachoFiscal.addEventListener("click", () => {
+  openUrl(
+    withFreshParam(URL_DESPACHO_FISCAL, {
+      target: "despacho-fiscal",
+      role: "DespachoFiscal",
+      access: "admin-facturacion"
+    })
+  );
+});
 
     // Entrar a SCaD -> HOME
 enterBtn.addEventListener("click", () => {
