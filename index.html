@@ -132,6 +132,13 @@
       white-space:nowrap;
     }
 
+    .versionPill{
+      font-size:11.5px;
+      background:rgba(47,107,255,.08);
+      color:rgba(30,75,216,.95);
+      border-color:rgba(47,107,255,.18);
+    }
+
     .btn{
       appearance:none;
       border:none;
@@ -566,6 +573,7 @@
         </div>
 
         <div class="topActions">
+          <span class="pill versionPill" id="versionPill">v---</span>
           <span class="pill" id="pill">Estado</span>
           <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
           <button class="btn btnGhost btnTop" id="enterBtn" type="button">Entrar a SCaD →</button>
@@ -715,6 +723,9 @@
   </div>
 
   <script>
+    const APP_VERSION = "PWA MS v0.4.2-audit";
+    const MS_REFRESH_MS = 5000;
+
     const URL_HOME = "https://www.scad.mx";
     const URL_MENSAJERIA = "https://www.scad.mx/mensajeria";
     const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
@@ -731,6 +742,7 @@
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
     const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
+    const MS_SEND_MESSAGE_ENDPOINT = "https://www.scad.mx/_functions/mssendmessage";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -740,6 +752,7 @@
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
       window.navigator.standalone === true;
 
+    const versionPill = document.getElementById("versionPill");
     const pill = document.getElementById("pill");
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
@@ -923,7 +936,7 @@
       return String(
         message.messageId ||
         message._id ||
-        `${message.senderMemberId || ""}-${message.createdAt || message._createdDate || ""}-${message.text || ""}`
+        `${message.senderMemberId || ""}-${message.createdAt || message._createdDate || ""}-${message.text || message.message || ""}`
       );
     }
 
@@ -1317,7 +1330,7 @@
       msPendingSelect.value = "";
     });
 
-    msSendBtn.addEventListener("click", () => {
+    msSendBtn.addEventListener("click", async () => {
       const value = msInput.value.trim();
 
       if (!activeContactMemberId) {
@@ -1328,7 +1341,7 @@
 
       if (!activeConversationId) {
         msHint.textContent = "Primero carga la conversación.";
-        loadMSConversation(activeContactMemberId, activeContactLabel);
+        await loadMSConversation(activeContactMemberId, activeContactLabel);
         return;
       }
 
@@ -1337,13 +1350,39 @@
         return;
       }
 
-      msHint.textContent = "Envío real pendiente. Abriendo Gestión MS con borrador.";
+      msSendBtn.disabled = true;
+      msHint.textContent = "Enviando mensaje...";
 
-      openMS({
-        section: "chat",
-        conversationId: activeConversationId,
-        draft: value
-      });
+      try {
+        const res = await fetch(MS_SEND_MESSAGE_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            memberId: activeMemberId,
+            contactMemberId: activeContactMemberId,
+            conversationId: activeConversationId,
+            text: value
+          })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || "No se pudo enviar el mensaje.");
+        }
+
+        msInput.value = "";
+        msHint.textContent = "Mensaje enviado.";
+        await loadMSMessages(activeConversationId, { allowNotify: false });
+
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "Error enviando mensaje.";
+      } finally {
+        msSendBtn.disabled = false;
+      }
     });
 
     msInput.addEventListener("keydown", (e) => {
@@ -1417,6 +1456,7 @@
       installBtn.classList.add("hidden");
     }
 
+    versionPill.textContent = APP_VERSION;
     loadMSContacts();
     startActiveChatAutoRefresh();
 
