@@ -1470,31 +1470,42 @@
       return localStorage.getItem("scad_myScadCode") || "";
     }
 
-    async function loadMyContactCode() {
-      const stored = getMyStoredScadCode();
-      if (stored) {
-        myContactCode.textContent = stored;
-        return;
-      }
-      if (!activeMemberId) {
-        myContactCode.textContent = "No disponible";
-        return;
-      }
-      try {
-        const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-        const data = await res.json();
-        const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
-        if (data.ok && code) {
-          localStorage.setItem("scad_myScadCode", code);
-          myContactCode.textContent = code;
-        } else {
-          myContactCode.textContent = "No disponible";
-        }
-      } catch (err) {
-        console.warn(err);
-        myContactCode.textContent = "No disponible";
-      }
+async function loadMyContactCode() {
+  const stored = getMyStoredScadCode();
+
+  function cleanCode(value) {
+    return String(value || "")
+      .replace(/^SCAD-/i, "")
+      .trim()
+      .toUpperCase();
+  }
+
+  if (stored) {
+    myContactCode.textContent = cleanCode(stored);
+    return;
+  }
+
+  if (!activeMemberId) {
+    myContactCode.textContent = "No disponible";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+    const data = await res.json();
+    const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
+
+    if (data.ok && code) {
+      localStorage.setItem("scad_myScadCode", code);
+      myContactCode.textContent = cleanCode(code);
+    } else {
+      myContactCode.textContent = "No disponible";
     }
+  } catch (err) {
+    console.warn(err);
+    myContactCode.textContent = "No disponible";
+  }
+}
 
     function renderRequestBadge() {
       const total = incomingRequests.length;
