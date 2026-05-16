@@ -723,7 +723,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.2-audit";
+    const APP_VERSION = "PWA MS v0.4.3-audio";
     const MS_REFRESH_MS = 5000;
 
     const URL_HOME = "https://www.scad.mx";
@@ -949,46 +949,73 @@
       return getMessageKey(incoming[incoming.length - 1]);
     }
 
+    async function ensureAudioContext() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioCtx) {
+        throw new Error("Este navegador no permite audio de notificación.");
+      }
+
+      if (!audioContext) {
+        audioContext = new AudioCtx();
+      }
+
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      return audioContext;
+    }
+
     async function unlockNotificationSound() {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        await ensureAudioContext();
 
-        if (!AudioCtx) {
-          msHint.textContent = "Este navegador no permite audio de notificación.";
-          return;
-        }
+        // Beep de confirmación en el mismo toque del usuario.
+        // Esto desbloquea audio en Android/iPhone.
+        playNotificationSound({
+          force: true,
+          frequency: 660,
+          duration: 0.18,
+          volume: 0.16
+        });
 
-        if (!audioContext) {
-          audioContext = new AudioCtx();
-        }
+        return true;
 
-        if (audioContext.state === "suspended") {
-          await audioContext.resume();
-        }
       } catch (err) {
         console.warn(err);
+        msHint.textContent = err.message || "No se pudo activar el sonido.";
+        return false;
       }
     }
 
-    function playNotificationSound() {
-      if (!soundEnabled || !audioContext) return;
+    function playNotificationSound(options = {}) {
+      const force = Boolean(options.force);
+      const frequency = Number(options.frequency || 880);
+      const duration = Number(options.duration || 0.24);
+      const volume = Number(options.volume || 0.14);
+
+      if (!force && !soundEnabled) return;
+      if (!audioContext) return;
 
       try {
+        const now = audioContext.currentTime;
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
 
         oscillator.type = "sine";
-        oscillator.frequency.value = 880;
+        oscillator.frequency.setValueAtTime(frequency, now);
 
-        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(volume, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
         oscillator.connect(gain);
         gain.connect(audioContext.destination);
 
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.24);
+        oscillator.start(now);
+        oscillator.stop(now + duration + 0.03);
+
       } catch (err) {
         console.warn(err);
       }
@@ -1390,16 +1417,25 @@
     });
 
     soundBtn.addEventListener("click", async () => {
-      soundEnabled = !soundEnabled;
+      if (!soundEnabled) {
+        soundBtn.disabled = true;
+        msHint.textContent = "Activando sonido...";
 
-      if (soundEnabled) {
-        await unlockNotificationSound();
+        const activated = await unlockNotificationSound();
+
+        soundEnabled = Boolean(activated);
+        soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔊 Activar sonido";
+        msHint.textContent = soundEnabled
+          ? "Sonido activado. Debiste escuchar un beep de confirmación."
+          : "No se pudo activar el sonido. Revisa volumen/permisos del dispositivo.";
+
+        soundBtn.disabled = false;
+        return;
       }
 
-      soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔇 Sonido inactivo";
-      msHint.textContent = soundEnabled
-        ? "Sonido activado para mensajes nuevos del chat activo."
-        : "Sonido desactivado.";
+      soundEnabled = false;
+      soundBtn.textContent = "🔇 Sonido inactivo";
+      msHint.textContent = "Sonido desactivado.";
     });
 
     tileCursos.addEventListener("click", () => {
