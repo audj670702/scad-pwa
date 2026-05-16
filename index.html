@@ -564,6 +564,25 @@
       flex-wrap:wrap;
     }
 
+
+    .msTools{border:1px solid var(--border);border-radius:var(--radius2);background:rgba(255,255,255,.76);overflow:hidden;}
+    .msToolsToggle{width:100%;appearance:none;border:none;background:transparent;min-height:42px;padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;color:rgba(15,23,42,.78);}
+    .msToolsToggleLeft{display:flex;align-items:center;gap:8px;min-width:0;}
+    .requestBadge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:#DC2626;color:#fff;font-size:11px;font-weight:950;}
+    .msToolsPanel{border-top:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:12px;}
+    .toolGroup{display:flex;flex-direction:column;gap:8px;}
+    .toolGroupTitle{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.70);}
+    .toolRow{display:flex;gap:8px;align-items:center;}
+    .toolRow input{width:100%;min-height:38px;border-radius:999px;border:1px solid var(--border);padding:0 13px;font-size:13px;outline:none;background:#fff;}
+    .toolRow input:focus{border-color:rgba(47,107,255,.45);box-shadow:0 0 0 3px rgba(47,107,255,.10);}
+    .toolResult,.requestList{display:flex;flex-direction:column;gap:8px;}
+    .miniCard{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.82);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .miniCardText{min-width:0;display:flex;flex-direction:column;gap:2px;font-size:12.8px;color:rgba(15,23,42,.76);}
+    .miniCardText strong{color:rgba(15,23,42,.90);font-size:13.5px;}
+    .miniCardActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+    .dangerBtn{color:#B91C1C;border-color:rgba(185,28,28,.20);background:rgba(185,28,28,.05);}
+    .toolDivider{height:1px;background:var(--border);border:0;margin:0;}
+
     .sectionTitle{
       margin:2px 2px 0;
       font-size:13px;
@@ -689,7 +708,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.4.9</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.0</p>
           </div>
         </div>
 
@@ -770,6 +789,42 @@
               <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
             </div>
 
+            <div class="msTools">
+              <button class="msToolsToggle" id="contactToolsToggle" type="button" aria-expanded="false">
+                <span class="msToolsToggleLeft">
+                  <span>👥 Contactos y solicitudes</span>
+                  <span class="requestBadge hidden" id="requestBadge">0</span>
+                </span>
+                <span id="contactToolsChevron">▾</span>
+              </button>
+              <div class="msToolsPanel hidden" id="contactToolsPanel">
+                <div class="toolGroup">
+                  <div class="toolGroupTitle">Agregar contacto</div>
+                  <div class="toolRow">
+                    <input id="contactSearchInput" type="text" placeholder="Código SCaD o nombre..." autocomplete="off">
+                    <button class="btn btnPrimary btnSmall" id="contactSearchBtn" type="button">Buscar</button>
+                  </div>
+                  <div class="toolResult" id="contactSearchResult"></div>
+                </div>
+                <hr class="toolDivider">
+                <div class="toolGroup">
+                  <div class="toolRow">
+                    <div class="toolGroupTitle" style="flex:1;">Solicitudes recibidas</div>
+                    <button class="btn btnGhost btnSmall" id="refreshRequestsBtn" type="button">Actualizar</button>
+                  </div>
+                  <div class="requestList" id="incomingRequestsList"><div class="hint">Sin solicitudes pendientes.</div></div>
+                </div>
+                <hr class="toolDivider">
+                <div class="toolGroup">
+                  <div class="toolGroupTitle">Opciones del chat activo</div>
+                  <div class="msActions">
+                    <button class="btn btnGhost btnSmall dangerBtn" id="removeContactBtn" type="button">Eliminar contacto</button>
+                    <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Eliminar conversación</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p class="hint" id="msHint">
               Cargando contactos de Mensajería SCaD...
             </p>
@@ -844,8 +899,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.9-ui";
-    const APP_VERSION_SHORT = "v0.4.9";
+    const APP_VERSION = "PWA MS v0.5.0-contactos";
+    const APP_VERSION_SHORT = "v0.5.0";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -868,6 +923,13 @@
     const MS_SEND_MESSAGE_ENDPOINT = "https://www.scad.mx/_functions/mssendmessage";
     const MS_PENDING_ENDPOINT = "https://www.scad.mx/_functions/mspending";
     const MS_MARK_READ_ENDPOINT = "https://www.scad.mx/_functions/msmarkread";
+    const MS_SEARCH_MEMBER_ENDPOINT = "https://www.scad.mx/_functions/mssearchmember";
+    const MS_SEND_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/mssendrequest";
+    const MS_INCOMING_REQUESTS_ENDPOINT = "https://www.scad.mx/_functions/msincomingrequests";
+    const MS_ACCEPT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msacceptrequest";
+    const MS_REJECT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msrejectrequest";
+    const MS_REMOVE_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msremovecontact";
+    const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -902,6 +964,17 @@
     const msHint = document.getElementById("msHint");
     const soundBtn = document.getElementById("soundBtn");
     const openMSBtn = document.getElementById("openMSBtn");
+    const contactToolsToggle = document.getElementById("contactToolsToggle");
+    const contactToolsPanel = document.getElementById("contactToolsPanel");
+    const contactToolsChevron = document.getElementById("contactToolsChevron");
+    const requestBadge = document.getElementById("requestBadge");
+    const contactSearchInput = document.getElementById("contactSearchInput");
+    const contactSearchBtn = document.getElementById("contactSearchBtn");
+    const contactSearchResult = document.getElementById("contactSearchResult");
+    const refreshRequestsBtn = document.getElementById("refreshRequestsBtn");
+    const incomingRequestsList = document.getElementById("incomingRequestsList");
+    const removeContactBtn = document.getElementById("removeContactBtn");
+    const deleteConversationBtn = document.getElementById("deleteConversationBtn");
     const activeConversationName = document.getElementById("activeConversationName");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
@@ -934,6 +1007,8 @@
     let soundEnabled = false;
     let audioContext = null;
     let notificationAudio = null;
+    let selectedSearchMember = null;
+    let incomingRequests = [];
 
     function openUrl(url){
       if (isStandalone) {
@@ -943,6 +1018,17 @@
 
       const w = window.open(url, "_blank", "noopener,noreferrer");
       if (!w) window.location.href = url;
+    }
+
+    async function postJson(url, payload) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {})
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || data.message || "Operación no completada.");
+      return data;
     }
 
     function withFreshParam(url, extraParams = {}) {
@@ -1365,6 +1451,194 @@
       }
     }
 
+
+    function toggleContactTools(forceOpen) {
+      const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : contactToolsPanel.classList.contains("hidden");
+      contactToolsPanel.classList.toggle("hidden", !shouldOpen);
+      contactToolsToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      contactToolsChevron.textContent = shouldOpen ? "▴" : "▾";
+      if (shouldOpen) loadIncomingRequests({ silent: true });
+    }
+
+    function renderRequestBadge() {
+      const total = incomingRequests.length;
+      if (total > 0) {
+        requestBadge.textContent = String(total);
+        requestBadge.classList.remove("hidden");
+        requestBadge.classList.add("flash");
+      } else {
+        requestBadge.textContent = "0";
+        requestBadge.classList.add("hidden");
+        requestBadge.classList.remove("flash");
+      }
+    }
+
+    function renderIncomingRequests() {
+      renderRequestBadge();
+      if (!incomingRequests.length) {
+        incomingRequestsList.innerHTML = `<div class="hint">Sin solicitudes pendientes.</div>`;
+        return;
+      }
+      incomingRequestsList.innerHTML = incomingRequests.map((request) => {
+        const id = escapeHtml(request._id || "");
+        const requestId = escapeHtml(request.requestId || "");
+        const name = escapeHtml(request.displayName || "Contacto");
+        const code = escapeHtml(request.scadCode || "");
+        const message = escapeHtml(request.message || "");
+        return `
+          <div class="miniCard">
+            <div class="miniCardText">
+              <strong>${name}</strong>
+              <span>${code || "Usuario SCaD"}</span>
+              ${message ? `<span>${message}</span>` : ""}
+            </div>
+            <div class="miniCardActions">
+              <button class="btn btnPrimary btnSmall acceptRequestBtn" data-id="${id}" data-request-id="${requestId}" type="button">Aceptar</button>
+              <button class="btn btnGhost btnSmall dangerBtn rejectRequestBtn" data-id="${id}" data-request-id="${requestId}" type="button">Rechazar</button>
+            </div>
+          </div>`;
+      }).join("");
+      incomingRequestsList.querySelectorAll(".acceptRequestBtn").forEach(btn => btn.addEventListener("click", () => acceptIncomingRequest(btn.dataset.id, btn.dataset.requestId)));
+      incomingRequestsList.querySelectorAll(".rejectRequestBtn").forEach(btn => btn.addEventListener("click", () => rejectIncomingRequest(btn.dataset.id, btn.dataset.requestId)));
+    }
+
+    async function loadIncomingRequests(options = {}) {
+      if (!activeMemberId) return;
+      try {
+        const res = await fetch(`${MS_INCOMING_REQUESTS_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "No se pudieron cargar solicitudes.");
+        incomingRequests = Array.isArray(data.requests) ? data.requests : [];
+        renderIncomingRequests();
+        if (!options.silent) msHint.textContent = incomingRequests.length ? `${incomingRequests.length} solicitud${incomingRequests.length === 1 ? "" : "es"} pendiente${incomingRequests.length === 1 ? "" : "s"}.` : "Sin solicitudes pendientes.";
+      } catch (err) {
+        console.warn(err);
+        if (!options.silent) msHint.textContent = err.message || "Error cargando solicitudes.";
+      }
+    }
+
+    async function searchMSMember() {
+      const q = contactSearchInput.value.trim();
+      selectedSearchMember = null;
+      if (!activeMemberId) { contactSearchResult.innerHTML = `<div class="hint">Primero inicia Mensajería.</div>`; return; }
+      if (!q) { contactSearchResult.innerHTML = `<div class="hint">Escribe un código SCaD o nombre.</div>`; return; }
+      contactSearchBtn.disabled = true;
+      contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
+      try {
+        const res = await fetch(`${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "No se pudo buscar contacto.");
+        const user = data.user || (Array.isArray(data.users) ? data.users[0] : null);
+        if (!user) { contactSearchResult.innerHTML = `<div class="hint">No se encontró ningún usuario.</div>`; return; }
+        selectedSearchMember = user;
+        contactSearchResult.innerHTML = `
+          <div class="miniCard">
+            <div class="miniCardText">
+              <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
+              <span>${escapeHtml(user.scadCode || user.memberId || "")}</span>
+            </div>
+            <div class="miniCardActions"><button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Enviar solicitud</button></div>
+          </div>`;
+        document.getElementById("sendRequestBtn").addEventListener("click", sendContactRequest);
+      } catch (err) {
+        console.warn(err);
+        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "Error buscando contacto.")}</div>`;
+      } finally {
+        contactSearchBtn.disabled = false;
+      }
+    }
+
+    async function sendContactRequest() {
+      if (!selectedSearchMember?.memberId) return;
+      const btn = document.getElementById("sendRequestBtn");
+      if (btn) btn.disabled = true;
+      try {
+        const data = await postJson(MS_SEND_REQUEST_ENDPOINT, { memberId: activeMemberId, toMemberId: selectedSearchMember.memberId });
+        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(data.message || "Solicitud enviada.")}</div>`;
+        contactSearchInput.value = "";
+        selectedSearchMember = null;
+      } catch (err) {
+        console.warn(err);
+        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "No se pudo enviar solicitud.")}</div>`;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function acceptIncomingRequest(requestItemId, requestId) {
+      try {
+        msHint.textContent = "Aceptando solicitud...";
+        await postJson(MS_ACCEPT_REQUEST_ENDPOINT, { memberId: activeMemberId, requestItemId, requestId });
+        await loadIncomingRequests({ silent: true });
+        await loadMSContacts();
+        msHint.textContent = "Solicitud aceptada.";
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "No se pudo aceptar solicitud.";
+      }
+    }
+
+    async function rejectIncomingRequest(requestItemId, requestId) {
+      try {
+        msHint.textContent = "Rechazando solicitud...";
+        await postJson(MS_REJECT_REQUEST_ENDPOINT, { memberId: activeMemberId, requestItemId, requestId });
+        await loadIncomingRequests({ silent: true });
+        msHint.textContent = "Solicitud rechazada.";
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "No se pudo rechazar solicitud.";
+      }
+    }
+
+    function resetActiveChat() {
+      activeContactMemberId = null;
+      activeContactLabel = "";
+      activeConversationId = null;
+      msMessages = [];
+      activeConversationName.textContent = "Chat activo";
+      chatStatus.textContent = "Pendiente";
+      msMessageBox.innerHTML = `<div class="msg">Selecciona un contacto para cargar la conversación.</div>`;
+      msContactSelect.value = "";
+      msPendingSelect.value = "";
+    }
+
+    async function removeActiveContact() {
+      if (!activeContactMemberId) { msHint.textContent = "Selecciona un contacto primero."; return; }
+      if (!window.confirm(`¿Eliminar a ${activeContactLabel || "este contacto"} de tus contactos?`)) return;
+      removeContactBtn.disabled = true;
+      msHint.textContent = "Eliminando contacto...";
+      try {
+        await postJson(MS_REMOVE_CONTACT_ENDPOINT, { memberId: activeMemberId, contactMemberId: activeContactMemberId });
+        resetActiveChat();
+        await loadMSContacts();
+        msHint.textContent = "Contacto eliminado.";
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "No se pudo eliminar contacto.";
+      } finally {
+        removeContactBtn.disabled = false;
+      }
+    }
+
+    async function deleteActiveConversation() {
+      if (!activeConversationId) { msHint.textContent = "Selecciona una conversación primero."; return; }
+      if (!window.confirm("¿Eliminar la conversación activa? Esta acción ocultará sus mensajes.")) return;
+      deleteConversationBtn.disabled = true;
+      msHint.textContent = "Eliminando conversación...";
+      try {
+        await postJson(MS_DELETE_CONVERSATION_ENDPOINT, { memberId: activeMemberId, conversationId: activeConversationId });
+        resetActiveChat();
+        await loadMSPending({ silent: true });
+        msHint.textContent = "Conversación eliminada.";
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "No se pudo eliminar conversación.";
+      } finally {
+        deleteConversationBtn.disabled = false;
+      }
+    }
+
+
     function scrollMessagesToBottom() {
       window.requestAnimationFrame(() => {
         msMessageBox.scrollTop = msMessageBox.scrollHeight;
@@ -1549,6 +1823,7 @@
         if (!canRefresh) return;
 
         loadMSPending({ silent: true, allowNotify: true });
+        loadIncomingRequests({ silent: true });
       }, MS_REFRESH_MS);
     }
 
@@ -1598,6 +1873,7 @@
 
         renderPendingSelect();
         await loadMSPending({ silent: true });
+        await loadIncomingRequests({ silent: true });
 
         msHint.textContent = msContacts.length
           ? "Selecciona un contacto para abrir el chat activo."
@@ -1620,6 +1896,13 @@
     linkSessionBtn.addEventListener("click", openPWAAccess);
 
     openMSBtn.addEventListener("click", () => openMS());
+
+    contactToolsToggle.addEventListener("click", () => toggleContactTools());
+    contactSearchBtn.addEventListener("click", searchMSMember);
+    contactSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchMSMember(); });
+    refreshRequestsBtn.addEventListener("click", () => loadIncomingRequests());
+    removeContactBtn.addEventListener("click", removeActiveContact);
+    deleteConversationBtn.addEventListener("click", deleteActiveConversation);
 
     msContactSelect.addEventListener("change", async () => {
       const contactMemberId = msContactSelect.value;
