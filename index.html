@@ -265,6 +265,49 @@
       font-size:12.5px;
     }
 
+    .soundPrompt{
+      color:#B91C1C;
+      border-color:rgba(220,38,38,.24);
+      background:rgba(220,38,38,.055);
+      animation:soundWavePrompt 1.55s ease-in-out infinite;
+      position:relative;
+    }
+
+    .soundPrompt::after{
+      content:"";
+      position:absolute;
+      inset:-4px;
+      border-radius:999px;
+      border:1px solid rgba(220,38,38,.24);
+      opacity:.72;
+      animation:soundWaveRing 1.55s ease-in-out infinite;
+      pointer-events:none;
+    }
+
+    .soundOn{
+      color:#166534;
+      border-color:rgba(22,101,52,.18);
+      background:rgba(22,163,74,.07);
+    }
+
+    .gestionOpen{
+      color:#1E4BD8;
+      border-color:rgba(47,107,255,.26);
+      background:rgba(47,107,255,.08);
+      box-shadow:0 8px 18px rgba(47,107,255,.10);
+    }
+
+    @keyframes soundWavePrompt{
+      0%,100%{ box-shadow:0 0 0 0 rgba(220,38,38,.22); }
+      50%{ box-shadow:0 0 0 7px rgba(220,38,38,.10); }
+    }
+
+    @keyframes soundWaveRing{
+      0%{ transform:scale(.98); opacity:.62; }
+      70%{ transform:scale(1.12); opacity:.08; }
+      100%{ transform:scale(1.12); opacity:0; }
+    }
+
     .hidden{ display:none!important; }
 
     .card{
@@ -811,8 +854,8 @@
             </div>
 
             <div class="msActions">
-              <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
-              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión <span class="requestBadge hidden" id="requestBadge">0</span></button>
+              <button class="btn btnGhost btnSmall soundPrompt" id="soundBtn" type="button">🔊 Activar sonido</button>
+              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button"><span id="gestionLabel">⚙ Gestión ▾</span> <span class="requestBadge hidden" id="requestBadge">0</span></button>
             </div>
 
             <div class="msTools">
@@ -985,6 +1028,7 @@
     const msHint = document.getElementById("msHint");
     const soundBtn = document.getElementById("soundBtn");
     const openMSBtn = document.getElementById("openMSBtn");
+    const gestionLabel = document.getElementById("gestionLabel");
     const contactToolsPanel = document.getElementById("contactToolsPanel");
     const requestBadge = document.getElementById("requestBadge");
     const myContactCode = document.getElementById("myContactCode");
@@ -1369,20 +1413,40 @@
         pendingBadge.classList.remove("hidden");
         pendingBadge.classList.add("flash");
         msPendingSelect.classList.add("pendingAlert");
-        msBadge.textContent = String(totalPending);
-        msBadge.classList.add("alert", "flash");
-        msStatusText.textContent = `${totalPending} mensaje${totalPending === 1 ? "" : "s"} pendiente${totalPending === 1 ? "" : "s"}`;
       } else {
         pendingBadge.textContent = "0";
         pendingBadge.classList.add("hidden");
         pendingBadge.classList.remove("flash");
         msPendingSelect.classList.remove("pendingAlert");
-        msBadge.textContent = "0";
-        msBadge.classList.remove("alert", "flash");
-        msStatusText.textContent = msContacts.length
-          ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
-          : "Sin contactos disponibles";
       }
+
+      updateMSHeaderStatus();
+    }
+
+    function updateMSHeaderStatus() {
+      const pendingTotal = getPendingTotal();
+      const requestTotal = Array.isArray(incomingRequests) ? incomingRequests.length : 0;
+      const totalAlerts = pendingTotal + requestTotal;
+
+      msBadge.textContent = String(totalAlerts);
+
+      if (totalAlerts > 0) {
+        msBadge.classList.add("alert", "flash");
+
+        if (pendingTotal > 0 && requestTotal > 0) {
+          msStatusText.textContent = `${pendingTotal} mensaje${pendingTotal === 1 ? "" : "s"} pendiente${pendingTotal === 1 ? "" : "s"} · ${requestTotal} solicitud${requestTotal === 1 ? "" : "es"}`;
+        } else if (pendingTotal > 0) {
+          msStatusText.textContent = `${pendingTotal} mensaje${pendingTotal === 1 ? "" : "s"} pendiente${pendingTotal === 1 ? "" : "s"}`;
+        } else {
+          msStatusText.textContent = `${requestTotal} solicitud${requestTotal === 1 ? "" : "es"} recibida${requestTotal === 1 ? "" : "s"}`;
+        }
+        return;
+      }
+
+      msBadge.classList.remove("alert", "flash");
+      msStatusText.textContent = msContacts.length
+        ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
+        : "Sin contactos disponibles";
     }
 
     function clearPendingForContact(contactMemberId) {
@@ -1497,6 +1561,8 @@
       const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : contactToolsPanel.classList.contains("hidden");
       contactToolsPanel.classList.toggle("hidden", !shouldOpen);
       openMSBtn.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      openMSBtn.classList.toggle("gestionOpen", shouldOpen);
+      if (gestionLabel) gestionLabel.textContent = shouldOpen ? "⚙ Gestión ▴" : "⚙ Gestión ▾";
       if (shouldOpen) {
         loadMyContactCode();
         loadIncomingRequests({ silent: true });
@@ -1553,6 +1619,8 @@
         requestBadge.classList.add("hidden");
         requestBadge.classList.remove("flash");
       }
+
+      updateMSHeaderStatus();
     }
 
     function renderIncomingRequests() {
@@ -1586,13 +1654,31 @@
 
     async function loadIncomingRequests(options = {}) {
       if (!activeMemberId) return;
+
       try {
+        const previousTotal = Array.isArray(incomingRequests) ? incomingRequests.length : 0;
         const res = await fetch(`${MS_INCOMING_REQUESTS_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
         const data = await res.json();
+
         if (!data.ok) throw new Error(data.error || "No se pudieron cargar solicitudes.");
+
         incomingRequests = Array.isArray(data.requests) ? data.requests : [];
+        const newTotal = incomingRequests.length;
+        const hasNewRequest = Boolean(options.allowNotify) && newTotal > previousTotal;
+
         renderIncomingRequests();
-        if (!options.silent) msHint.textContent = incomingRequests.length ? `${incomingRequests.length} solicitud${incomingRequests.length === 1 ? "" : "es"} pendiente${incomingRequests.length === 1 ? "" : "s"}.` : "Sin solicitudes pendientes.";
+
+        if (hasNewRequest) {
+          playNotificationSound();
+          msHint.textContent = `${newTotal} solicitud${newTotal === 1 ? "" : "es"} recibida${newTotal === 1 ? "" : "s"}.`;
+          return;
+        }
+
+        if (!options.silent) {
+          msHint.textContent = incomingRequests.length
+            ? `${incomingRequests.length} solicitud${incomingRequests.length === 1 ? "" : "es"} pendiente${incomingRequests.length === 1 ? "" : "s"}.`
+            : "Sin solicitudes pendientes.";
+        }
       } catch (err) {
         console.warn(err);
         if (!options.silent) msHint.textContent = err.message || "Error cargando solicitudes.";
@@ -1906,7 +1992,7 @@
         if (!canRefresh) return;
 
         loadMSPending({ silent: true, allowNotify: true });
-        loadIncomingRequests({ silent: true });
+        loadIncomingRequests({ silent: true, allowNotify: true });
       }, MS_REFRESH_MS);
     }
 
@@ -2092,6 +2178,8 @@
 
         soundEnabled = Boolean(activated);
         soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔊 Activar sonido";
+        soundBtn.classList.toggle("soundPrompt", !soundEnabled);
+        soundBtn.classList.toggle("soundOn", soundEnabled);
         msHint.textContent = soundEnabled
           ? "Sonido activado. Debiste escuchar un beep de confirmación."
           : "No se pudo activar el sonido. Revisa volumen/permisos del dispositivo.";
@@ -2101,7 +2189,9 @@
       }
 
       soundEnabled = false;
-      soundBtn.textContent = "🔇 Sonido inactivo";
+      soundBtn.textContent = "🔊 Activar sonido";
+      soundBtn.classList.add("soundPrompt");
+      soundBtn.classList.remove("soundOn");
       msHint.textContent = "Sonido desactivado.";
     });
 
