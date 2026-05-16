@@ -731,7 +731,6 @@
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
     const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
-    const MS_SEND_MESSAGE_ENDPOINT = "https://www.scad.mx/_functions/mssendmessage";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -790,6 +789,10 @@
     let msContacts = [];
     let msMessages = [];
     let pendingByContact = {};
+    let lastIncomingMessageKey = "";
+    let isRefreshingActiveChat = false;
+    let soundEnabled = false;
+    let audioContext = null;
 
     function openUrl(url){
       if (isStandalone) {
@@ -912,6 +915,69 @@
         });
       } catch (err) {
         return "";
+      }
+    }
+
+    function getMessageKey(message) {
+      if (!message) return "";
+      return String(
+        message.messageId ||
+        message._id ||
+        `${message.senderMemberId || ""}-${message.createdAt || message._createdDate || ""}-${message.text || ""}`
+      );
+    }
+
+    function getLatestIncomingMessageKey(messages) {
+      const incoming = (Array.isArray(messages) ? messages : [])
+        .filter(message => message.senderMemberId && message.senderMemberId !== activeMemberId);
+
+      if (!incoming.length) return "";
+
+      return getMessageKey(incoming[incoming.length - 1]);
+    }
+
+    async function unlockNotificationSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioCtx) {
+          msHint.textContent = "Este navegador no permite audio de notificación.";
+          return;
+        }
+
+        if (!audioContext) {
+          audioContext = new AudioCtx();
+        }
+
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    function playNotificationSound() {
+      if (!soundEnabled || !audioContext) return;
+
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 880;
+
+        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.24);
+      } catch (err) {
+        console.warn(err);
       }
     }
 
@@ -1050,7 +1116,8 @@
         msHint.textContent = "Conversación activa. Cargando mensajes...";
 
         clearPendingForContact(contactMemberId);
-        await loadMSMessages(activeConversationId);
+        lastIncomingMessageKey = "";
+        await loadMSMessages(activeConversationId, { allowNotify: false });
 
       } catch (err) {
         console.warn(err);
@@ -1064,13 +1131,19 @@
       }
     }
 
-    async function loadMSMessages(conversationId) {
+    async function loadMSMessages(conversationId, options = {}) {
       if (!conversationId) {
         msHint.textContent = "Falta conversationId.";
         return;
       }
 
+      if (isRefreshingActiveChat && options.silent) return;
+
       try {
+        if (options.silent) {
+          isRefreshingActiveChat = true;
+        }
+
         const url = `${MS_MESSAGES_ENDPOINT}?conversationId=${encodeURIComponent(conversationId)}`;
         const res = await fetch(url);
         const data = await res.json();
@@ -1079,21 +1152,59 @@
           throw new Error(data.error || "No se pudieron cargar mensajes.");
         }
 
-        renderMessages(data.messages || []);
+        const messages = data.messages || [];
+        const latestIncomingKey = getLatestIncomingMessageKey(messages);
+        const hasNewIncoming =
+          Boolean(options.allowNotify) &&
+          Boolean(lastIncomingMessageKey) &&
+          Boolean(latestIncomingKey) &&
+          latestIncomingKey !== lastIncomingMessageKey;
 
-        msHint.textContent = (data.messages || []).length
-          ? "Mensajes cargados."
-          : "No hay mensajes todavía.";
+        renderMessages(messages);
+
+        if (latestIncomingKey) {
+          lastIncomingMessageKey = latestIncomingKey;
+        }
+
+        if (hasNewIncoming) {
+          playNotificationSound();
+          msHint.textContent = "Mensaje nuevo recibido.";
+        } else if (!options.silent) {
+          msHint.textContent = messages.length
+            ? "Mensajes cargados."
+            : "No hay mensajes todavía.";
+        }
 
       } catch (err) {
         console.warn(err);
-        msHint.textContent = err.message || "Error cargando mensajes.";
-        msMessageBox.innerHTML = `
-          <div class="msg">
-            Error cargando mensajes.
-          </div>
-        `;
+
+        if (!options.silent) {
+          msHint.textContent = err.message || "Error cargando mensajes.";
+          msMessageBox.innerHTML = `
+            <div class="msg">
+              Error cargando mensajes.
+            </div>
+          `;
+        }
+      } finally {
+        if (options.silent) {
+          isRefreshingActiveChat = false;
+        }
       }
+    }
+
+    function startActiveChatAutoRefresh() {
+      window.setInterval(() => {
+        const panelIsOpen = !msPanel.classList.contains("hidden");
+        const canRefresh = panelIsOpen && activeConversationId && activeMemberId;
+
+        if (!canRefresh) return;
+
+        loadMSMessages(activeConversationId, {
+          silent: true,
+          allowNotify: true
+        });
+      }, MS_REFRESH_MS);
     }
 
     async function loadMSContacts() {
@@ -1206,7 +1317,7 @@
       msPendingSelect.value = "";
     });
 
-    msSendBtn.addEventListener("click", async () => {
+    msSendBtn.addEventListener("click", () => {
       const value = msInput.value.trim();
 
       if (!activeContactMemberId) {
@@ -1217,7 +1328,7 @@
 
       if (!activeConversationId) {
         msHint.textContent = "Primero carga la conversación.";
-        await loadMSConversation(activeContactMemberId, activeContactLabel);
+        loadMSConversation(activeContactMemberId, activeContactLabel);
         return;
       }
 
@@ -1226,52 +1337,29 @@
         return;
       }
 
-      msSendBtn.disabled = true;
-      msHint.textContent = "Enviando mensaje...";
+      msHint.textContent = "Envío real pendiente. Abriendo Gestión MS con borrador.";
 
-      try {
-        const res = await fetch(MS_SEND_MESSAGE_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            memberId: activeMemberId,
-            contactMemberId: activeContactMemberId,
-            conversationId: activeConversationId,
-            text: value
-          })
-        });
-
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(data.error || "No se pudo enviar el mensaje.");
-        }
-
-        msInput.value = "";
-        msHint.textContent = "Mensaje enviado.";
-        await loadMSMessages(activeConversationId);
-
-      } catch (err) {
-        console.warn(err);
-        msHint.textContent = err.message || "Error enviando mensaje.";
-      } finally {
-        msSendBtn.disabled = false;
-      }
+      openMS({
+        section: "chat",
+        conversationId: activeConversationId,
+        draft: value
+      });
     });
 
     msInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") msSendBtn.click();
     });
 
-    let soundEnabled = false;
-
-    soundBtn.addEventListener("click", () => {
+    soundBtn.addEventListener("click", async () => {
       soundEnabled = !soundEnabled;
+
+      if (soundEnabled) {
+        await unlockNotificationSound();
+      }
+
       soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔇 Sonido inactivo";
       msHint.textContent = soundEnabled
-        ? "Sonido activado para la sesión visible."
+        ? "Sonido activado para mensajes nuevos del chat activo."
         : "Sonido desactivado.";
     });
 
@@ -1330,6 +1418,7 @@
     }
 
     loadMSContacts();
+    startActiveChatAutoRefresh();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
