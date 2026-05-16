@@ -734,7 +734,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.3</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
           </div>
         </div>
 
@@ -919,8 +919,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.2-codigo";
-    const APP_VERSION_SHORT = "v0.5.2";
+    const APP_VERSION = "PWA MS v0.5.4-busqueda-codigo";
+    const APP_VERSION_SHORT = "v0.5.4";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1123,6 +1123,20 @@
         .replace(/^SCAD-/i, "")
         .trim()
         .toUpperCase();
+    }
+
+    function normalizeContactSearchQuery(value) {
+      const raw = String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[–—]/g, "-")
+        .replace(/\s+/g, "");
+
+      if (/^[A-Z0-9]{6}$/.test(raw)) {
+        return `SCAD-${raw}`;
+      }
+
+      return raw;
     }
 
     function getContactLabel(contact, index) {
@@ -1593,7 +1607,8 @@
       contactSearchBtn.disabled = true;
       contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
       try {
-        const res = await fetch(`${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(q)}`);
+        const normalizedQ = normalizeContactSearchQuery(q);
+        const res = await fetch(`${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(normalizedQ)}`);
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || "No se pudo buscar contacto.");
         const user = data.user || (Array.isArray(data.users) ? data.users[0] : null);
