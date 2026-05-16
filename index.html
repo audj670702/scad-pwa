@@ -191,16 +191,25 @@
       display:flex;
       flex-direction:column;
       gap:12px;
+      padding:0;
+      overflow:hidden;
     }
 
-    .msHeader{
+    .msTop{
+      width:100%;
+      appearance:none;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      padding:16px;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
+      text-align:left;
     }
 
-    .msTitle{
+    .msHeaderLeft{
       display:flex;
       align-items:center;
       gap:10px;
@@ -219,16 +228,28 @@
       flex:0 0 auto;
     }
 
+    .msTitle{
+      min-width:0;
+    }
+
     .msTitle h2{
       margin:0;
       font-size:18px;
       line-height:1.1;
+      color:var(--text);
     }
 
     .msTitle p{
       margin:3px 0 0;
       font-size:12.5px;
       color:var(--muted);
+    }
+
+    .msHeaderRight{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
     }
 
     .badge{
@@ -242,6 +263,53 @@
       color:white;
       font-size:12px;
       font-weight:950;
+    }
+
+    .msChevron{
+      font-size:16px;
+      font-weight:950;
+      color:rgba(15,23,42,.60);
+      width:20px;
+      text-align:center;
+    }
+
+    .msPanel{
+      padding:0 16px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      border-top:1px solid var(--border);
+    }
+
+    .selectorBlock{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      padding-top:12px;
+    }
+
+    .selectorBlock label{
+      font-size:12.5px;
+      font-weight:950;
+      color:rgba(15,23,42,.76);
+    }
+
+    .msSelect{
+      width:100%;
+      min-height:42px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      padding:0 12px;
+      font-size:14px;
+      font-weight:800;
+      color:rgba(15,23,42,.86);
+      outline:none;
+    }
+
+    .msSelect:focus{
+      border-color:rgba(47,107,255,.45);
+      box-shadow:0 0 0 3px rgba(47,107,255,.10);
     }
 
     .msMain{
@@ -529,67 +597,82 @@
       </header>
 
       <section class="card msCard">
-        <div class="msHeader">
-          <div class="msTitle">
+        <button class="msTop" id="msToggle" type="button" aria-expanded="false" aria-controls="msPanel">
+          <div class="msHeaderLeft">
             <div class="msIcon">💬</div>
-            <div>
+            <div class="msTitle">
               <h2>Mensajería SCaD</h2>
-              <p>Conversaciones y mensajes</p>
-            </div>
-          </div>
-          <span class="badge" id="msBadge">0</span>
-        </div>
-
-        <div class="msMain">
-
-          <div class="conversationPanel">
-            <div class="panelHeader">
-              <span>Conversaciones</span>
-              <button class="miniBtn" id="openMSConversationsBtn" type="button">Abrir</button>
-            </div>
-
-            <div class="conversationList">
-              <button class="conversationRow active" type="button">
-                <span class="avatar">💬</span>
-                <span class="conversationInfo">
-                  <strong>Sin conversación activa</strong>
-                  <small>Selecciona un chat desde Gestión MS</small>
-                </span>
-              </button>
+              <p id="msStatusText">Sin mensajes nuevos</p>
             </div>
           </div>
 
-          <div class="chatPanel">
-            <div class="panelHeader">
-              <span>Chat activo</span>
-              <span class="chatStatus">Pendiente</span>
-            </div>
+          <div class="msHeaderRight">
+            <span class="badge" id="msBadge">0</span>
+            <span class="msChevron" id="msChevron">▾</span>
+          </div>
+        </button>
 
-            <div class="messageBox" id="msMessageBox">
-              <div class="msg">
-                Abre Gestión MS para seleccionar una conversación.
+        <div class="msPanel hidden" id="msPanel">
+
+          <div class="selectorBlock">
+            <label for="msConversationSelect">Conversación / contacto</label>
+            <select class="msSelect" id="msConversationSelect">
+              <option value="">Seleccionar contacto</option>
+              <option value="open-ms">Abrir Gestión MS</option>
+            </select>
+          </div>
+
+          <div class="msMain">
+
+            <div class="conversationPanel">
+              <div class="panelHeader">
+                <span>Conversaciones</span>
+                <button class="miniBtn" id="openMSConversationsBtn" type="button">Abrir</button>
               </div>
-              <div class="msg me">
-                Cuando la PWA tenga integración real, aquí aparecerá el chat activo.
+
+              <div class="conversationList">
+                <button class="conversationRow active" id="conversationPlaceholder" type="button">
+                  <span class="avatar">💬</span>
+                  <span class="conversationInfo">
+                    <strong>Sin conversación activa</strong>
+                    <small>Selecciona un chat desde Gestión MS</small>
+                  </span>
+                </button>
               </div>
             </div>
 
-            <div class="composer">
-              <input id="msInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
-              <button class="btn btnPrimary" id="msSendBtn" type="button">Enviar</button>
+            <div class="chatPanel">
+              <div class="panelHeader">
+                <span>Chat activo</span>
+                <span class="chatStatus" id="chatStatus">Pendiente</span>
+              </div>
+
+              <div class="messageBox" id="msMessageBox">
+                <div class="msg">
+                  Abre Gestión MS para seleccionar una conversación.
+                </div>
+                <div class="msg me">
+                  Cuando la PWA tenga integración real, aquí aparecerá el chat activo.
+                </div>
+              </div>
+
+              <div class="composer">
+                <input id="msInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
+                <button class="btn btnPrimary" id="msSendBtn" type="button">Enviar</button>
+              </div>
             </div>
+
           </div>
 
-        </div>
+          <div class="msActions">
+            <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
+            <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+          </div>
 
-        <div class="msActions">
-          <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
-          <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+          <p class="hint" id="msHint">
+            Versión segura: las conversaciones reales se gestionan en Wix.
+          </p>
         </div>
-
-        <p class="hint" id="msHint">
-          Versión segura: las conversaciones reales se gestionan en Wix.
-        </p>
       </section>
 
       <p class="sectionTitle">Accesos SCaD</p>
@@ -685,12 +768,17 @@
     const enterBtn = document.getElementById("enterBtn");
     const helpVideo = document.getElementById("helpVideo");
 
+    const msToggle = document.getElementById("msToggle");
+    const msPanel = document.getElementById("msPanel");
+    const msChevron = document.getElementById("msChevron");
+    const msConversationSelect = document.getElementById("msConversationSelect");
     const msInput = document.getElementById("msInput");
     const msSendBtn = document.getElementById("msSendBtn");
     const msHint = document.getElementById("msHint");
     const soundBtn = document.getElementById("soundBtn");
     const openMSBtn = document.getElementById("openMSBtn");
     const openMSConversationsBtn = document.getElementById("openMSConversationsBtn");
+    const conversationPlaceholder = document.getElementById("conversationPlaceholder");
 
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
@@ -731,32 +819,56 @@
       return u.toString();
     }
 
-    function openMS(){
-      openUrl(withFreshParam(URL_MENSAJERIA, { target: "mensajeria-scad" }));
+    function openMS(extraParams = {}) {
+      openUrl(withFreshParam(URL_MENSAJERIA, {
+        target: "mensajeria-scad",
+        ...extraParams
+      }));
     }
+
+    function toggleMS(forceOpen){
+      const shouldOpen = typeof forceOpen === "boolean"
+        ? forceOpen
+        : msPanel.classList.contains("hidden");
+
+      msPanel.classList.toggle("hidden", !shouldOpen);
+      msToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      msChevron.textContent = shouldOpen ? "▴" : "▾";
+    }
+
+    msToggle.addEventListener("click", () => toggleMS());
 
     enterBtn.addEventListener("click", () => {
       openUrl(withFreshParam(URL_HOME, { target: "home" }));
     });
 
-    openMSBtn.addEventListener("click", openMS);
-    openMSConversationsBtn.addEventListener("click", openMS);
+    openMSBtn.addEventListener("click", () => openMS());
+    openMSConversationsBtn.addEventListener("click", () => openMS({ section: "conversations" }));
+    conversationPlaceholder.addEventListener("click", () => openMS({ section: "conversations" }));
+
+    msConversationSelect.addEventListener("change", () => {
+      if (msConversationSelect.value === "open-ms") {
+        msHint.textContent = "Abriendo Gestión MS para seleccionar contacto.";
+        openMS({ section: "conversations" });
+        msConversationSelect.value = "";
+      }
+    });
 
     msSendBtn.addEventListener("click", () => {
       const value = msInput.value.trim();
 
       if (!value) {
         msHint.textContent = "Primero selecciona una conversación en Gestión MS.";
-        openMS();
+        openMS({ section: "conversations" });
         return;
       }
 
       msHint.textContent = "Para enviar, abre la conversación activa en Gestión MS.";
 
-      openUrl(withFreshParam(URL_MENSAJERIA, {
-        target: "mensajeria-scad",
+      openMS({
+        section: "chat",
         draft: value
-      }));
+      });
     });
 
     msInput.addEventListener("keydown", (e) => {
