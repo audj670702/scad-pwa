@@ -536,6 +536,28 @@
       line-height:1.35;
     }
 
+    .authNotice{
+      border:1px solid rgba(47,107,255,.18);
+      background:rgba(47,107,255,.06);
+      border-radius:var(--radius2);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .authNotice strong{
+      font-size:13.5px;
+      color:rgba(15,23,42,.90);
+    }
+
+    .authNotice p{
+      margin:0;
+      font-size:12.5px;
+      line-height:1.35;
+      color:var(--muted);
+    }
+
     @media(max-width:560px){
       .topbar{
         align-items:flex-start;
@@ -613,6 +635,12 @@
         </button>
 
         <div class="msPanel hidden" id="msPanel">
+
+          <div class="authNotice hidden" id="msAuthNotice">
+            <strong>Vincula tu sesión SCaD</strong>
+            <p>Tu sesión Wix está activa, pero la PWA necesita recibir tu identificación para cargar Mensajería.</p>
+            <button class="btn btnPrimary btnSmall" id="linkSessionBtn" type="button">Vincular sesión SCaD</button>
+          </div>
 
           <div class="selectorBlock">
             <label for="msConversationSelect">Conversación / contacto</label>
@@ -757,6 +785,7 @@
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
     const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
+    const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -787,6 +816,8 @@
     const activeConversationSub = document.getElementById("activeConversationSub");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
+    const msAuthNotice = document.getElementById("msAuthNotice");
+    const linkSessionBtn = document.getElementById("linkSessionBtn");
 
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
@@ -853,6 +884,33 @@
       msPanel.classList.toggle("hidden", !shouldOpen);
       msToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
       msChevron.textContent = shouldOpen ? "▴" : "▾";
+    }
+
+    function openPWAAccess(){
+      openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
+    }
+
+    function showMSAuthRequired(){
+      msAuthNotice.classList.remove("hidden");
+      resetMSSelect("Falta memberId");
+      msStatusText.textContent = "Falta identificación";
+      msBadge.textContent = "0";
+      activeConversationName.textContent = "Sin conversación activa";
+      activeConversationSub.textContent = "Vincula tu sesión";
+      chatStatus.textContent = "Pendiente";
+      msHint.textContent = "Toca Vincular sesión SCaD para cargar tus contactos.";
+      msMessageBox.innerHTML = `
+        <div class="msg">
+          La PWA necesita recibir tu identificación SCaD para cargar Mensajería.
+        </div>
+        <div class="msg me">
+          Toca Vincular sesión SCaD.
+        </div>
+      `;
+    }
+
+    function hideMSAuthRequired(){
+      msAuthNotice.classList.add("hidden");
     }
 
     function getMemberIdFromUrlOrStorage() {
@@ -1042,12 +1100,11 @@
       activeMemberId = getMemberIdFromUrlOrStorage();
 
       if (!activeMemberId) {
-        resetMSSelect("Falta memberId");
-        msStatusText.textContent = "Falta identificación";
-        msHint.textContent = "Abre la PWA con ?memberId=ID_DEL_MIEMBRO para cargar contactos.";
+        showMSAuthRequired();
         return;
       }
 
+      hideMSAuthRequired();
       resetMSSelect("Cargando contactos...");
       msHint.textContent = "Cargando contactos MS...";
 
@@ -1102,6 +1159,8 @@
     enterBtn.addEventListener("click", () => {
       openUrl(withFreshParam(URL_HOME, { target: "home" }));
     });
+
+    linkSessionBtn.addEventListener("click", openPWAAccess);
 
     openMSBtn.addEventListener("click", () => openMS());
     openMSConversationsBtn.addEventListener("click", () => openMS({ section: "conversations" }));
