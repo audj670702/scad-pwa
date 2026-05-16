@@ -5,56 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SCaD</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#F7F8FC">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="SCaD">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <meta name="description" content="SCaD • Instala la app y entra a tu plataforma e-learning." />
+  <meta name="description" content="SCaD • Acceso rápido a tus herramientas." />
 
   <style>
     :root{
       --bg:#F7F8FC;
       --card:#FFFFFF;
-      --border: rgba(15, 23, 42, .10);
-
+      --border:rgba(15,23,42,.10);
       --text:#0F172A;
-      --muted: rgba(15, 23, 42, .68);
-
+      --muted:rgba(15,23,42,.62);
       --accent:#2F6BFF;
       --accent2:#1E4BD8;
-
-      --shadow: 0 18px 55px rgba(2, 6, 23, .10);
-      --shadow2: 0 10px 25px rgba(2, 6, 23, .08);
-
-      --radius: 22px;
-      --radius2: 16px;
+      --green:#16A34A;
+      --shadow:0 18px 55px rgba(2,6,23,.10);
+      --shadow2:0 10px 25px rgba(2,6,23,.08);
+      --radius:22px;
+      --radius2:16px;
     }
 
-    *{ box-sizing:border-box; }
-    html, body{
-      height:100%;
+    *{box-sizing:border-box;}
+
+    html,body{
       margin:0;
-      font-family: system-ui,-apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color: var(--text);
+      min-height:100%;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
       background:
         radial-gradient(900px 520px at 15% 5%, rgba(47,107,255,.14), transparent 55%),
         radial-gradient(900px 520px at 85% 15%, rgba(34,197,94,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg), #EEF1FA);
+        linear-gradient(180deg,var(--bg),#EEF1FA);
     }
 
     .wrap{
-      min-height:100%;
+      min-height:100vh;
       display:flex;
-      align-items:center;
       justify-content:center;
-      padding: 22px;
+      padding:18px;
     }
 
     .shell{
-      width:min(780px, 96vw);
+      width:min(780px,96vw);
       display:flex;
       flex-direction:column;
       gap:14px;
@@ -64,53 +60,61 @@
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:14px;
-      padding: 12px 14px;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.70);
-      border: 1px solid rgba(15,23,42,.08);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      gap:12px;
+      padding:12px;
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.78);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow2);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
     }
 
     .brand{
       display:flex;
       align-items:center;
-      gap:12px;
-      min-width: 220px;
+      gap:10px;
+      min-width:0;
     }
 
     .logo{
       width:44px;
       height:44px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(47,107,255,.14), rgba(255,255,255,1));
-      border: 1px solid rgba(15,23,42,.10);
-      display:grid;
-      place-items:center;
+      border-radius:14px;
       overflow:hidden;
+      border:1px solid var(--border);
+      background:#fff;
       flex:0 0 auto;
     }
-    .logo img{ width:100%; height:100%; object-fit:contain; display:block; }
 
-    .brand h1{
-      font-size:18px;
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .brandText{
+      min-width:0;
+    }
+
+    .brandText h1{
       margin:0;
+      font-size:18px;
       line-height:1.1;
-      letter-spacing:.2px;
-    }
-    .brand p{
-      margin:4px 0 0 0;
-      font-size:12.8px;
-      color: var(--muted);
-      line-height:1.25;
     }
 
-    .status{
+    .brandText p{
+      margin:4px 0 0;
+      font-size:12.5px;
+      color:var(--muted);
+      line-height:1.2;
+    }
+
+    .topActions{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
     }
@@ -118,224 +122,285 @@
     .pill{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      color: rgba(15,23,42,.86);
-      background: rgba(15,23,42,.04);
-      border: 1px solid rgba(15,23,42,.10);
-    }
-
-    .help{
-      display:inline-flex;
-      align-items:center;
       justify-content:center;
-      width:34px;
-      height:34px;
-      border-radius: 999px;
-      text-decoration:none;
-      color: rgba(15,23,42,.80);
-      background: rgba(255,255,255,.85);
-      border: 1px solid rgba(15,23,42,.10);
-      transition: transform .08s ease, opacity .12s ease;
-    }
-    .help:active{ transform: translateY(1px); opacity:.92; }
-
-    .card{
-      background: var(--card);
-      border: 1px solid rgba(15,23,42,.10);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      overflow:hidden;
-    }
-
-    .hero{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:16px;
-      padding: 4px 2px 14px 2px;
-    }
-
-    .heroTitle{
-      font-size: 22px;
-      margin:0;
-      letter-spacing:.2px;
-      line-height:1.15;
-    }
-
-    .heroSub{
-      margin:8px 0 0 0;
-      color: var(--muted);
-      font-size: 13.5px;
-      line-height: 1.4;
-      max-width: 560px;
-    }
-
-    .actions{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-top: 14px;
+      min-height:34px;
+      padding:0 11px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:850;
+      background:rgba(15,23,42,.05);
+      border:1px solid var(--border);
+      color:rgba(15,23,42,.82);
+      white-space:nowrap;
     }
 
     .btn{
       appearance:none;
       border:none;
-      border-radius: 999px;
-      height: 46px;
-      padding: 0 18px;
-      font-weight: 900;
       cursor:pointer;
+      text-decoration:none;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:10px;
-      transition: transform .08s ease, opacity .12s ease, box-shadow .12s ease, background .12s ease;
+      gap:8px;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:13px;
       user-select:none;
-      min-width: 230px;
-      letter-spacing:.1px;
-      white-space: nowrap;
+      white-space:nowrap;
     }
-    .btn:active{ transform: translateY(1px); opacity:.95; }
-    .btn[disabled]{ opacity:.65; cursor:not-allowed; }
+
+    .btn:active{
+      transform:translateY(1px);
+      opacity:.94;
+    }
 
     .btnPrimary{
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      color: white;
-      box-shadow: 0 14px 26px rgba(47,107,255,.18);
-      border: 1px solid rgba(0,0,0,.04);
+      background:linear-gradient(180deg,var(--accent),var(--accent2));
+      color:white;
+      box-shadow:0 12px 24px rgba(47,107,255,.18);
     }
 
     .btnGhost{
-      background: rgba(15,23,42,.04);
-      color: rgba(15,23,42,.88);
-      border: 1px solid rgba(15,23,42,.10);
-      box-shadow: none;
-      font-weight: 850;
+      background:rgba(15,23,42,.04);
+      color:rgba(15,23,42,.88);
+      border:1px solid var(--border);
     }
 
-    .btnIcon{
-      font-size: 16px;
-      line-height: 1;
-      opacity: .95;
+    .btnSmall{
+      min-height:34px;
+      padding:0 12px;
+      font-size:12.5px;
     }
 
-    .hint{
-      margin: 10px 0 0 0;
-      font-size: 12.5px;
-      color: rgba(15,23,42,.62);
-      line-height: 1.35;
+    .hidden{
+      display:none!important;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
     }
 
-.tile{
-  border-radius: var(--radius2);
-  border: 1px solid rgba(15,23,42,.10);
-  background: linear-gradient(180deg, rgba(15,23,42,.03), rgba(255,255,255,1));
-  padding: 14px 16px;
-  cursor:pointer;
-  user-select:none;
-  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
-  box-shadow: none;
-  min-height: 88px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.tile:active{ transform: translateY(1px); }
+    .msCard{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
 
-.tileIcon{
-  order: 0;
-  font-size: 22px;
-  color: rgba(15,23,42,.76);
-  width: 28px;
-  flex: 0 0 28px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.tileBody{
-  order: 1;
-  min-width:0;
-  flex:1 1 auto;
-}
-
-.tileTitle{
-  font-weight: 900;
-  font-size: 13.5px;
-  margin:0;
-  letter-spacing:.1px;
-  line-height: 1.25;
-}
-
-.tileDesc{
-  margin:4px 0 0 0;
-  font-size: 12.5px;
-  color: rgba(15,23,42,.62);
-  line-height: 1.3;
-}
-
-    .sectionToggle{
-      width:100%;
-      margin-top: 14px;
-      appearance:none;
-      border:none;
-      border-radius: 999px;
-      height: 42px;
-      padding: 0 16px;
-      font-weight: 850;
-      cursor:pointer;
+    .msHeader{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      color: rgba(15,23,42,.82);
-      background: rgba(15,23,42,.04);
-      border: 1px solid rgba(15,23,42,.10);
+      gap:10px;
     }
 
-    .sectionToggleLeft{
+    .msTitle{
       display:flex;
       align-items:center;
       gap:10px;
       min-width:0;
     }
 
-    .sectionToggleIcon{
-      font-size: 16px;
-      line-height: 1;
+    .msIcon{
+      width:40px;
+      height:40px;
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      background:rgba(47,107,255,.10);
+      border:1px solid rgba(47,107,255,.16);
+      font-size:20px;
+      flex:0 0 auto;
     }
 
-    .sectionToggleChevron{
-      font-size: 14px;
-      line-height: 1;
-      opacity: .72;
+    .msTitle h2{
+      margin:0;
+      font-size:18px;
+      line-height:1.1;
+    }
+
+    .msTitle p{
+      margin:3px 0 0;
+      font-size:12.5px;
+      color:var(--muted);
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      height:28px;
+      border-radius:999px;
+      background:var(--green);
+      color:white;
+      font-size:12px;
+      font-weight:950;
+    }
+
+    .messageBox{
+      border:1px solid var(--border);
+      border-radius:var(--radius2);
+      background:linear-gradient(180deg,rgba(15,23,42,.025),#fff);
+      min-height:118px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .msg{
+      max-width:86%;
+      padding:9px 11px;
+      border-radius:14px;
+      font-size:13px;
+      line-height:1.3;
+      background:rgba(15,23,42,.055);
+      color:rgba(15,23,42,.82);
+    }
+
+    .msg.me{
+      align-self:flex-end;
+      background:rgba(47,107,255,.10);
+    }
+
+    .composer{
+      display:flex;
+      gap:8px;
+    }
+
+    .composer input{
+      width:100%;
+      min-height:42px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      padding:0 14px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+
+    .composer input:focus{
+      border-color:rgba(47,107,255,.45);
+      box-shadow:0 0 0 3px rgba(47,107,255,.10);
+    }
+
+    .msActions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .sectionTitle{
+      margin:2px 2px 0;
+      font-size:13px;
+      font-weight:950;
+      color:rgba(15,23,42,.76);
+    }
+
+    .quickGrid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .quickLink{
+      min-height:46px;
+      border-radius:15px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.78);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 12px;
+      cursor:pointer;
+      font-weight:850;
+      font-size:13.5px;
+      color:rgba(15,23,42,.88);
+      user-select:none;
+    }
+
+    .quickLink:active{
+      transform:translateY(1px);
+      opacity:.94;
+    }
+
+    .quickIcon{
+      width:26px;
+      text-align:center;
+      font-size:18px;
+      flex:0 0 auto;
+    }
+
+    .resourcesToggle{
+      width:100%;
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      min-height:42px;
+      padding:0 14px;
+      font-weight:900;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:rgba(15,23,42,.82);
+      background:rgba(255,255,255,.78);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow2);
     }
 
     .resourcePanel{
-      margin-top: 12px;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:-6px;
     }
 
-    .hidden{ display:none !important; }
-
-    @media (max-width: 740px){
-      .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .btn{ width:100%; min-width: unset; }
-      .topbar{ padding: 12px; }
+    .hint{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
     }
-    @media (max-width: 430px){
-      .grid{ grid-template-columns: 1fr; }
+
+    @media(max-width:560px){
+      .topbar{
+        align-items:flex-start;
+      }
+
+      .topActions{
+        flex-direction:column;
+        align-items:flex-end;
+      }
+
+      .btnTop{
+        min-height:34px;
+        padding:0 11px;
+      }
+
+      .quickGrid{
+        grid-template-columns:1fr;
+      }
+
+      .resourcePanel{
+        grid-template-columns:1fr;
+      }
+
+      .composer{
+        flex-direction:column;
+      }
+
+      .composer .btn{
+        width:100%;
+      }
     }
   </style>
 </head>
@@ -344,167 +409,135 @@
   <div class="wrap">
     <div class="shell">
 
-      <!-- Topbar -->
-      <div class="topbar" role="banner">
+      <header class="topbar">
         <div class="brand">
-          <div class="logo" aria-hidden="true">
+          <div class="logo">
             <img src="/icons/icon-192.png" alt="">
           </div>
-          <div>
+          <div class="brandText">
             <h1>SCaD</h1>
-            <p>Acceso rápido a tu plataforma.</p>
+            <p>Acceso rápido</p>
           </div>
         </div>
 
-        <div class="status">
+        <div class="topActions">
           <span class="pill" id="pill">Estado</span>
-          <a class="help hidden" id="helpVideo" href="https://app.scad.mx/tutorial-ios/" target="_blank" rel="noopener noreferrer" aria-label="Tutorial iOS">▶</a>
+          <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
+          <button class="btn btnGhost btnTop" id="enterBtn" type="button">Entrar a SCaD →</button>
         </div>
-      </div>
+      </header>
 
-      <!-- Main -->
-      <div class="card" role="main" aria-live="polite">
-        <div class="hero">
-          <div>
-            <h2 class="heroTitle" id="heroTitle">Bienvenido a SCaD</h2>
-            <p class="heroSub" id="heroSub">
-              Instala la app para abrir SCaD como una aplicación y acceder más rápido.
-            </p>
-
-            <div class="actions">
-              <button class="btn btnPrimary hidden" id="installBtn" type="button">Instalar App SCaD</button>
-
-              <!-- Entrar a SCaD (HOME) -->
-              <button class="btn btnGhost" id="enterBtn" type="button">
-                <span class="btnIcon" aria-hidden="true">🌐</span>
-                Entrar a SCaD →
-              </button>
+      <section class="card msCard">
+        <div class="msHeader">
+          <div class="msTitle">
+            <div class="msIcon">💬</div>
+            <div>
+              <h2>Mensajería SCaD</h2>
+              <p>Centro de mensajes y contactos</p>
             </div>
-
-            <p class="hint" id="hint"></p>
           </div>
+          <span class="badge" id="msBadge">0</span>
         </div>
 
-        <div class="grid" id="grid">
-          <div class="tile" id="tileCursos" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Mis cursos</p>
-<p class="tileDesc">Accede a los cursos en los que estás inscrito.</p>
-            </div>
-            <div class="tileIcon">🎓</div>
-          </div>
-
-          <div class="tile" id="tileMiPlan" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Mi entrenamiento</p>
-              <p class="tileDesc">Accede directo a tu plan de entrenamiento.</p>
-            </div>
-            <div class="tileIcon">🏋️</div>
-          </div>
-
-          <div class="tile" id="tileNovedades" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Novedades</p>
-              <p class="tileDesc">Actualizaciones, mejoras y ofertas.</p>
-            </div>
-            <div class="tileIcon">✨</div>
-          </div>
-
-          <div class="tile" id="tileCPC" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Centro Privado de Capacitación</p>
-              <p class="tileDesc">Información institucional y oferta.</p>
-            </div>
-            <div class="tileIcon">🧑‍🏫</div>
-          </div>
-
-          <div class="tile" id="tileFacturacion" role="button" tabindex="0">
-  <div class="tileBody">
-    <p class="tileTitle">Servicio de Facturación</p>
-    <p class="tileDesc">Acceso exclusivo para inscritos al programa de facturación.</p>
-  </div>
-  <div class="tileIcon">🧾</div>
-</div>
-
-          <div class="tile" id="tilePricing" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Planes y precios</p>
-              <p class="tileDesc">Consulta opciones y suscripción.</p>
-            </div>
-            <div class="tileIcon">💳</div>
-          </div>
-
-          <div class="tile" id="tileSoporte" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Soporte</p>
-              <p class="tileDesc">Contacto y ayuda rápida.</p>
-            </div>
-            <div class="tileIcon">💬</div>
-          </div>
-
-          <div class="tile" id="tileTutorial" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Tutorial iPhone/iPad</p>
-              <p class="tileDesc">Cómo instalar SCaD en iOS (Safari).</p>
-            </div>
-            <div class="tileIcon">▶</div>
-          </div>
+        <div class="messageBox" id="msMessageBox">
+          <div class="msg">Mensajería lista para integrarse con MS.</div>
+          <div class="msg me">Usa Gestión MS para abrir contactos y chats.</div>
         </div>
 
-        <button class="sectionToggle" id="resourcesToggle" type="button" aria-expanded="false" aria-controls="resourcesPanel">
-          <span class="sectionToggleLeft">
-            <span class="sectionToggleIcon" aria-hidden="true">🗂️</span>
-            <span>Recursos</span>
-          </span>
-          <span class="sectionToggleChevron" id="resourcesChevron" aria-hidden="true">▾</span>
-        </button>
-
-        <div class="grid resourcePanel hidden" id="resourcesPanel">
-          <div class="tile" id="tilePDE" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Panel de Entrenador</p>
-              <p class="tileDesc">Acceso para usuarios con rol de entrenador.</p>
-            </div>
-            <div class="tileIcon">🧭</div>
-          </div>
-
-          <div class="tile" id="tilePDO" role="button" tabindex="0">
-            <div class="tileBody">
-              <p class="tileTitle">Panel ODIN</p>
-              <p class="tileDesc">Acceso al panel ODIN.</p>
-            </div>
-            <div class="tileIcon">🔐</div>
-          </div>
-
-<div class="tile" id="tileDespachoFiscal" role="button" tabindex="0">
-  <div class="tileBody">
-    <p class="tileTitle">Despacho Fiscal</p>
-    <p class="tileDesc">Acceso administrativo al módulo de facturación.</p>
-  </div>
-  <div class="tileIcon">🏢</div>
-</div>
+        <div class="composer">
+          <input id="msInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
+          <button class="btn btnPrimary" id="msSendBtn" type="button">Enviar</button>
         </div>
-      </div>
+
+        <div class="msActions">
+          <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
+          <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+        </div>
+
+        <p class="hint" id="msHint">Versión segura: el chat real se gestiona en Wix.</p>
+      </section>
+
+      <p class="sectionTitle">Accesos SCaD</p>
+
+      <section class="quickGrid">
+        <div class="quickLink" id="tileCursos" role="button" tabindex="0">
+          <span class="quickIcon">🎓</span>
+          <span>Mis cursos</span>
+        </div>
+
+        <div class="quickLink" id="tileMiPlan" role="button" tabindex="0">
+          <span class="quickIcon">🏋️</span>
+          <span>Mi entrenamiento</span>
+        </div>
+
+        <div class="quickLink" id="tileCPC" role="button" tabindex="0">
+          <span class="quickIcon">🧑‍🏫</span>
+          <span>Centro Privado de Capacitación</span>
+        </div>
+
+        <div class="quickLink" id="tileNovedades" role="button" tabindex="0">
+          <span class="quickIcon">✨</span>
+          <span>Novedades</span>
+        </div>
+
+        <div class="quickLink" id="tilePricing" role="button" tabindex="0">
+          <span class="quickIcon">💳</span>
+          <span>Planes y servicios</span>
+        </div>
+
+        <div class="quickLink" id="tileSoporte" role="button" tabindex="0">
+          <span class="quickIcon">💬</span>
+          <span>Soporte</span>
+        </div>
+
+        <div class="quickLink" id="tileFacturacion" role="button" tabindex="0">
+          <span class="quickIcon">🧾</span>
+          <span>Servicio de facturación</span>
+        </div>
+      </section>
+
+      <button class="resourcesToggle" id="resourcesToggle" type="button" aria-expanded="false">
+        <span>🗂️ Recursos</span>
+        <span id="resourcesChevron">▾</span>
+      </button>
+
+      <section class="resourcePanel hidden" id="resourcesPanel">
+        <div class="quickLink" id="tilePDE" role="button" tabindex="0">
+          <span class="quickIcon">🧭</span>
+          <span>Panel de Entrenador</span>
+        </div>
+
+        <div class="quickLink" id="tilePDO" role="button" tabindex="0">
+          <span class="quickIcon">🔐</span>
+          <span>Panel ODIN</span>
+        </div>
+
+        <div class="quickLink" id="tileDespachoFiscal" role="button" tabindex="0">
+          <span class="quickIcon">🏢</span>
+          <span>Despacho Fiscal</span>
+        </div>
+      </section>
+
+      <a class="hidden" id="helpVideo" href="https://app.scad.mx/tutorial-ios/" target="_blank" rel="noopener noreferrer">Tutorial iOS</a>
 
     </div>
   </div>
 
   <script>
-    // --- URLs
     const URL_HOME = "https://www.scad.mx";
-const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
+    const URL_MENSAJERIA = "https://www.scad.mx/ms-mensajeria-scad";
+    const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
     const URL_CONTACT = "https://www.scad.mx/contact";
     const URL_NOVEDADES = "https://www.scad.mx/novedades";
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
     const URL_CPC = "https://www.scad.mx/cpc";
     const URL_FACT_GESTION = "https://www.scad.mx/fact";
-    const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
-const URL_MIPLAN = "https://www.scad.mx/registrogym";
+    const URL_MIPLAN = "https://www.scad.mx/registrogym";
     const URL_PDE = "https://www.scad.mx/hub-pde";
     const URL_PDO = "https://www.scad.mx/hub-odin";
     const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact-pwa-acceso";
+    const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
 
-    // --- Detección
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
@@ -512,139 +545,149 @@ const URL_MIPLAN = "https://www.scad.mx/registrogym";
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
       window.navigator.standalone === true;
 
-    // --- UI refs
+    const pill = document.getElementById("pill");
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
-    const pill = document.getElementById("pill");
     const helpVideo = document.getElementById("helpVideo");
 
-    const heroTitle = document.getElementById("heroTitle");
-    const heroSub = document.getElementById("heroSub");
-    const hint = document.getElementById("hint");
+    const msInput = document.getElementById("msInput");
+    const msSendBtn = document.getElementById("msSendBtn");
+    const msHint = document.getElementById("msHint");
+    const soundBtn = document.getElementById("soundBtn");
+    const openMSBtn = document.getElementById("openMSBtn");
 
-    // Tiles
     const tileCursos = document.getElementById("tileCursos");
-    const tileSoporte = document.getElementById("tileSoporte");
-    const tileTutorial = document.getElementById("tileTutorial");
+    const tileMiPlan = document.getElementById("tileMiPlan");
+    const tileCPC = document.getElementById("tileCPC");
     const tileNovedades = document.getElementById("tileNovedades");
     const tilePricing = document.getElementById("tilePricing");
-    const tileCPC = document.getElementById("tileCPC");
+    const tileSoporte = document.getElementById("tileSoporte");
     const tileFacturacion = document.getElementById("tileFacturacion");
-    const tileMiPlan = document.getElementById("tileMiPlan");
-    const tilePDE = document.getElementById("tilePDE");
-    const tilePDO = document.getElementById("tilePDO");
-    const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
 
     const resourcesToggle = document.getElementById("resourcesToggle");
     const resourcesPanel = document.getElementById("resourcesPanel");
     const resourcesChevron = document.getElementById("resourcesChevron");
 
-// Ocultar tutorial iOS cuando la app ya está instalada
-if (isStandalone || !isIOS) {
-  tileTutorial.classList.add("hidden");
-  helpVideo.classList.add("hidden");
-}    function openUrl(url){
+    const tilePDE = document.getElementById("tilePDE");
+    const tilePDO = document.getElementById("tilePDO");
+    const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
+
+    function openUrl(url){
       if (isStandalone) {
         window.location.href = url;
         return;
       }
+
       const w = window.open(url, "_blank", "noopener,noreferrer");
       if (!w) window.location.href = url;
     }
 
     function withFreshParam(url, extraParams = {}) {
-  const u = new URL(url);
+      const u = new URL(url);
 
-  Object.entries(extraParams).forEach(([key, value]) => {
-    u.searchParams.set(key, String(value));
-  });
+      Object.entries(extraParams).forEach(([key, value]) => {
+        u.searchParams.set(key, String(value));
+      });
 
-  u.searchParams.set("from", "pwa");
-  u.searchParams.set("t", String(Date.now()));
+      u.searchParams.set("from", "pwa");
+      u.searchParams.set("t", String(Date.now()));
 
-  return u.toString();
-}
-
-        function toggleResources(forceOpen){
-      const shouldOpen = typeof forceOpen === "boolean"
-        ? forceOpen
-        : resourcesPanel.classList.contains("hidden");
-
-      resourcesPanel.classList.toggle("hidden", !shouldOpen);
-      resourcesToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-      resourcesChevron.textContent = shouldOpen ? "▴" : "▾";
+      return u.toString();
     }
 
-    resourcesToggle.addEventListener("click", () => toggleResources());
+    function openMS(){
+      openUrl(withFreshParam(URL_MENSAJERIA, { target: "mensajeria-scad" }));
+    }
 
-    // Launcher actions
-tileCursos.addEventListener("click", () => {
-  openUrl(withFreshParam(URL_MIS_CURSOS, { target: "mis-cursos" }));
-});
-    tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
-    tileTutorial.addEventListener("click", () => openUrl(IOS_TUTORIAL_URL));
+    enterBtn.addEventListener("click", () => {
+      openUrl(withFreshParam(URL_HOME, { target: "home" }));
+    });
+
+    openMSBtn.addEventListener("click", openMS);
+
+    msSendBtn.addEventListener("click", () => {
+      const value = msInput.value.trim();
+
+      if (!value) {
+        msHint.textContent = "Escribe un mensaje o abre Gestión MS.";
+        return;
+      }
+
+      msHint.textContent = "Abriendo Gestión MS para enviar el mensaje.";
+      openUrl(withFreshParam(URL_MENSAJERIA, {
+        target: "mensajeria-scad",
+        draft: value
+      }));
+    });
+
+    msInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") msSendBtn.click();
+    });
+
+    let soundEnabled = false;
+
+    soundBtn.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔇 Sonido inactivo";
+      msHint.textContent = soundEnabled
+        ? "Sonido activado para la sesión visible."
+        : "Sonido desactivado.";
+    });
+
+    tileCursos.addEventListener("click", () => {
+      openUrl(withFreshParam(URL_MIS_CURSOS, { target: "mis-cursos" }));
+    });
+
+    tileMiPlan.addEventListener("click", () => {
+      openUrl(withFreshParam(URL_MIPLAN, { target: "mi-entrenamiento" }));
+    });
+
+    tileCPC.addEventListener("click", () => openUrl(URL_CPC));
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
     tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
-    tileCPC.addEventListener("click", () => openUrl(URL_CPC));
+    tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
+
     tileFacturacion.addEventListener("click", () => {
-  openUrl(
-    withFreshParam(URL_FACT_GESTION, {
-      target: "facturacion",
-      program: "Ⓟ SERVICIO DE FACTURACIÓN"
-    })
-  );
-});
-tileMiPlan.addEventListener("click", () => {
-  openUrl(withFreshParam(URL_MIPLAN, { target: "mi-entrenamiento" }));
-});
+      openUrl(withFreshParam(URL_FACT_GESTION, {
+        target: "facturacion",
+        program: "Ⓟ SERVICIO DE FACTURACIÓN"
+      }));
+    });
+
     tilePDE.addEventListener("click", () => openUrl(URL_PDE));
     tilePDO.addEventListener("click", () => openUrl(URL_PDO));
 
     tileDespachoFiscal.addEventListener("click", () => {
-  openUrl(
-    withFreshParam(URL_DESPACHO_FISCAL, {
-      target: "despacho-fiscal",
-      role: "DespachoFiscal",
-      access: "admin-facturacion"
-    })
-  );
-});
+      openUrl(withFreshParam(URL_DESPACHO_FISCAL, {
+        target: "despacho-fiscal",
+        role: "DespachoFiscal",
+        access: "admin-facturacion"
+      }));
+    });
 
-    // Entrar a SCaD -> HOME
-enterBtn.addEventListener("click", () => {
-  openUrl(withFreshParam(URL_HOME, { target: "home" }));
-});
+    resourcesToggle.addEventListener("click", () => {
+      const open = resourcesPanel.classList.contains("hidden");
+      resourcesPanel.classList.toggle("hidden", !open);
+      resourcesToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      resourcesChevron.textContent = open ? "▴" : "▾";
+    });
 
-    // --- Estado inicial
-    if (isStandalone) {
-      pill.textContent = "Instalada ✅";
-      heroTitle.textContent = "SCaD está lista";
-      heroSub.textContent = "Abre SCaD desde tu pantalla de inicio.";
-      hint.textContent = "";
-      installBtn.classList.add("hidden");
-    } else if (isIOS) {
-      pill.textContent = isSafari ? "iOS (Safari)" : "iOS";
-      helpVideo.classList.remove("hidden");
-      helpVideo.href = IOS_TUTORIAL_URL;
-
-      heroTitle.textContent = "Instala SCaD en iPhone/iPad";
-      if (isSafari) {
-        heroSub.innerHTML = "Safari → <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.";
-        hint.textContent = "Tip: si no ves “Añadir…”, desplázate en el menú de compartir.";
-      } else {
-        heroSub.innerHTML = "Para instalar la app en iOS, abre esta página en <b>Safari</b>.";
-        hint.textContent = "Luego: Safari → Compartir → Añadir a pantalla de inicio.";
-      }
-      installBtn.classList.add("hidden"); // iOS no usa beforeinstallprompt
-    } else {
-      pill.textContent = "Instalación";
-      heroTitle.textContent = "Instala la app SCaD";
-      heroSub.textContent = "Si tu navegador lo permite, podrás instalar la app con un toque.";
-      hint.textContent = "";
-      installBtn.classList.add("hidden"); // se mostrará solo si llega beforeinstallprompt
+    if (isStandalone || !isIOS) {
+      helpVideo.classList.add("hidden");
     }
 
-    // --- Service Worker
+    if (isStandalone) {
+      pill.textContent = "Instalada ✅";
+      installBtn.classList.add("hidden");
+    } else if (isIOS) {
+      pill.textContent = isSafari ? "iOS Safari" : "iOS";
+      installBtn.classList.add("hidden");
+      helpVideo.href = IOS_TUTORIAL_URL;
+    } else {
+      pill.textContent = "Web";
+      installBtn.classList.add("hidden");
+    }
+
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
@@ -655,7 +698,6 @@ enterBtn.addEventListener("click", () => {
       });
     }
 
-    // --- Instalación Android/Escritorio (Chrome/Edge)
     let deferredPrompt = null;
 
     window.addEventListener("beforeinstallprompt", (e) => {
@@ -666,53 +708,35 @@ enterBtn.addEventListener("click", () => {
 
       installBtn.classList.remove("hidden");
       pill.textContent = "Instalable ✅";
-      heroSub.textContent = "Instala SCaD para abrirla como app en este dispositivo.";
-      hint.textContent = "Si lo prefieres, también puedes entrar sin instalar.";
     });
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
       installBtn.classList.add("hidden");
       pill.textContent = "Instalada ✅";
-      heroTitle.textContent = "SCaD está lista";
-      heroSub.textContent = "Abre SCaD desde tu pantalla de inicio.";
-      hint.textContent = "Busca el ícono en tu pantalla de inicio / escritorio.";
     });
 
     installBtn.addEventListener("click", async () => {
       if (!deferredPrompt) return;
 
       installBtn.disabled = true;
+
       try {
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
+
         if (choice && choice.outcome === "dismissed") {
-          hint.textContent = "Instalación cancelada. Puedes intentarlo cuando quieras.";
           installBtn.disabled = false;
-        } else {
-          hint.textContent = "Instalando SCaD…";
         }
       } catch (err) {
         console.warn(err);
-        hint.textContent = "No se pudo abrir el instalador en este navegador.";
         installBtn.disabled = false;
       } finally {
         deferredPrompt = null;
       }
     });
 
-    // Si no aparece beforeinstallprompt, aviso neutral
-    setTimeout(() => {
-      if (isIOS || isStandalone) return;
-      const installVisible = !installBtn.classList.contains("hidden");
-      if (!installVisible) {
-        pill.textContent = "Web";
-        hint.textContent = "La instalación de la app no está disponible en este navegador.";
-      }
-    }, 1500);
-
-    // Accesibilidad teclado (tiles)
-    document.querySelectorAll(".tile").forEach(el => {
+    document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") el.click();
       });
