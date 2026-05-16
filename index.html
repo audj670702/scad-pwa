@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="SCaD">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <meta name="description" content="SCaD • Acceso rápido a tus herramientas." />
+  <meta name="description" content="SCaD HUB • Acceso rápido a tus herramientas." />
 
   <style>
     :root{
@@ -132,11 +132,85 @@
       white-space:nowrap;
     }
 
+    .brandMeta{
+      color:var(--muted);
+      font-weight:650;
+      letter-spacing:.01em;
+    }
+
     .versionPill{
-      font-size:11.5px;
-      background:rgba(47,107,255,.08);
-      color:rgba(30,75,216,.95);
-      border-color:rgba(47,107,255,.18);
+      display:none!important;
+    }
+
+    .splash{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(680px 420px at 50% 20%, rgba(47,107,255,.10), transparent 60%),
+        #fff;
+      transition:opacity .55s ease, visibility .55s ease;
+    }
+
+    .splash.hide{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+
+    .splashCard{
+      width:min(260px,72vw);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      padding:30px 24px;
+      border-radius:28px;
+      background:#fff;
+      border:1px solid rgba(15,23,42,.08);
+      box-shadow:0 24px 70px rgba(2,6,23,.12);
+      animation:splashRise .9s ease both;
+    }
+
+    .splashLogo{
+      width:86px;
+      height:86px;
+      border-radius:24px;
+      display:grid;
+      place-items:center;
+      background:#fff;
+      border:1px solid rgba(15,23,42,.10);
+      overflow:hidden;
+      box-shadow:0 10px 24px rgba(2,6,23,.08);
+    }
+
+    .splashLogo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+
+    .splashHub{
+      font-size:20px;
+      font-weight:950;
+      letter-spacing:.28em;
+      color:rgba(15,23,42,.76);
+      transform:translateX(.14em);
+      animation:hubPulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes splashRise{
+      from{ opacity:0; transform:translateY(10px) scale(.97); }
+      to{ opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    @keyframes hubPulse{
+      0%,100%{ opacity:.62; letter-spacing:.24em; }
+      50%{ opacity:1; letter-spacing:.34em; }
     }
 
     .btn{
@@ -345,10 +419,24 @@
       height:22px;
       padding:0 7px;
       border-radius:999px;
-      background:var(--green);
+      background:#DC2626;
       color:white;
       font-size:11px;
       font-weight:950;
+    }
+
+    .pendingMiniBadge.flash,
+    .badge.flash{
+      animation:redBadgePulse 1.35s ease-in-out infinite;
+    }
+
+    .badge.alert{
+      background:#DC2626;
+    }
+
+    @keyframes redBadgePulse{
+      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(220,38,38,.34); }
+      50%{ transform:scale(1.08); box-shadow:0 0 0 7px rgba(220,38,38,.12); }
     }
 
     .msSelect{
@@ -362,6 +450,11 @@
       font-weight:800;
       color:rgba(15,23,42,.86);
       outline:none;
+    }
+
+    #msPendingSelect{
+      color:rgba(15,23,42,.58);
+      font-weight:650;
     }
 
     .msSelect:focus{
@@ -577,6 +670,15 @@
 </head>
 
 <body>
+  <div class="splash" id="splashScreen" aria-hidden="true">
+    <div class="splashCard">
+      <div class="splashLogo">
+        <img src="/icons/icon-192.png" alt="SCaD">
+      </div>
+      <div class="splashHub">HUB</div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="shell">
 
@@ -587,15 +689,15 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p>Acceso rápido</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.4.9</p>
           </div>
         </div>
 
         <div class="topActions">
-          <span class="pill versionPill" id="versionPill">v---</span>
+          <span class="pill versionPill hidden" id="versionPill">v---</span>
           <span class="pill" id="pill">Estado</span>
           <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
-          <button class="btn btnGhost btnTop" id="enterBtn" type="button">Entrar a SCaD →</button>
+          <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
         </div>
       </header>
 
@@ -742,7 +844,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.8-scroll";
+    const APP_VERSION = "PWA MS v0.4.9-ui";
+    const APP_VERSION_SHORT = "v0.4.9";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -775,6 +878,8 @@
       window.navigator.standalone === true;
 
     const versionPill = document.getElementById("versionPill");
+    const brandMeta = document.getElementById("brandMeta");
+    const splashScreen = document.getElementById("splashScreen");
     const pill = document.getElementById("pill");
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
@@ -1135,14 +1240,18 @@
       if (totalPending > 0) {
         pendingBadge.textContent = String(totalPending);
         pendingBadge.classList.remove("hidden");
+        pendingBadge.classList.add("flash");
         msPendingSelect.classList.add("pendingAlert");
         msBadge.textContent = String(totalPending);
+        msBadge.classList.add("alert", "flash");
         msStatusText.textContent = `${totalPending} mensaje${totalPending === 1 ? "" : "s"} pendiente${totalPending === 1 ? "" : "s"}`;
       } else {
         pendingBadge.textContent = "0";
         pendingBadge.classList.add("hidden");
+        pendingBadge.classList.remove("flash");
         msPendingSelect.classList.remove("pendingAlert");
         msBadge.textContent = "0";
+        msBadge.classList.remove("alert", "flash");
         msStatusText.textContent = msContacts.length
           ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
           : "Sin contactos disponibles";
@@ -1684,7 +1793,13 @@
       installBtn.classList.add("hidden");
     }
 
-    versionPill.textContent = APP_VERSION;
+    if (versionPill) versionPill.textContent = APP_VERSION;
+    if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
+
+    window.setTimeout(() => {
+      if (splashScreen) splashScreen.classList.add("hide");
+    }, 1800);
+
     loadMSContacts();
     startActiveChatAutoRefresh();
     startPendingAutoRefresh();
