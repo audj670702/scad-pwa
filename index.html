@@ -617,8 +617,7 @@
           <div class="selectorBlock">
             <label for="msConversationSelect">Conversación / contacto</label>
             <select class="msSelect" id="msConversationSelect">
-              <option value="">Seleccionar contacto</option>
-              <option value="open-ms">Abrir Gestión MS</option>
+              <option value="">Cargando contactos...</option>
             </select>
           </div>
 
@@ -634,8 +633,8 @@
                 <button class="conversationRow active" id="conversationPlaceholder" type="button">
                   <span class="avatar">💬</span>
                   <span class="conversationInfo">
-                    <strong>Sin conversación activa</strong>
-                    <small>Selecciona un chat desde Gestión MS</small>
+                    <strong id="activeConversationName">Sin conversación activa</strong>
+                    <small id="activeConversationSub">Selecciona un contacto</small>
                   </span>
                 </button>
               </div>
@@ -649,10 +648,10 @@
 
               <div class="messageBox" id="msMessageBox">
                 <div class="msg">
-                  Abre Gestión MS para seleccionar una conversación.
+                  Selecciona un contacto para preparar la conversación.
                 </div>
                 <div class="msg me">
-                  Cuando la PWA tenga integración real, aquí aparecerá el chat activo.
+                  La carga de mensajes y envío real se conecta en el siguiente paso.
                 </div>
               </div>
 
@@ -670,7 +669,7 @@
           </div>
 
           <p class="hint" id="msHint">
-            Versión segura: las conversaciones reales se gestionan en Wix.
+            Cargando contactos de Mensajería SCaD...
           </p>
         </div>
       </section>
@@ -755,6 +754,7 @@
     const URL_PDO = "https://www.scad.mx/hub-odin";
     const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact-pwa-acceso";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
+    const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
 
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -771,6 +771,8 @@
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
     const msChevron = document.getElementById("msChevron");
+    const msStatusText = document.getElementById("msStatusText");
+    const msBadge = document.getElementById("msBadge");
     const msConversationSelect = document.getElementById("msConversationSelect");
     const msInput = document.getElementById("msInput");
     const msSendBtn = document.getElementById("msSendBtn");
@@ -779,6 +781,10 @@
     const openMSBtn = document.getElementById("openMSBtn");
     const openMSConversationsBtn = document.getElementById("openMSConversationsBtn");
     const conversationPlaceholder = document.getElementById("conversationPlaceholder");
+    const activeConversationName = document.getElementById("activeConversationName");
+    const activeConversationSub = document.getElementById("activeConversationSub");
+    const chatStatus = document.getElementById("chatStatus");
+    const msMessageBox = document.getElementById("msMessageBox");
 
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
@@ -796,6 +802,11 @@
     const tilePDO = document.getElementById("tilePDO");
     const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
 
+    let activeMemberId = null;
+    let activeContactMemberId = null;
+    let activeContactLabel = "";
+    let msContacts = [];
+
     function openUrl(url){
       if (isStandalone) {
         window.location.href = url;
@@ -810,7 +821,9 @@
       const u = new URL(url);
 
       Object.entries(extraParams).forEach(([key, value]) => {
-        u.searchParams.set(key, String(value));
+        if (value !== undefined && value !== null && value !== "") {
+          u.searchParams.set(key, String(value));
+        }
       });
 
       u.searchParams.set("from", "pwa");
@@ -822,6 +835,8 @@
     function openMS(extraParams = {}) {
       openUrl(withFreshParam(URL_MENSAJERIA, {
         target: "mensajeria-scad",
+        memberId: activeMemberId || "",
+        contactMemberId: activeContactMemberId || "",
         ...extraParams
       }));
     }
@@ -836,6 +851,112 @@
       msChevron.textContent = shouldOpen ? "▴" : "▾";
     }
 
+    function getMemberIdFromUrlOrStorage() {
+      const params = new URLSearchParams(window.location.search);
+      const urlMemberId = params.get("memberId");
+
+      if (urlMemberId) {
+        localStorage.setItem("scad_memberId", urlMemberId);
+        return urlMemberId;
+      }
+
+      return localStorage.getItem("scad_memberId");
+    }
+
+    function shortId(value) {
+      if (!value) return "";
+      return String(value).slice(0, 8);
+    }
+
+    function getContactLabel(contact, index) {
+      return (
+        contact.displayName ||
+        contact.contactName ||
+        contact.name ||
+        contact.fullName ||
+        contact.title ||
+        `Contacto ${index + 1} · ${shortId(contact.contactMemberId)}`
+      );
+    }
+
+    function setMessageBoxForContact(label) {
+      msMessageBox.innerHTML = `
+        <div class="msg">
+          Conversación preparada con ${label}.
+        </div>
+        <div class="msg me">
+          Siguiente paso: cargar mensajes reales y enviar desde PWA.
+        </div>
+      `;
+    }
+
+    function resetMSSelect(message) {
+      msConversationSelect.innerHTML = "";
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = message;
+      msConversationSelect.appendChild(opt);
+    }
+
+    async function loadMSContacts() {
+      activeMemberId = getMemberIdFromUrlOrStorage();
+
+      if (!activeMemberId) {
+        resetMSSelect("Falta memberId");
+        msStatusText.textContent = "Falta identificación";
+        msHint.textContent = "Abre la PWA con ?memberId=ID_DEL_MIEMBRO para cargar contactos.";
+        return;
+      }
+
+      resetMSSelect("Cargando contactos...");
+      msHint.textContent = "Cargando contactos MS...";
+
+      try {
+        const res = await fetch(
+          `${MS_CONTACTS_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`
+        );
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          resetMSSelect("No se pudieron cargar contactos");
+          msStatusText.textContent = "Error cargando contactos";
+          msHint.textContent = data.reason || data.error || "No se pudieron cargar contactos.";
+          return;
+        }
+
+        msContacts = Array.isArray(data.contacts) ? data.contacts : [];
+
+        msConversationSelect.innerHTML = "";
+
+        const first = document.createElement("option");
+        first.value = "";
+        first.textContent = msContacts.length ? "Seleccionar contacto" : "Sin contactos aceptados";
+        msConversationSelect.appendChild(first);
+
+        msContacts.forEach((contact, index) => {
+          const opt = document.createElement("option");
+          opt.value = contact.contactMemberId;
+          opt.textContent = getContactLabel(contact, index);
+          msConversationSelect.appendChild(opt);
+        });
+
+        msStatusText.textContent = msContacts.length
+          ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
+          : "Sin contactos disponibles";
+
+        msHint.textContent = msContacts.length
+          ? "Selecciona un contacto para preparar la conversación."
+          : "No tienes contactos aceptados en MS.";
+
+      } catch (err) {
+        console.warn(err);
+        resetMSSelect("Error cargando contactos");
+        msStatusText.textContent = "Error MS";
+        msHint.textContent = "Error cargando contactos MS.";
+      }
+    }
+
     msToggle.addEventListener("click", () => toggleMS());
 
     enterBtn.addEventListener("click", () => {
@@ -844,26 +965,55 @@
 
     openMSBtn.addEventListener("click", () => openMS());
     openMSConversationsBtn.addEventListener("click", () => openMS({ section: "conversations" }));
-    conversationPlaceholder.addEventListener("click", () => openMS({ section: "conversations" }));
+    conversationPlaceholder.addEventListener("click", () => {
+      if (activeContactMemberId) {
+        openMS({ section: "chat" });
+      } else {
+        openMS({ section: "conversations" });
+      }
+    });
 
     msConversationSelect.addEventListener("change", () => {
-      if (msConversationSelect.value === "open-ms") {
-        msHint.textContent = "Abriendo Gestión MS para seleccionar contacto.";
-        openMS({ section: "conversations" });
-        msConversationSelect.value = "";
+      const contactMemberId = msConversationSelect.value;
+
+      if (!contactMemberId) {
+        activeContactMemberId = null;
+        activeContactLabel = "";
+        activeConversationName.textContent = "Sin conversación activa";
+        activeConversationSub.textContent = "Selecciona un contacto";
+        chatStatus.textContent = "Pendiente";
+        msHint.textContent = "Selecciona un contacto.";
+        return;
       }
+
+      const selectedIndex = msConversationSelect.selectedIndex;
+      const selectedText = msConversationSelect.options[selectedIndex]?.textContent || "Contacto";
+
+      activeContactMemberId = contactMemberId;
+      activeContactLabel = selectedText;
+
+      activeConversationName.textContent = selectedText;
+      activeConversationSub.textContent = `ID ${shortId(contactMemberId)}`;
+      chatStatus.textContent = "Contacto seleccionado";
+      msHint.textContent = "Contacto seleccionado. Falta cargar conversación real.";
+      setMessageBoxForContact(selectedText);
     });
 
     msSendBtn.addEventListener("click", () => {
       const value = msInput.value.trim();
 
-      if (!value) {
-        msHint.textContent = "Primero selecciona una conversación en Gestión MS.";
-        openMS({ section: "conversations" });
+      if (!activeContactMemberId) {
+        msHint.textContent = "Primero selecciona un contacto.";
+        toggleMS(true);
         return;
       }
 
-      msHint.textContent = "Para enviar, abre la conversación activa en Gestión MS.";
+      if (!value) {
+        msHint.textContent = "Escribe un mensaje.";
+        return;
+      }
+
+      msHint.textContent = "Abriendo Gestión MS con el contacto y borrador.";
 
       openMS({
         section: "chat",
@@ -938,6 +1088,8 @@
       pill.textContent = "Web";
       installBtn.classList.add("hidden");
     }
+
+    loadMSContacts();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
