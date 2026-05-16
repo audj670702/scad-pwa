@@ -723,7 +723,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.3-audio";
+    const APP_VERSION = "PWA MS v0.4.5-mp3";
+    const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
     const URL_HOME = "https://www.scad.mx";
@@ -806,6 +807,7 @@
     let isRefreshingActiveChat = false;
     let soundEnabled = false;
     let audioContext = null;
+    let notificationAudio = null;
 
     function openUrl(url){
       if (isStandalone) {
@@ -949,12 +951,38 @@
       return getMessageKey(incoming[incoming.length - 1]);
     }
 
+    function getNotificationAudio() {
+      if (!notificationAudio) {
+        notificationAudio = new Audio(MS_SOUND_URL);
+        notificationAudio.preload = "auto";
+        notificationAudio.volume = 1;
+        notificationAudio.playsInline = true;
+      }
+
+      return notificationAudio;
+    }
+
+    async function playAudioFile(options = {}) {
+      const force = Boolean(options.force);
+
+      if (!force && !soundEnabled) return false;
+
+      try {
+        const audio = getNotificationAudio();
+        audio.pause();
+        audio.currentTime = 0;
+        await audio.play();
+        return true;
+      } catch (err) {
+        console.warn("Audio MP3 no reproducido:", err);
+        return false;
+      }
+    }
+
     async function ensureAudioContext() {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
 
-      if (!AudioCtx) {
-        throw new Error("Este navegador no permite audio de notificación.");
-      }
+      if (!AudioCtx) return null;
 
       if (!audioContext) {
         audioContext = new AudioCtx();
@@ -969,18 +997,25 @@
 
     async function unlockNotificationSound() {
       try {
-        await ensureAudioContext();
+        getNotificationAudio();
 
-        // Beep de confirmación en el mismo toque del usuario.
-        // Esto desbloquea audio en Android/iPhone.
-        playNotificationSound({
+        // El audio debe intentar sonar en el mismo toque del usuario.
+        const mp3Played = await playAudioFile({ force: true });
+
+        if (mp3Played) {
+          return true;
+        }
+
+        // Fallback por si el MP3 falla en algún navegador.
+        await ensureAudioContext();
+        const oscillatorPlayed = playOscillatorSound({
           force: true,
-          frequency: 660,
-          duration: 0.18,
-          volume: 0.16
+          frequency: 880,
+          duration: 0.25,
+          volume: 0.22
         });
 
-        return true;
+        return Boolean(oscillatorPlayed);
 
       } catch (err) {
         console.warn(err);
@@ -989,21 +1024,21 @@
       }
     }
 
-    function playNotificationSound(options = {}) {
+    function playOscillatorSound(options = {}) {
       const force = Boolean(options.force);
       const frequency = Number(options.frequency || 880);
       const duration = Number(options.duration || 0.24);
-      const volume = Number(options.volume || 0.14);
+      const volume = Number(options.volume || 0.18);
 
-      if (!force && !soundEnabled) return;
-      if (!audioContext) return;
+      if (!force && !soundEnabled) return false;
+      if (!audioContext) return false;
 
       try {
         const now = audioContext.currentTime;
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
 
-        oscillator.type = "sine";
+        oscillator.type = "square";
         oscillator.frequency.setValueAtTime(frequency, now);
 
         gain.gain.setValueAtTime(0.0001, now);
@@ -1016,6 +1051,25 @@
         oscillator.start(now);
         oscillator.stop(now + duration + 0.03);
 
+        return true;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+
+    async function playNotificationSound(options = {}) {
+      const force = Boolean(options.force);
+
+      if (!force && !soundEnabled) return;
+
+      const mp3Played = await playAudioFile({ force });
+
+      if (mp3Played) return;
+
+      try {
+        await ensureAudioContext();
+        playOscillatorSound(options);
       } catch (err) {
         console.warn(err);
       }
