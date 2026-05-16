@@ -562,6 +562,8 @@
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
     }
 
 
@@ -569,6 +571,8 @@
     .msToolsToggle{width:100%;appearance:none;border:none;background:transparent;min-height:42px;padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;color:rgba(15,23,42,.78);}
     .msToolsToggleLeft{display:flex;align-items:center;gap:8px;min-width:0;}
     .requestBadge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:#DC2626;color:#fff;font-size:11px;font-weight:950;}
+    .myCodeLine{font-size:12.5px;color:rgba(15,23,42,.62);line-height:1.35;background:rgba(15,23,42,.035);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:10px 12px;}
+    .myCodeLine strong{color:rgba(15,23,42,.88);font-weight:950;letter-spacing:.02em;}
     .msToolsPanel{border-top:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:12px;}
     .toolGroup{display:flex;flex-direction:column;gap:8px;}
     .toolGroupTitle{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.70);}
@@ -786,18 +790,12 @@
 
             <div class="msActions">
               <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
-              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión <span class="requestBadge hidden" id="requestBadge">0</span></button>
             </div>
 
             <div class="msTools">
-              <button class="msToolsToggle" id="contactToolsToggle" type="button" aria-expanded="false">
-                <span class="msToolsToggleLeft">
-                  <span>👥 Contactos y solicitudes</span>
-                  <span class="requestBadge hidden" id="requestBadge">0</span>
-                </span>
-                <span id="contactToolsChevron">▾</span>
-              </button>
               <div class="msToolsPanel hidden" id="contactToolsPanel">
+                <div class="myCodeLine">Mi código de contacto: <strong id="myContactCode">Cargando...</strong></div>
                 <div class="toolGroup">
                   <div class="toolGroupTitle">Agregar contacto</div>
                   <div class="toolRow">
@@ -899,8 +897,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.0-contactos";
-    const APP_VERSION_SHORT = "v0.5.0";
+    const APP_VERSION = "PWA MS v0.5.1-gestion";
+    const APP_VERSION_SHORT = "v0.5.1";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -930,6 +928,7 @@
     const MS_REJECT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msrejectrequest";
     const MS_REMOVE_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msremovecontact";
     const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
+    const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -964,10 +963,9 @@
     const msHint = document.getElementById("msHint");
     const soundBtn = document.getElementById("soundBtn");
     const openMSBtn = document.getElementById("openMSBtn");
-    const contactToolsToggle = document.getElementById("contactToolsToggle");
     const contactToolsPanel = document.getElementById("contactToolsPanel");
-    const contactToolsChevron = document.getElementById("contactToolsChevron");
     const requestBadge = document.getElementById("requestBadge");
+    const myContactCode = document.getElementById("myContactCode");
     const contactSearchInput = document.getElementById("contactSearchInput");
     const contactSearchBtn = document.getElementById("contactSearchBtn");
     const contactSearchResult = document.getElementById("contactSearchResult");
@@ -1455,9 +1453,47 @@
     function toggleContactTools(forceOpen) {
       const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : contactToolsPanel.classList.contains("hidden");
       contactToolsPanel.classList.toggle("hidden", !shouldOpen);
-      contactToolsToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-      contactToolsChevron.textContent = shouldOpen ? "▴" : "▾";
-      if (shouldOpen) loadIncomingRequests({ silent: true });
+      openMSBtn.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      if (shouldOpen) {
+        loadMyContactCode();
+        loadIncomingRequests({ silent: true });
+      }
+    }
+
+    function getMyStoredScadCode() {
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get("scadCode") || params.get("contactCode") || params.get("codigoScad");
+      if (urlCode) {
+        localStorage.setItem("scad_myScadCode", urlCode);
+        return urlCode;
+      }
+      return localStorage.getItem("scad_myScadCode") || "";
+    }
+
+    async function loadMyContactCode() {
+      const stored = getMyStoredScadCode();
+      if (stored) {
+        myContactCode.textContent = stored;
+        return;
+      }
+      if (!activeMemberId) {
+        myContactCode.textContent = "No disponible";
+        return;
+      }
+      try {
+        const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+        const data = await res.json();
+        const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
+        if (data.ok && code) {
+          localStorage.setItem("scad_myScadCode", code);
+          myContactCode.textContent = code;
+        } else {
+          myContactCode.textContent = "No disponible";
+        }
+      } catch (err) {
+        console.warn(err);
+        myContactCode.textContent = "No disponible";
+      }
     }
 
     function renderRequestBadge() {
@@ -1836,6 +1872,7 @@
       }
 
       hideMSAuthRequired();
+      loadMyContactCode();
       resetSelect(msContactSelect, "Cargando contactos...");
       resetSelect(msPendingSelect, "Sin mensajes pendientes");
       msHint.textContent = "Cargando contactos MS...";
@@ -1895,9 +1932,8 @@
 
     linkSessionBtn.addEventListener("click", openPWAAccess);
 
-    openMSBtn.addEventListener("click", () => openMS());
+    openMSBtn.addEventListener("click", () => toggleContactTools());
 
-    contactToolsToggle.addEventListener("click", () => toggleContactTools());
     contactSearchBtn.addEventListener("click", searchMSMember);
     contactSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchMSMember(); });
     refreshRequestsBtn.addEventListener("click", () => loadIncomingRequests());
