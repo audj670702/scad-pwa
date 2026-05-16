@@ -723,7 +723,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.6-pending";
+    const APP_VERSION = "PWA MS v0.4.7-pending-audio";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1139,10 +1139,19 @@
       }
     }
 
+    function getPendingTotal() {
+      return Object.values(pendingByContact).reduce((sum, value) => {
+        const count = Number(value || 0);
+        return sum + (Number.isFinite(count) && count > 0 ? count : 0);
+      }, 0);
+    }
+
     async function loadMSPending(options = {}) {
       if (!activeMemberId) return;
 
       try {
+        const previousTotal = getPendingTotal();
+
         const url = `${MS_PENDING_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`;
         const res = await fetch(url);
         const data = await res.json();
@@ -1174,10 +1183,21 @@
           }
         });
 
+        const newTotal = Number(data.total || getPendingTotal() || 0);
+        const hasNewPending =
+          Boolean(options.allowNotify) &&
+          newTotal > previousTotal;
+
         renderPendingSelect();
 
-        if (!options.silent && (data.total || 0) > 0) {
-          msHint.textContent = `${data.total} mensaje${data.total === 1 ? "" : "s"} pendiente${data.total === 1 ? "" : "s"}.`;
+        if (hasNewPending) {
+          playNotificationSound();
+          msHint.textContent = `${newTotal} mensaje${newTotal === 1 ? "" : "s"} pendiente${newTotal === 1 ? "" : "s"}.`;
+          return;
+        }
+
+        if (!options.silent && newTotal > 0) {
+          msHint.textContent = `${newTotal} mensaje${newTotal === 1 ? "" : "s"} pendiente${newTotal === 1 ? "" : "s"}.`;
         }
 
       } catch (err) {
@@ -1391,7 +1411,7 @@
 
         if (!canRefresh) return;
 
-        loadMSPending({ silent: true });
+        loadMSPending({ silent: true, allowNotify: true });
       }, MS_REFRESH_MS);
     }
 
