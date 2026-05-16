@@ -94,9 +94,7 @@
       display:block;
     }
 
-    .brandText{
-      min-width:0;
-    }
+    .brandText{ min-width:0; }
 
     .brandText h1{
       margin:0;
@@ -175,9 +173,7 @@
       font-size:12.5px;
     }
 
-    .hidden{
-      display:none!important;
-    }
+    .hidden{ display:none!important; }
 
     .card{
       background:var(--card);
@@ -228,9 +224,7 @@
       flex:0 0 auto;
     }
 
-    .msTitle{
-      min-width:0;
-    }
+    .msTitle{ min-width:0; }
 
     .msTitle h2{
       margin:0;
@@ -281,17 +275,73 @@
       border-top:1px solid var(--border);
     }
 
+    .authNotice{
+      border:1px solid rgba(47,107,255,.18);
+      background:rgba(47,107,255,.06);
+      border-radius:var(--radius2);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .authNotice strong{
+      font-size:14px;
+      color:rgba(15,23,42,.92);
+    }
+
+    .authNotice p{
+      margin:0;
+      font-size:12.8px;
+      line-height:1.35;
+      color:var(--muted);
+    }
+
+    .msContent{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .selectorGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      padding-top:12px;
+    }
+
     .selectorBlock{
       display:flex;
       flex-direction:column;
       gap:6px;
-      padding-top:12px;
+    }
+
+    .selectorLabelRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      min-height:20px;
     }
 
     .selectorBlock label{
       font-size:12.5px;
       font-weight:950;
       color:rgba(15,23,42,.76);
+    }
+
+    .pendingMiniBadge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:22px;
+      height:22px;
+      padding:0 7px;
+      border-radius:999px;
+      background:var(--green);
+      color:white;
+      font-size:11px;
+      font-weight:950;
     }
 
     .msSelect{
@@ -312,13 +362,17 @@
       box-shadow:0 0 0 3px rgba(47,107,255,.10);
     }
 
-    .msMain{
-      display:grid;
-      grid-template-columns:240px 1fr;
-      gap:10px;
+    .pendingAlert{
+      border-color:rgba(47,107,255,.55);
+      box-shadow:0 0 0 3px rgba(47,107,255,.10);
+      animation:pendingPulse 2.4s ease-in-out infinite;
     }
 
-    .conversationPanel,
+    @keyframes pendingPulse{
+      0%,100%{ box-shadow:0 0 0 3px rgba(47,107,255,.08); }
+      50%{ box-shadow:0 0 0 6px rgba(47,107,255,.18); }
+    }
+
     .chatPanel{
       border:1px solid var(--border);
       border-radius:var(--radius2);
@@ -345,74 +399,8 @@
       font-weight:850;
     }
 
-    .miniBtn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      min-height:28px;
-      padding:0 10px;
-      border-radius:999px;
-      background:rgba(47,107,255,.10);
-      color:rgba(30,75,216,.95);
-      font-size:12px;
-      font-weight:900;
-    }
-
-    .conversationList{
-      padding:8px;
-    }
-
-    .conversationRow{
-      width:100%;
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      border-radius:14px;
-      background:rgba(15,23,42,.04);
-      padding:9px;
-      display:flex;
-      align-items:center;
-      gap:9px;
-      text-align:left;
-    }
-
-    .conversationRow.active{
-      background:rgba(47,107,255,.10);
-      border:1px solid rgba(47,107,255,.14);
-    }
-
-    .avatar{
-      width:34px;
-      height:34px;
-      display:grid;
-      place-items:center;
-      border-radius:999px;
-      background:#fff;
-      border:1px solid var(--border);
-      flex:0 0 auto;
-    }
-
-    .conversationInfo{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:0;
-    }
-
-    .conversationInfo strong{
-      font-size:12.8px;
-      line-height:1.2;
-      color:rgba(15,23,42,.88);
-    }
-
-    .conversationInfo small{
-      font-size:11.5px;
-      line-height:1.2;
-      color:rgba(15,23,42,.58);
-    }
-
     .messageBox{
-      min-height:118px;
+      min-height:138px;
       padding:12px;
       display:flex;
       flex-direction:column;
@@ -537,9 +525,7 @@
     }
 
     @media(max-width:560px){
-      .topbar{
-        align-items:flex-start;
-      }
+      .topbar{ align-items:flex-start; }
 
       .topActions{
         flex-direction:column;
@@ -551,25 +537,15 @@
         padding:0 11px;
       }
 
-      .msMain{
-        grid-template-columns:1fr;
-      }
+      .selectorGrid{ grid-template-columns:1fr; }
 
-      .quickGrid{
-        grid-template-columns:1fr;
-      }
+      .quickGrid{ grid-template-columns:1fr; }
 
-      .resourcePanel{
-        grid-template-columns:1fr;
-      }
+      .resourcePanel{ grid-template-columns:1fr; }
 
-      .composer{
-        flex-direction:column;
-      }
+      .composer{ flex-direction:column; }
 
-      .composer .btn{
-        width:100%;
-      }
+      .composer .btn{ width:100%; }
     }
   </style>
 </head>
@@ -614,44 +590,43 @@
 
         <div class="msPanel hidden" id="msPanel">
 
-          <div class="selectorBlock">
-            <label for="msConversationSelect">Conversación / contacto</label>
-            <select class="msSelect" id="msConversationSelect">
-              <option value="">Cargando contactos...</option>
-            </select>
+          <div class="authNotice hidden" id="msAuthNotice">
+            <strong>Inicia Mensajería</strong>
+            <p>Conecta tu sesión SCaD para cargar tus contactos y conversaciones.</p>
+            <button class="btn btnPrimary btnSmall" id="linkSessionBtn" type="button">Iniciar Mensajería</button>
           </div>
 
-          <div class="msMain">
-
-            <div class="conversationPanel">
-              <div class="panelHeader">
-                <span>Conversaciones</span>
-                <button class="miniBtn" id="openMSConversationsBtn" type="button">Abrir</button>
+          <div class="msContent" id="msContent">
+            <div class="selectorGrid">
+              <div class="selectorBlock">
+                <div class="selectorLabelRow">
+                  <label for="msContactSelect">Destinatario</label>
+                </div>
+                <select class="msSelect" id="msContactSelect">
+                  <option value="">Cargando contactos...</option>
+                </select>
               </div>
 
-              <div class="conversationList">
-                <button class="conversationRow active" id="conversationPlaceholder" type="button">
-                  <span class="avatar">💬</span>
-                  <span class="conversationInfo">
-                    <strong id="activeConversationName">Sin conversación activa</strong>
-                    <small id="activeConversationSub">Selecciona un contacto</small>
-                  </span>
-                </button>
+              <div class="selectorBlock">
+                <div class="selectorLabelRow">
+                  <label for="msPendingSelect">Mensajes pendientes</label>
+                  <span class="pendingMiniBadge hidden" id="pendingBadge">0</span>
+                </div>
+                <select class="msSelect" id="msPendingSelect">
+                  <option value="">Sin mensajes pendientes</option>
+                </select>
               </div>
             </div>
 
             <div class="chatPanel">
               <div class="panelHeader">
-                <span>Chat activo</span>
+                <span id="activeConversationName">Chat activo</span>
                 <span class="chatStatus" id="chatStatus">Pendiente</span>
               </div>
 
               <div class="messageBox" id="msMessageBox">
                 <div class="msg">
-                  Selecciona un contacto para preparar la conversación.
-                </div>
-                <div class="msg me">
-                  La carga de mensajes y envío real se conecta en el siguiente paso.
+                  Selecciona un contacto para cargar la conversación.
                 </div>
               </div>
 
@@ -661,16 +636,15 @@
               </div>
             </div>
 
-          </div>
+            <div class="msActions">
+              <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
+              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+            </div>
 
-          <div class="msActions">
-            <button class="btn btnGhost btnSmall" id="soundBtn" type="button">🔊 Activar sonido</button>
-            <button class="btn btnGhost btnSmall" id="openMSBtn" type="button">⚙ Gestión MS</button>
+            <p class="hint" id="msHint">
+              Cargando contactos de Mensajería SCaD...
+            </p>
           </div>
-
-          <p class="hint" id="msHint">
-            Cargando contactos de Mensajería SCaD...
-          </p>
         </div>
       </section>
 
@@ -757,6 +731,7 @@
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
     const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
+    const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -775,16 +750,19 @@
     const msChevron = document.getElementById("msChevron");
     const msStatusText = document.getElementById("msStatusText");
     const msBadge = document.getElementById("msBadge");
-    const msConversationSelect = document.getElementById("msConversationSelect");
+    const msAuthNotice = document.getElementById("msAuthNotice");
+    const msContent = document.getElementById("msContent");
+    const linkSessionBtn = document.getElementById("linkSessionBtn");
+
+    const msContactSelect = document.getElementById("msContactSelect");
+    const msPendingSelect = document.getElementById("msPendingSelect");
+    const pendingBadge = document.getElementById("pendingBadge");
     const msInput = document.getElementById("msInput");
     const msSendBtn = document.getElementById("msSendBtn");
     const msHint = document.getElementById("msHint");
     const soundBtn = document.getElementById("soundBtn");
     const openMSBtn = document.getElementById("openMSBtn");
-    const openMSConversationsBtn = document.getElementById("openMSConversationsBtn");
-    const conversationPlaceholder = document.getElementById("conversationPlaceholder");
     const activeConversationName = document.getElementById("activeConversationName");
-    const activeConversationSub = document.getElementById("activeConversationSub");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
 
@@ -810,6 +788,7 @@
     let activeConversationId = null;
     let msContacts = [];
     let msMessages = [];
+    let pendingByContact = {};
 
     function openUrl(url){
       if (isStandalone) {
@@ -855,6 +834,22 @@
       msChevron.textContent = shouldOpen ? "▴" : "▾";
     }
 
+    function openPWAAccess(){
+      openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
+    }
+
+    function showMSAuthRequired(){
+      msAuthNotice.classList.remove("hidden");
+      msContent.classList.add("hidden");
+      msStatusText.textContent = "Inicia Mensajería";
+      msBadge.textContent = "0";
+    }
+
+    function hideMSAuthRequired(){
+      msAuthNotice.classList.add("hidden");
+      msContent.classList.remove("hidden");
+    }
+
     function getMemberIdFromUrlOrStorage() {
       const params = new URLSearchParams(window.location.search);
       const urlMemberId = params.get("memberId");
@@ -883,6 +878,19 @@
       );
     }
 
+    function getUnreadCount(contact) {
+      const raw =
+        contact.unreadCount ??
+        contact.unread ??
+        contact.pendingCount ??
+        contact.pendingMessages ??
+        contact.newMessages ??
+        0;
+
+      const count = Number(raw);
+      return Number.isFinite(count) && count > 0 ? count : 0;
+    }
+
     function escapeHtml(value) {
       return String(value || "")
         .replaceAll("&", "&amp;")
@@ -903,6 +911,68 @@
         });
       } catch (err) {
         return "";
+      }
+    }
+
+    function resetSelect(selectEl, message) {
+      selectEl.innerHTML = "";
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = message;
+      selectEl.appendChild(opt);
+    }
+
+    function renderPendingSelect() {
+      const pendingContacts = msContacts.filter(contact => {
+        const id = contact.contactMemberId;
+        return id && (pendingByContact[id] || 0) > 0;
+      });
+
+      const totalPending = pendingContacts.reduce((sum, contact) => {
+        return sum + (pendingByContact[contact.contactMemberId] || 0);
+      }, 0);
+
+      msPendingSelect.innerHTML = "";
+
+      const first = document.createElement("option");
+      first.value = "";
+      first.textContent = totalPending > 0
+        ? `Mensajes pendientes · ${totalPending}`
+        : "Sin mensajes pendientes";
+      msPendingSelect.appendChild(first);
+
+      pendingContacts.forEach((contact, index) => {
+        const id = contact.contactMemberId;
+        const count = pendingByContact[id] || 0;
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = `${getContactLabel(contact, index)} · ${count} nuevo${count === 1 ? "" : "s"}`;
+        msPendingSelect.appendChild(opt);
+      });
+
+      if (totalPending > 0) {
+        pendingBadge.textContent = String(totalPending);
+        pendingBadge.classList.remove("hidden");
+        msPendingSelect.classList.add("pendingAlert");
+        msBadge.textContent = String(totalPending);
+        msStatusText.textContent = `${totalPending} mensaje${totalPending === 1 ? "" : "s"} pendiente${totalPending === 1 ? "" : "s"}`;
+      } else {
+        pendingBadge.textContent = "0";
+        pendingBadge.classList.add("hidden");
+        msPendingSelect.classList.remove("pendingAlert");
+        msBadge.textContent = "0";
+        msStatusText.textContent = msContacts.length
+          ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
+          : "Sin contactos disponibles";
+      }
+    }
+
+    function clearPendingForContact(contactMemberId) {
+      if (!contactMemberId) return;
+
+      if (pendingByContact[contactMemberId]) {
+        delete pendingByContact[contactMemberId];
+        renderPendingSelect();
       }
     }
 
@@ -958,8 +1028,7 @@
       activeContactMemberId = contactMemberId;
       activeContactLabel = label || "Contacto";
 
-      activeConversationName.textContent = activeContactLabel;
-      activeConversationSub.textContent = "Cargando conversación...";
+      activeConversationName.textContent = `Chat activo: ${activeContactLabel}`;
       chatStatus.textContent = "Cargando";
       msHint.textContent = "Cargando conversación...";
       setMessageBoxLoading(activeContactLabel);
@@ -976,19 +1045,15 @@
         const conversation = data.conversation;
         activeConversationId = conversation.conversationId;
 
-        activeConversationSub.textContent = activeConversationId
-          ? `Conversación ${shortId(activeConversationId)}`
-          : `ID ${shortId(contactMemberId)}`;
-
         chatStatus.textContent = "Activa";
         msHint.textContent = "Conversación activa. Cargando mensajes...";
 
+        clearPendingForContact(contactMemberId);
         await loadMSMessages(activeConversationId);
 
       } catch (err) {
         console.warn(err);
         chatStatus.textContent = "Error";
-        activeConversationSub.textContent = "No se pudo cargar conversación";
         msHint.textContent = err.message || "Error cargando conversación.";
         msMessageBox.innerHTML = `
           <div class="msg">
@@ -1030,25 +1095,17 @@
       }
     }
 
-    function resetMSSelect(message) {
-      msConversationSelect.innerHTML = "";
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = message;
-      msConversationSelect.appendChild(opt);
-    }
-
     async function loadMSContacts() {
       activeMemberId = getMemberIdFromUrlOrStorage();
 
       if (!activeMemberId) {
-        resetMSSelect("Falta memberId");
-        msStatusText.textContent = "Falta identificación";
-        msHint.textContent = "Abre la PWA con ?memberId=ID_DEL_MIEMBRO para cargar contactos.";
+        showMSAuthRequired();
         return;
       }
 
-      resetMSSelect("Cargando contactos...");
+      hideMSAuthRequired();
+      resetSelect(msContactSelect, "Cargando contactos...");
+      resetSelect(msPendingSelect, "Sin mensajes pendientes");
       msHint.textContent = "Cargando contactos MS...";
 
       try {
@@ -1059,39 +1116,43 @@
         const data = await res.json();
 
         if (!data.ok) {
-          resetMSSelect("No se pudieron cargar contactos");
+          resetSelect(msContactSelect, "No se pudieron cargar contactos");
           msStatusText.textContent = "Error cargando contactos";
           msHint.textContent = data.reason || data.error || "No se pudieron cargar contactos.";
           return;
         }
 
         msContacts = Array.isArray(data.contacts) ? data.contacts : [];
+        pendingByContact = {};
 
-        msConversationSelect.innerHTML = "";
+        msContactSelect.innerHTML = "";
 
         const first = document.createElement("option");
         first.value = "";
         first.textContent = msContacts.length ? "Seleccionar contacto" : "Sin contactos aceptados";
-        msConversationSelect.appendChild(first);
+        msContactSelect.appendChild(first);
 
         msContacts.forEach((contact, index) => {
           const opt = document.createElement("option");
           opt.value = contact.contactMemberId;
           opt.textContent = getContactLabel(contact, index);
-          msConversationSelect.appendChild(opt);
+          msContactSelect.appendChild(opt);
+
+          const unread = getUnreadCount(contact);
+          if (unread > 0 && contact.contactMemberId) {
+            pendingByContact[contact.contactMemberId] = unread;
+          }
         });
 
-        msStatusText.textContent = msContacts.length
-          ? `${msContacts.length} contacto${msContacts.length === 1 ? "" : "s"} disponible${msContacts.length === 1 ? "" : "s"}`
-          : "Sin contactos disponibles";
+        renderPendingSelect();
 
         msHint.textContent = msContacts.length
-          ? "Selecciona un contacto para preparar la conversación."
+          ? "Selecciona un contacto para abrir el chat activo."
           : "No tienes contactos aceptados en MS.";
 
       } catch (err) {
         console.warn(err);
-        resetMSSelect("Error cargando contactos");
+        resetSelect(msContactSelect, "Error cargando contactos");
         msStatusText.textContent = "Error MS";
         msHint.textContent = "Error cargando contactos MS.";
       }
@@ -1103,41 +1164,45 @@
       openUrl(withFreshParam(URL_HOME, { target: "home" }));
     });
 
-    openMSBtn.addEventListener("click", () => openMS());
-    openMSConversationsBtn.addEventListener("click", () => openMS({ section: "conversations" }));
-    conversationPlaceholder.addEventListener("click", () => {
-      if (activeContactMemberId) {
-        openMS({ section: "chat" });
-      } else {
-        openMS({ section: "conversations" });
-      }
-    });
+    linkSessionBtn.addEventListener("click", openPWAAccess);
 
-    msConversationSelect.addEventListener("change", async () => {
-      const contactMemberId = msConversationSelect.value;
+    openMSBtn.addEventListener("click", () => openMS());
+
+    msContactSelect.addEventListener("change", async () => {
+      const contactMemberId = msContactSelect.value;
 
       if (!contactMemberId) {
         activeContactMemberId = null;
         activeContactLabel = "";
         activeConversationId = null;
         msMessages = [];
-
-        activeConversationName.textContent = "Sin conversación activa";
-        activeConversationSub.textContent = "Selecciona un contacto";
+        activeConversationName.textContent = "Chat activo";
         chatStatus.textContent = "Pendiente";
         msHint.textContent = "Selecciona un contacto.";
         msMessageBox.innerHTML = `
           <div class="msg">
-            Selecciona un contacto para preparar la conversación.
+            Selecciona un contacto para cargar la conversación.
           </div>
         `;
         return;
       }
 
-      const selectedIndex = msConversationSelect.selectedIndex;
-      const selectedText = msConversationSelect.options[selectedIndex]?.textContent || "Contacto";
-
+      const selectedText = msContactSelect.options[msContactSelect.selectedIndex]?.textContent || "Contacto";
       await loadMSConversation(contactMemberId, selectedText);
+      msPendingSelect.value = "";
+    });
+
+    msPendingSelect.addEventListener("change", async () => {
+      const contactMemberId = msPendingSelect.value;
+
+      if (!contactMemberId) return;
+
+      const contact = msContacts.find(item => item.contactMemberId === contactMemberId);
+      const label = contact ? getContactLabel(contact, 0) : "Contacto";
+
+      msContactSelect.value = contactMemberId;
+      await loadMSConversation(contactMemberId, label);
+      msPendingSelect.value = "";
     });
 
     msSendBtn.addEventListener("click", () => {
