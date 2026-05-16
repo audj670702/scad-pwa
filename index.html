@@ -407,11 +407,25 @@
     }
 
     .messageBox{
-      min-height:138px;
+      height:clamp(190px, 34vh, 310px);
+      min-height:190px;
       padding:12px;
       display:flex;
       flex-direction:column;
       gap:8px;
+      overflow-y:auto;
+      overflow-x:hidden;
+      overscroll-behavior:contain;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .messageBox::-webkit-scrollbar{
+      width:6px;
+    }
+
+    .messageBox::-webkit-scrollbar-thumb{
+      background:rgba(15,23,42,.18);
+      border-radius:999px;
     }
 
     .msg{
@@ -549,6 +563,11 @@
       .quickGrid{ grid-template-columns:1fr; }
 
       .resourcePanel{ grid-template-columns:1fr; }
+
+      .messageBox{
+        height:240px;
+        min-height:240px;
+      }
 
       .composer{ flex-direction:column; }
 
@@ -723,7 +742,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.4.7-pending-audio";
+    const APP_VERSION = "PWA MS v0.4.8-scroll";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1237,6 +1256,12 @@
       }
     }
 
+    function scrollMessagesToBottom() {
+      window.requestAnimationFrame(() => {
+        msMessageBox.scrollTop = msMessageBox.scrollHeight;
+      });
+    }
+
     function renderMessages(messages) {
       msMessages = Array.isArray(messages) ? messages : [];
 
@@ -1249,6 +1274,7 @@
             Escribe un mensaje para continuar la conversación.
           </div>
         `;
+        scrollMessagesToBottom();
         return;
       }
 
@@ -1264,6 +1290,7 @@
           </div>
         `;
       }).join("");
+      scrollMessagesToBottom();
     }
 
     function setMessageBoxLoading(label) {
@@ -1272,6 +1299,7 @@
           Cargando conversación con ${escapeHtml(label)}...
         </div>
       `;
+      scrollMessagesToBottom();
     }
 
     async function loadMSConversation(contactMemberId, label) {
