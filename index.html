@@ -895,7 +895,7 @@
         </div>
       </section>
 
-      <p class="sectionTitle">Accesos SCaD</p>
+      <p class="sectionTitle">Mis accesos</p>
 
       <section class="quickGrid">
         <div class="quickLink" id="tileCursos" role="button" tabindex="0">
@@ -935,24 +935,29 @@
       </section>
 
       <button class="resourcesToggle" id="resourcesToggle" type="button" aria-expanded="false">
-        <span>🗂️ Control de servicios</span>
+        <span>🗂️ Paneles de control</span>
         <span id="resourcesChevron">▾</span>
       </button>
 
       <section class="resourcePanel hidden" id="resourcesPanel">
         <div class="quickLink" id="tilePDE" role="button" tabindex="0">
-          <span class="quickIcon">🧭</span>
+          <span class="quickIcon">💪</span>
           <span>Panel de Entrenador</span>
         </div>
 
         <div class="quickLink" id="tilePDO" role="button" tabindex="0">
-          <span class="quickIcon">🔐</span>
+          <span class="quickIcon">🦷</span>
           <span>Panel ODIN</span>
         </div>
 
         <div class="quickLink" id="tileDespachoFiscal" role="button" tabindex="0">
-          <span class="quickIcon">🏢</span>
+          <span class="quickIcon">🧮</span>
           <span>Despacho Fiscal</span>
+        </div>
+
+        <div class="quickLink" id="tileGestionContactos" role="button" tabindex="0">
+          <span class="quickIcon">👥</span>
+          <span>Gestión de contactos</span>
         </div>
       </section>
 
@@ -979,6 +984,7 @@
     const URL_PDE = "https://www.scad.mx/hub-pde";
     const URL_PDO = "https://www.scad.mx/hub-odin";
     const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact-pwa-acceso";
+    const URL_PANEL_MS = "https://www.scad.mx/panel-ms";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
@@ -1058,6 +1064,7 @@
     const tilePDE = document.getElementById("tilePDE");
     const tilePDO = document.getElementById("tilePDO");
     const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
+    const tileGestionContactos = document.getElementById("tileGestionContactos");
 
     let activeMemberId = null;
     let activeContactMemberId = null;
@@ -2217,6 +2224,7 @@
 
     tilePDE.addEventListener("click", () => openUrl(URL_PDE));
     tilePDO.addEventListener("click", () => openUrl(URL_PDO));
+    tileGestionContactos.addEventListener("click", () => openUrl(URL_PANEL_MS));
 
     tileDespachoFiscal.addEventListener("click", () => {
       openUrl(withFreshParam(URL_DESPACHO_FISCAL, {
