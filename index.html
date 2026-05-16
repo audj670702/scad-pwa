@@ -731,6 +731,7 @@
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
     const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
     const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
+    const MS_SEND_MESSAGE_ENDPOINT = "https://www.scad.mx/_functions/mssendmessage";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -1205,7 +1206,7 @@
       msPendingSelect.value = "";
     });
 
-    msSendBtn.addEventListener("click", () => {
+    msSendBtn.addEventListener("click", async () => {
       const value = msInput.value.trim();
 
       if (!activeContactMemberId) {
@@ -1216,7 +1217,7 @@
 
       if (!activeConversationId) {
         msHint.textContent = "Primero carga la conversación.";
-        loadMSConversation(activeContactMemberId, activeContactLabel);
+        await loadMSConversation(activeContactMemberId, activeContactLabel);
         return;
       }
 
@@ -1225,13 +1226,39 @@
         return;
       }
 
-      msHint.textContent = "Envío real pendiente. Abriendo Gestión MS con borrador.";
+      msSendBtn.disabled = true;
+      msHint.textContent = "Enviando mensaje...";
 
-      openMS({
-        section: "chat",
-        conversationId: activeConversationId,
-        draft: value
-      });
+      try {
+        const res = await fetch(MS_SEND_MESSAGE_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            memberId: activeMemberId,
+            contactMemberId: activeContactMemberId,
+            conversationId: activeConversationId,
+            text: value
+          })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || "No se pudo enviar el mensaje.");
+        }
+
+        msInput.value = "";
+        msHint.textContent = "Mensaje enviado.";
+        await loadMSMessages(activeConversationId);
+
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "Error enviando mensaje.";
+      } finally {
+        msSendBtn.disabled = false;
+      }
     });
 
     msInput.addEventListener("keydown", (e) => {
