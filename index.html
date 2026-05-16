@@ -132,6 +132,17 @@
       white-space:nowrap;
     }
 
+    .statusText{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:34px;
+      font-size:12.5px;
+      font-weight:450;
+      color:rgba(15,23,42,.56);
+      white-space:nowrap;
+    }
+
     .brandMeta{
       color:var(--muted);
       font-weight:650;
@@ -341,10 +352,11 @@
     }
 
     .msChevron{
-      font-size:16px;
+      font-size:24px;
+      line-height:1;
       font-weight:950;
       color:rgba(15,23,42,.60);
-      width:20px;
+      width:30px;
       text-align:center;
     }
 
@@ -629,22 +641,32 @@
     }
 
     .resourcesToggle{
-      width:100%;
+      width:min(340px,100%);
+      align-self:center;
       appearance:none;
       border:none;
       border-radius:999px;
-      min-height:42px;
-      padding:0 14px;
-      font-weight:900;
+      min-height:40px;
+      padding:0 13px 0 15px;
+      font-weight:850;
       cursor:pointer;
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      color:rgba(15,23,42,.82);
-      background:rgba(255,255,255,.78);
-      border:1px solid var(--border);
-      box-shadow:var(--shadow2);
+      color:rgba(15,23,42,.62);
+      background:rgba(15,23,42,.055);
+      border:1px solid rgba(15,23,42,.09);
+      box-shadow:none;
+    }
+
+    #resourcesChevron{
+      font-size:24px;
+      line-height:1;
+      font-weight:950;
+      color:rgba(15,23,42,.55);
+      width:28px;
+      text-align:center;
     }
 
     .resourcePanel{
@@ -712,13 +734,13 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.0</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.3</p>
           </div>
         </div>
 
         <div class="topActions">
           <span class="pill versionPill hidden" id="versionPill">v---</span>
-          <span class="pill" id="pill">Estado</span>
+          <span class="statusText" id="pill">Estado</span>
           <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
           <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
         </div>
@@ -799,7 +821,7 @@
                 <div class="toolGroup">
                   <div class="toolGroupTitle">Agregar contacto</div>
                   <div class="toolRow">
-                    <input id="contactSearchInput" type="text" placeholder="Código SCaD o nombre..." autocomplete="off">
+                    <input id="contactSearchInput" type="text" placeholder="Código o nombre..." autocomplete="off">
                     <button class="btn btnPrimary btnSmall" id="contactSearchBtn" type="button">Buscar</button>
                   </div>
                   <div class="toolResult" id="contactSearchResult"></div>
@@ -870,7 +892,7 @@
       </section>
 
       <button class="resourcesToggle" id="resourcesToggle" type="button" aria-expanded="false">
-        <span>🗂️ Recursos</span>
+        <span>🗂️ Control de servicios</span>
         <span id="resourcesChevron">▾</span>
       </button>
 
@@ -897,8 +919,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.1-gestion";
-    const APP_VERSION_SHORT = "v0.5.1";
+    const APP_VERSION = "PWA MS v0.5.2-codigo";
+    const APP_VERSION_SHORT = "v0.5.2";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1094,6 +1116,13 @@
     function shortId(value) {
       if (!value) return "";
       return String(value).slice(0, 8);
+    }
+
+    function cleanContactCode(value) {
+      return String(value || "")
+        .replace(/^SCAD-/i, "")
+        .trim()
+        .toUpperCase();
     }
 
     function getContactLabel(contact, index) {
@@ -1470,42 +1499,34 @@
       return localStorage.getItem("scad_myScadCode") || "";
     }
 
-async function loadMyContactCode() {
-  const stored = getMyStoredScadCode();
+    async function loadMyContactCode() {
+      const stored = getMyStoredScadCode();
+      if (stored) {
+        myContactCode.textContent = cleanContactCode(stored);
+        return;
+      }
 
-  function cleanCode(value) {
-    return String(value || "")
-      .replace(/^SCAD-/i, "")
-      .trim()
-      .toUpperCase();
-  }
+      if (!activeMemberId) {
+        myContactCode.textContent = "No disponible";
+        return;
+      }
 
-  if (stored) {
-    myContactCode.textContent = cleanCode(stored);
-    return;
-  }
+      try {
+        const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+        const data = await res.json();
+        const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
 
-  if (!activeMemberId) {
-    myContactCode.textContent = "No disponible";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-    const data = await res.json();
-    const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
-
-    if (data.ok && code) {
-      localStorage.setItem("scad_myScadCode", code);
-      myContactCode.textContent = cleanCode(code);
-    } else {
-      myContactCode.textContent = "No disponible";
+        if (data.ok && code) {
+          localStorage.setItem("scad_myScadCode", code);
+          myContactCode.textContent = cleanContactCode(code);
+        } else {
+          myContactCode.textContent = "No disponible";
+        }
+      } catch (err) {
+        console.warn(err);
+        myContactCode.textContent = "No disponible";
+      }
     }
-  } catch (err) {
-    console.warn(err);
-    myContactCode.textContent = "No disponible";
-  }
-}
 
     function renderRequestBadge() {
       const total = incomingRequests.length;
@@ -1530,7 +1551,7 @@ async function loadMyContactCode() {
         const id = escapeHtml(request._id || "");
         const requestId = escapeHtml(request.requestId || "");
         const name = escapeHtml(request.displayName || "Contacto");
-        const code = escapeHtml(request.scadCode || "");
+        const code = escapeHtml(cleanContactCode(request.scadCode || ""));
         const message = escapeHtml(request.message || "");
         return `
           <div class="miniCard">
@@ -1582,7 +1603,7 @@ async function loadMyContactCode() {
           <div class="miniCard">
             <div class="miniCardText">
               <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
-              <span>${escapeHtml(user.scadCode || user.memberId || "")}</span>
+              <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.memberId || "")}</span>
             </div>
             <div class="miniCardActions"><button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Enviar solicitud</button></div>
           </div>`;
@@ -2112,7 +2133,7 @@ async function loadMyContactCode() {
     }
 
     if (isStandalone) {
-      pill.textContent = "Instalada ✅";
+      pill.textContent = "App instalada";
       installBtn.classList.add("hidden");
     } else if (isIOS) {
       pill.textContent = isSafari ? "iOS Safari" : "iOS";
@@ -2153,13 +2174,13 @@ async function loadMyContactCode() {
       if (isIOS || isStandalone) return;
 
       installBtn.classList.remove("hidden");
-      pill.textContent = "Instalable ✅";
+      pill.textContent = "App instalable";
     });
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
       installBtn.classList.add("hidden");
-      pill.textContent = "Instalada ✅";
+      pill.textContent = "App instalada";
     });
 
     installBtn.addEventListener("click", async () => {
