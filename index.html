@@ -755,6 +755,8 @@
     const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact-pwa-acceso";
     const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
     const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
+    const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
+    const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
 
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -805,7 +807,9 @@
     let activeMemberId = null;
     let activeContactMemberId = null;
     let activeContactLabel = "";
+    let activeConversationId = null;
     let msContacts = [];
+    let msMessages = [];
 
     function openUrl(url){
       if (isStandalone) {
@@ -879,15 +883,151 @@
       );
     }
 
-    function setMessageBoxForContact(label) {
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      try {
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (err) {
+        return "";
+      }
+    }
+
+    function renderMessages(messages) {
+      msMessages = Array.isArray(messages) ? messages : [];
+
+      if (!msMessages.length) {
+        msMessageBox.innerHTML = `
+          <div class="msg">
+            No hay mensajes todavía con ${escapeHtml(activeContactLabel || "este contacto")}.
+          </div>
+          <div class="msg me">
+            Escribe un mensaje para continuar la conversación.
+          </div>
+        `;
+        return;
+      }
+
+      msMessageBox.innerHTML = msMessages.map((message) => {
+        const isMine = message.senderMemberId === activeMemberId;
+        const text = escapeHtml(message.text || message.message || "");
+        const time = formatDate(message.createdAt || message._createdDate);
+
+        return `
+          <div class="msg ${isMine ? "me" : ""}">
+            ${text || "(Mensaje sin texto)"}
+            ${time ? `<br><small>${time}</small>` : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function setMessageBoxLoading(label) {
       msMessageBox.innerHTML = `
         <div class="msg">
-          Conversación preparada con ${label}.
-        </div>
-        <div class="msg me">
-          Siguiente paso: cargar mensajes reales y enviar desde PWA.
+          Cargando conversación con ${escapeHtml(label)}...
         </div>
       `;
+    }
+
+    async function loadMSConversation(contactMemberId, label) {
+      if (!activeMemberId) {
+        msHint.textContent = "Falta memberId para cargar conversación.";
+        return;
+      }
+
+      if (!contactMemberId) {
+        msHint.textContent = "Selecciona un contacto.";
+        return;
+      }
+
+      activeConversationId = null;
+      activeContactMemberId = contactMemberId;
+      activeContactLabel = label || "Contacto";
+
+      activeConversationName.textContent = activeContactLabel;
+      activeConversationSub.textContent = "Cargando conversación...";
+      chatStatus.textContent = "Cargando";
+      msHint.textContent = "Cargando conversación...";
+      setMessageBoxLoading(activeContactLabel);
+
+      try {
+        const url = `${MS_CONVERSATION_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&contactMemberId=${encodeURIComponent(contactMemberId)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.ok || !data.conversation) {
+          throw new Error(data.error || "No se pudo cargar conversación.");
+        }
+
+        const conversation = data.conversation;
+        activeConversationId = conversation.conversationId;
+
+        activeConversationSub.textContent = activeConversationId
+          ? `Conversación ${shortId(activeConversationId)}`
+          : `ID ${shortId(contactMemberId)}`;
+
+        chatStatus.textContent = "Activa";
+        msHint.textContent = "Conversación activa. Cargando mensajes...";
+
+        await loadMSMessages(activeConversationId);
+
+      } catch (err) {
+        console.warn(err);
+        chatStatus.textContent = "Error";
+        activeConversationSub.textContent = "No se pudo cargar conversación";
+        msHint.textContent = err.message || "Error cargando conversación.";
+        msMessageBox.innerHTML = `
+          <div class="msg">
+            No se pudo cargar la conversación.
+          </div>
+        `;
+      }
+    }
+
+    async function loadMSMessages(conversationId) {
+      if (!conversationId) {
+        msHint.textContent = "Falta conversationId.";
+        return;
+      }
+
+      try {
+        const url = `${MS_MESSAGES_ENDPOINT}?conversationId=${encodeURIComponent(conversationId)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || "No se pudieron cargar mensajes.");
+        }
+
+        renderMessages(data.messages || []);
+
+        msHint.textContent = (data.messages || []).length
+          ? "Mensajes cargados."
+          : "No hay mensajes todavía.";
+
+      } catch (err) {
+        console.warn(err);
+        msHint.textContent = err.message || "Error cargando mensajes.";
+        msMessageBox.innerHTML = `
+          <div class="msg">
+            Error cargando mensajes.
+          </div>
+        `;
+      }
     }
 
     function resetMSSelect(message) {
@@ -973,30 +1113,31 @@
       }
     });
 
-    msConversationSelect.addEventListener("change", () => {
+    msConversationSelect.addEventListener("change", async () => {
       const contactMemberId = msConversationSelect.value;
 
       if (!contactMemberId) {
         activeContactMemberId = null;
         activeContactLabel = "";
+        activeConversationId = null;
+        msMessages = [];
+
         activeConversationName.textContent = "Sin conversación activa";
         activeConversationSub.textContent = "Selecciona un contacto";
         chatStatus.textContent = "Pendiente";
         msHint.textContent = "Selecciona un contacto.";
+        msMessageBox.innerHTML = `
+          <div class="msg">
+            Selecciona un contacto para preparar la conversación.
+          </div>
+        `;
         return;
       }
 
       const selectedIndex = msConversationSelect.selectedIndex;
       const selectedText = msConversationSelect.options[selectedIndex]?.textContent || "Contacto";
 
-      activeContactMemberId = contactMemberId;
-      activeContactLabel = selectedText;
-
-      activeConversationName.textContent = selectedText;
-      activeConversationSub.textContent = `ID ${shortId(contactMemberId)}`;
-      chatStatus.textContent = "Contacto seleccionado";
-      msHint.textContent = "Contacto seleccionado. Falta cargar conversación real.";
-      setMessageBoxForContact(selectedText);
+      await loadMSConversation(contactMemberId, selectedText);
     });
 
     msSendBtn.addEventListener("click", () => {
@@ -1008,15 +1149,22 @@
         return;
       }
 
+      if (!activeConversationId) {
+        msHint.textContent = "Primero carga la conversación.";
+        loadMSConversation(activeContactMemberId, activeContactLabel);
+        return;
+      }
+
       if (!value) {
         msHint.textContent = "Escribe un mensaje.";
         return;
       }
 
-      msHint.textContent = "Abriendo Gestión MS con el contacto y borrador.";
+      msHint.textContent = "Envío real pendiente. Abriendo Gestión MS con borrador.";
 
       openMS({
         section: "chat",
+        conversationId: activeConversationId,
         draft: value
       });
     });
