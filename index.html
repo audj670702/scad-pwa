@@ -807,7 +807,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.6</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.7</p>
           </div>
         </div>
 
@@ -997,8 +997,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.6-android-install-repair";
-    const APP_VERSION_SHORT = "v0.5.6";
+    const APP_VERSION = "PWA MS v0.5.7-android-install-restored";
+    const APP_VERSION_SHORT = "v0.5.7";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1096,14 +1096,10 @@
     const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
     const tileGestionContactos = document.getElementById("tileGestionContactos");
 
+
     let deferredPrompt = null;
 
-    function setInstallStatus(text) {
-      if (pill) pill.textContent = text;
-    }
-
     function showInstallButton(label = "Instalar") {
-      if (!installBtn) return;
       installBtn.textContent = label;
       installBtn.disabled = false;
       installBtn.classList.remove("hidden");
@@ -1111,30 +1107,34 @@
     }
 
     function hideInstallButton() {
-      if (!installBtn) return;
       installBtn.classList.add("hidden");
       installBtn.classList.remove("installPromptPulse");
       installBtn.disabled = false;
     }
 
-    function initPWAInstallUI() {
+    function initializePWAInstallUI() {
       if (isStandalone) {
-        setInstallStatus("App instalada");
+        pill.textContent = "App instalada";
         hideInstallButton();
+        if (helpVideo) helpVideo.classList.add("hidden");
         return;
       }
 
       if (isIOS) {
-        setInstallStatus(isSafari ? "iPhone · Tutorial" : "iPhone");
+        pill.textContent = isSafari ? "iPhone · Tutorial" : "iPhone";
         hideInstallButton();
-        if (helpVideo) helpVideo.href = IOS_TUTORIAL_URL;
+        if (helpVideo) {
+          helpVideo.href = IOS_TUTORIAL_URL;
+          helpVideo.classList.remove("hidden");
+        }
         return;
       }
 
-      // Android/Chrome: el botón solo se muestra cuando Chrome entregue beforeinstallprompt.
-      // Si se queda aquí, Chrome todavía no habilitó el instalador nativo.
-      setInstallStatus("Preparando instalación");
+      // Android/Chrome: el botón solo se activa cuando Chrome entrega beforeinstallprompt.
+      // Mantiene la experiencia original: cuando aparece, el toque abre el instalador nativo.
+      pill.textContent = "Instalación";
       hideInstallButton();
+      if (helpVideo) helpVideo.classList.add("hidden");
     }
 
     window.addEventListener("beforeinstallprompt", (e) => {
@@ -1143,73 +1143,46 @@
 
       if (isIOS || isStandalone) return;
 
+      pill.textContent = "Instalable";
       showInstallButton("Instalar");
-      setInstallStatus("App instalable");
-      console.log("SCaD PWA: beforeinstallprompt recibido");
     });
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
+      pill.textContent = "App instalada";
       hideInstallButton();
-      setInstallStatus("App instalada");
-      console.log("SCaD PWA: appinstalled recibido");
     });
 
     installBtn.addEventListener("click", async () => {
       if (isIOS) {
-        if (helpVideo) helpVideo.click();
+        openUrl(IOS_TUTORIAL_URL);
         return;
       }
 
-      if (!deferredPrompt) {
-        setInstallStatus("Preparando instalación");
-        hideInstallButton();
-        return;
-      }
+      if (!deferredPrompt) return;
 
       installBtn.disabled = true;
-      setInstallStatus("Abriendo instalación...");
 
       try {
         await deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
 
-        if (choice && choice.outcome === "accepted") {
-          setInstallStatus("Instalando...");
-          hideInstallButton();
-        } else {
-          setInstallStatus("App instalable");
+        if (choice && choice.outcome === "dismissed") {
+          installBtn.disabled = false;
+          pill.textContent = "Instalable";
           showInstallButton("Instalar");
+        } else {
+          pill.textContent = "Instalando...";
         }
       } catch (err) {
-        console.warn("SCaD PWA: error al abrir instalador:", err);
-        setInstallStatus("App instalable");
+        console.warn(err);
+        installBtn.disabled = false;
+        pill.textContent = "Instalable";
         showInstallButton("Instalar");
       } finally {
         deferredPrompt = null;
       }
     });
-
-    initPWAInstallUI();
-
-    if ("serviceWorker" in navigator) {
-      const registerSCaDSW = async () => {
-        try {
-          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v056", { scope: "/" });
-          if (registration && typeof registration.update === "function") {
-            registration.update();
-          }
-        } catch (e) {
-          console.warn("SW no registrado:", e);
-        }
-      };
-
-      if (document.readyState === "loading") {
-        window.addEventListener("load", registerSCaDSW);
-      } else {
-        registerSCaDSW();
-      }
-    }
 
     let activeMemberId = null;
     let activeContactMemberId = null;
@@ -2386,9 +2359,7 @@
       resourcesChevron.textContent = open ? "▴" : "▾";
     });
 
-    if (isStandalone || !isIOS) {
-      helpVideo.classList.add("hidden");
-    }
+    initializePWAInstallUI();
 
     if (versionPill) versionPill.textContent = APP_VERSION;
     if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
@@ -2400,6 +2371,17 @@
     loadMSContacts();
     startActiveChatAutoRefresh();
     startPendingAutoRefresh();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v057", { scope: "/" });
+          if (registration && registration.update) await registration.update();
+        } catch (e) {
+          console.warn("SW no registrado:", e);
+        }
+      });
+    }
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
