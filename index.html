@@ -781,12 +781,22 @@
           </div>
         </div>
 
-        <div class="topActions">
-          <span class="pill versionPill hidden" id="versionPill">v---</span>
-          <span class="statusText" id="pill">Estado</span>
-          <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
-          <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
-        </div>
+<div class="topActions">
+  <span class="pill versionPill hidden" id="versionPill">v---</span>
+  <span class="statusText" id="pill">Estado</span>
+
+  <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">
+    ⬇ Instalar
+  </button>
+
+  <button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
+    📱 Instalar en iPhone
+  </button>
+
+  <button class="btn btnGhost btnTop" id="enterBtn" type="button">
+    🌐 Entrar a SCaD →
+  </button>
+</div>
       </header>
 
       <section class="card msCard">
@@ -1012,10 +1022,11 @@
     const versionPill = document.getElementById("versionPill");
     const brandMeta = document.getElementById("brandMeta");
     const splashScreen = document.getElementById("splashScreen");
-    const pill = document.getElementById("pill");
-    const installBtn = document.getElementById("installBtn");
-    const enterBtn = document.getElementById("enterBtn");
-    const helpVideo = document.getElementById("helpVideo");
+const pill = document.getElementById("pill");
+const installBtn = document.getElementById("installBtn");
+const iosInstallBtn = document.getElementById("iosInstallBtn");
+const enterBtn = document.getElementById("enterBtn");
+const helpVideo = document.getElementById("helpVideo");
 
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
@@ -2070,6 +2081,10 @@
       openUrl(withFreshParam(URL_HOME, { target: "home" }));
     });
 
+    iosInstallBtn.addEventListener("click", () => {
+  openUrl(IOS_TUTORIAL_URL);
+});
+    
     linkSessionBtn.addEventListener("click", openPWAAccess);
 
     openMSBtn.addEventListener("click", () => toggleContactTools());
@@ -2241,21 +2256,24 @@
       resourcesChevron.textContent = open ? "▴" : "▾";
     });
 
-    if (isStandalone || !isIOS) {
-      helpVideo.classList.add("hidden");
-    }
+if (helpVideo) {
+  helpVideo.classList.add("hidden");
+  helpVideo.href = IOS_TUTORIAL_URL;
+}
 
-    if (isStandalone) {
-      pill.textContent = "App instalada";
-      installBtn.classList.add("hidden");
-    } else if (isIOS) {
-      pill.textContent = isSafari ? "iOS Safari" : "iOS";
-      installBtn.classList.add("hidden");
-      helpVideo.href = IOS_TUTORIAL_URL;
-    } else {
-      pill.textContent = "Web";
-      installBtn.classList.add("hidden");
-    }
+if (isStandalone) {
+  pill.textContent = "App instalada";
+  installBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
+} else if (isIOS) {
+  pill.textContent = isSafari ? "iOS Safari" : "iOS";
+  installBtn.classList.add("hidden");
+  iosInstallBtn.classList.remove("hidden");
+} else {
+  pill.textContent = "Web";
+  installBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
+}
 
     if (versionPill) versionPill.textContent = APP_VERSION;
     if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
@@ -2280,41 +2298,53 @@
 
     let deferredPrompt = null;
 
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
 
-      if (isIOS || isStandalone) return;
+  if (isIOS || isStandalone) return;
 
-      installBtn.classList.remove("hidden");
-      pill.textContent = "App instalable";
-    });
+  installBtn.disabled = false;
+  installBtn.classList.remove("hidden");
+  iosInstallBtn.classList.add("hidden");
+  pill.textContent = "App instalable";
+});
 
-    window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+  installBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
+  pill.textContent = "App instalada";
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) {
+    pill.textContent = "Instalación no disponible";
+    return;
+  }
+
+  installBtn.disabled = true;
+  pill.textContent = "Abriendo instalador...";
+
+  try {
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+
+    if (choice && choice.outcome === "accepted") {
+      pill.textContent = "Instalación iniciada";
       installBtn.classList.add("hidden");
-      pill.textContent = "App instalada";
-    });
-
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
-
-      installBtn.disabled = true;
-
-      try {
-        deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-
-        if (choice && choice.outcome === "dismissed") {
-          installBtn.disabled = false;
-        }
-      } catch (err) {
-        console.warn(err);
-        installBtn.disabled = false;
-      } finally {
-        deferredPrompt = null;
-      }
-    });
+    } else {
+      pill.textContent = "Instalación cancelada";
+      installBtn.disabled = false;
+    }
+  } catch (err) {
+    console.warn(err);
+    pill.textContent = "No se pudo instalar";
+    installBtn.disabled = false;
+  } finally {
+    deferredPrompt = null;
+  }
+});
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
