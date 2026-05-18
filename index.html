@@ -807,7 +807,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.7</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.8</p>
           </div>
         </div>
 
@@ -997,8 +997,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.7-android-install-restored";
-    const APP_VERSION_SHORT = "v0.5.7";
+    const APP_VERSION = "PWA MS v0.5.8-android-visible-install-button";
+    const APP_VERSION_SHORT = "v0.5.8";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1112,6 +1112,13 @@
       installBtn.disabled = false;
     }
 
+    function showInstallWaitingButton() {
+      installBtn.textContent = "Instalar App SCaD";
+      installBtn.disabled = true;
+      installBtn.classList.remove("hidden");
+      installBtn.classList.remove("installPromptPulse");
+    }
+
     function initializePWAInstallUI() {
       if (isStandalone) {
         pill.textContent = "App instalada";
@@ -1130,10 +1137,11 @@
         return;
       }
 
-      // Android/Chrome: el botón solo se activa cuando Chrome entrega beforeinstallprompt.
-      // Mantiene la experiencia original: cuando aparece, el toque abre el instalador nativo.
+      // Android/Chrome: mostramos el botón como en la experiencia original,
+      // pero queda deshabilitado hasta que Chrome entregue beforeinstallprompt.
+      // Cuando Chrome lo entrega, el botón se activa y abre el instalador nativo.
       pill.textContent = "Instalación";
-      hideInstallButton();
+      showInstallWaitingButton();
       if (helpVideo) helpVideo.classList.add("hidden");
     }
 
@@ -1144,7 +1152,7 @@
       if (isIOS || isStandalone) return;
 
       pill.textContent = "Instalable";
-      showInstallButton("Instalar");
+      showInstallButton("Instalar App SCaD");
     });
 
     window.addEventListener("appinstalled", () => {
@@ -1170,7 +1178,7 @@
         if (choice && choice.outcome === "dismissed") {
           installBtn.disabled = false;
           pill.textContent = "Instalable";
-          showInstallButton("Instalar");
+          showInstallButton("Instalar App SCaD");
         } else {
           pill.textContent = "Instalando...";
         }
@@ -1178,7 +1186,7 @@
         console.warn(err);
         installBtn.disabled = false;
         pill.textContent = "Instalable";
-        showInstallButton("Instalar");
+        showInstallButton("Instalar App SCaD");
       } finally {
         deferredPrompt = null;
       }
@@ -2375,7 +2383,7 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v057", { scope: "/" });
+          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v058", { scope: "/" });
           if (registration && registration.update) await registration.update();
         } catch (e) {
           console.warn("SW no registrado:", e);
