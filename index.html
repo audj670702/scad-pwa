@@ -2286,24 +2286,6 @@ if (isStandalone) {
       });
     }
 
-    let deferredPrompt = null;
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (isIOS || isStandalone) return;
-
-      installBtn.classList.remove("hidden");
-      pill.textContent = "App instalable";
-    });
-
-    window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
-      installBtn.classList.add("hidden");
-      pill.textContent = "App instalada";
-    });
-
 let deferredPrompt = null;
 
 // Si ya está instalada, ocultamos el bloque de instalación
