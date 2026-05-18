@@ -265,7 +265,6 @@
       font-size:12.5px;
     }
 
-
     .installPromptPulse{
       background:linear-gradient(180deg,#EF4444,#B91C1C);
       color:#fff;
@@ -808,7 +807,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.5</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.6</p>
           </div>
         </div>
 
@@ -998,8 +997,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.5-android-install-fix";
-    const APP_VERSION_SHORT = "v0.5.5";
+    const APP_VERSION = "PWA MS v0.5.6-android-install-repair";
+    const APP_VERSION_SHORT = "v0.5.6";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1096,6 +1095,121 @@
     const tilePDO = document.getElementById("tilePDO");
     const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
     const tileGestionContactos = document.getElementById("tileGestionContactos");
+
+    let deferredPrompt = null;
+
+    function setInstallStatus(text) {
+      if (pill) pill.textContent = text;
+    }
+
+    function showInstallButton(label = "Instalar") {
+      if (!installBtn) return;
+      installBtn.textContent = label;
+      installBtn.disabled = false;
+      installBtn.classList.remove("hidden");
+      installBtn.classList.add("installPromptPulse");
+    }
+
+    function hideInstallButton() {
+      if (!installBtn) return;
+      installBtn.classList.add("hidden");
+      installBtn.classList.remove("installPromptPulse");
+      installBtn.disabled = false;
+    }
+
+    function initPWAInstallUI() {
+      if (isStandalone) {
+        setInstallStatus("App instalada");
+        hideInstallButton();
+        return;
+      }
+
+      if (isIOS) {
+        setInstallStatus(isSafari ? "iPhone · Tutorial" : "iPhone");
+        hideInstallButton();
+        if (helpVideo) helpVideo.href = IOS_TUTORIAL_URL;
+        return;
+      }
+
+      // Android/Chrome: el botón solo se muestra cuando Chrome entregue beforeinstallprompt.
+      // Si se queda aquí, Chrome todavía no habilitó el instalador nativo.
+      setInstallStatus("Preparando instalación");
+      hideInstallButton();
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      if (isIOS || isStandalone) return;
+
+      showInstallButton("Instalar");
+      setInstallStatus("App instalable");
+      console.log("SCaD PWA: beforeinstallprompt recibido");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      hideInstallButton();
+      setInstallStatus("App instalada");
+      console.log("SCaD PWA: appinstalled recibido");
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (isIOS) {
+        if (helpVideo) helpVideo.click();
+        return;
+      }
+
+      if (!deferredPrompt) {
+        setInstallStatus("Preparando instalación");
+        hideInstallButton();
+        return;
+      }
+
+      installBtn.disabled = true;
+      setInstallStatus("Abriendo instalación...");
+
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+
+        if (choice && choice.outcome === "accepted") {
+          setInstallStatus("Instalando...");
+          hideInstallButton();
+        } else {
+          setInstallStatus("App instalable");
+          showInstallButton("Instalar");
+        }
+      } catch (err) {
+        console.warn("SCaD PWA: error al abrir instalador:", err);
+        setInstallStatus("App instalable");
+        showInstallButton("Instalar");
+      } finally {
+        deferredPrompt = null;
+      }
+    });
+
+    initPWAInstallUI();
+
+    if ("serviceWorker" in navigator) {
+      const registerSCaDSW = async () => {
+        try {
+          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v056", { scope: "/" });
+          if (registration && typeof registration.update === "function") {
+            registration.update();
+          }
+        } catch (e) {
+          console.warn("SW no registrado:", e);
+        }
+      };
+
+      if (document.readyState === "loading") {
+        window.addEventListener("load", registerSCaDSW);
+      } else {
+        registerSCaDSW();
+      }
+    }
 
     let activeMemberId = null;
     let activeContactMemberId = null;
@@ -2272,86 +2386,8 @@
       resourcesChevron.textContent = open ? "▴" : "▾";
     });
 
-    function showInstallButton(label = "Instalar") {
-      installBtn.textContent = label;
-      installBtn.disabled = false;
-      installBtn.classList.remove("hidden");
-      installBtn.classList.add("installPromptPulse");
-    }
-
-    function hideInstallButton() {
-      installBtn.classList.add("hidden");
-      installBtn.classList.remove("installPromptPulse");
-      installBtn.disabled = false;
-    }
-
-    let deferredPrompt = null;
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (isIOS || isStandalone) return;
-
-      showInstallButton("Instalar");
-      pill.textContent = "App instalable";
-    });
-
-    window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
-      hideInstallButton();
-      pill.textContent = "App instalada";
-    });
-
-    installBtn.addEventListener("click", async () => {
-      if (isIOS) {
-        openUrl(IOS_TUTORIAL_URL);
-        return;
-      }
-
-      if (!deferredPrompt) {
-        hideInstallButton();
-        pill.textContent = "Preparando instalación";
-        return;
-      }
-
-      installBtn.disabled = true;
-      pill.textContent = "Abriendo instalación...";
-
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-
-        if (choice && choice.outcome === "accepted") {
-          hideInstallButton();
-          pill.textContent = "Instalando...";
-        } else {
-          hideInstallButton();
-          pill.textContent = "Instalación cancelada";
-        }
-      } catch (err) {
-        console.warn(err);
-        hideInstallButton();
-        pill.textContent = "Error al instalar";
-      } finally {
-        deferredPrompt = null;
-      }
-    });
-
     if (isStandalone || !isIOS) {
       helpVideo.classList.add("hidden");
-    }
-
-    if (isStandalone) {
-      pill.textContent = "App instalada";
-      hideInstallButton();
-    } else if (isIOS) {
-      pill.textContent = isSafari ? "iPhone · Tutorial" : "iPhone";
-      hideInstallButton();
-      helpVideo.href = IOS_TUTORIAL_URL;
-    } else {
-      pill.textContent = "Preparando instalación";
-      hideInstallButton();
     }
 
     if (versionPill) versionPill.textContent = APP_VERSION;
@@ -2364,17 +2400,6 @@
     loadMSContacts();
     startActiveChatAutoRefresh();
     startPendingAutoRefresh();
-
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
-        try {
-          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-android-install-fix", { scope: "/" });
-          if (registration && registration.update) registration.update();
-        } catch (e) {
-          console.warn("SW no registrado:", e);
-        }
-      });
-    }
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
