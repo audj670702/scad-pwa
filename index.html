@@ -1019,6 +1019,53 @@ const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
 const helpVideo = document.getElementById("helpVideo");
 
+    let deferredPrompt = null;
+
+// --- Flujo de instalación PWA tomado del código original
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Evita el mini-infobar automático
+  e.preventDefault();
+
+  deferredPrompt = e;
+
+  if (isIOS || isStandalone) return;
+
+  installBtn.classList.remove("hidden");
+  pill.textContent = "App instalable";
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+
+  installBtn.disabled = true;
+
+  try {
+    deferredPrompt.prompt();
+
+    const choice = await deferredPrompt.userChoice;
+
+    // choice.outcome: 'accepted' | 'dismissed'
+    if (choice && choice.outcome === "accepted") {
+      pill.textContent = "Instalación iniciada. ✅";
+    } else {
+      pill.textContent = "Instalación cancelada. Puedes intentarlo después.";
+      installBtn.disabled = false;
+    }
+  } catch (err) {
+    console.warn(err);
+    pill.textContent = "No se pudo abrir el instalador en este navegador.";
+    installBtn.disabled = false;
+  } finally {
+    deferredPrompt = null;
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  pill.textContent = "SCaD instalada. ✅";
+  installBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
+});
+
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
     const msChevron = document.getElementById("msChevron");
@@ -2260,9 +2307,12 @@ if (isStandalone) {
   installBtn.classList.add("hidden");
   iosInstallBtn.classList.remove("hidden");
 } else {
-  pill.textContent = "Web";
-  installBtn.classList.add("hidden");
   iosInstallBtn.classList.add("hidden");
+
+  if (!deferredPrompt) {
+    pill.textContent = "Web";
+    installBtn.classList.add("hidden");
+  }
 }
 
     if (versionPill) versionPill.textContent = APP_VERSION;
@@ -2285,59 +2335,6 @@ if (isStandalone) {
         }
       });
     }
-
-let deferredPrompt = null;
-
-// Si ya está instalada, ocultamos el bloque de instalación
-if (isStandalone) {
-  pill.textContent = "App instalada";
-  installBtn.classList.add("hidden");
-  iosInstallBtn.classList.add("hidden");
-}
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  // Evita el mini-infobar automático
-  e.preventDefault();
-
-  deferredPrompt = e;
-
-  if (isIOS || isStandalone) return;
-
-  installBtn.classList.remove("hidden");
-  pill.textContent = "App instalable";
-});
-
-installBtn.addEventListener("click", async () => {
-  if (!deferredPrompt) return;
-
-  installBtn.disabled = true;
-
-  try {
-    deferredPrompt.prompt();
-
-    const choice = await deferredPrompt.userChoice;
-
-    // choice.outcome: 'accepted' | 'dismissed'
-    if (choice && choice.outcome === "accepted") {
-      pill.textContent = "Instalación iniciada. ✅";
-    } else {
-      pill.textContent = "Instalación cancelada. Puedes intentarlo después.";
-      installBtn.disabled = false;
-    }
-  } catch (err) {
-    console.warn(err);
-    pill.textContent = "No se pudo abrir el instalador en este navegador.";
-    installBtn.disabled = false;
-  } finally {
-    deferredPrompt = null;
-  }
-});
-
-window.addEventListener("appinstalled", () => {
-  pill.textContent = "SCaD instalada. ✅";
-  installBtn.classList.add("hidden");
-  iosInstallBtn.classList.add("hidden");
-});
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
