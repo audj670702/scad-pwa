@@ -2,9 +2,10 @@
   "name": "SCaD",
   "short_name": "SCaD",
   "description": "Acceso rápido a SCaD. Instala la app y entra a la plataforma.",
-"start_url": "/?v=20260424",
+  "start_url": "/?v=20260518",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#111111",
   "theme_color": "#111111",
   "icons": [
