@@ -807,7 +807,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.8</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.6.0</p>
           </div>
         </div>
 
@@ -997,8 +997,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.8-android-visible-install-button";
-    const APP_VERSION_SHORT = "v0.5.8";
+    const APP_VERSION = "PWA MS v0.6.0-android-install-final";
+    const APP_VERSION_SHORT = "v0.6.0";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1046,6 +1046,73 @@
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
     const helpVideo = document.getElementById("helpVideo");
+
+    // --- Instalación PWA Android/Chrome: flujo funcional original + actualización segura
+    let deferredPrompt = null;
+
+    function hideInstallAction() {
+      installBtn.classList.add("hidden");
+      installBtn.classList.remove("installPromptPulse");
+      installBtn.disabled = true;
+    }
+
+    function showInstallAction() {
+      installBtn.textContent = "Instalar App SCaD";
+      installBtn.disabled = false;
+      installBtn.classList.remove("hidden");
+      installBtn.classList.add("installPromptPulse");
+    }
+
+    function setInstalledState() {
+      deferredPrompt = null;
+      pill.textContent = "App instalada";
+      hideInstallAction();
+    }
+
+    function setAndroidWaitingState() {
+      pill.textContent = "Instalación";
+      hideInstallAction();
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      if (isIOS || isStandalone) return;
+
+      pill.textContent = "Instalable ✅";
+      showInstallAction();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      setInstalledState();
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (isIOS || isStandalone) return;
+      if (!deferredPrompt) return;
+
+      installBtn.disabled = true;
+
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+
+        if (choice && choice.outcome === "dismissed") {
+          installBtn.disabled = false;
+          pill.textContent = "Instalable ✅";
+          return;
+        }
+
+        pill.textContent = "Instalando...";
+      } catch (err) {
+        console.warn("Instalador PWA no abierto:", err);
+        installBtn.disabled = false;
+        pill.textContent = "Instalable ✅";
+      } finally {
+        deferredPrompt = null;
+      }
+    });
 
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
@@ -1095,102 +1162,6 @@
     const tilePDO = document.getElementById("tilePDO");
     const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
     const tileGestionContactos = document.getElementById("tileGestionContactos");
-
-
-    let deferredPrompt = null;
-
-    function showInstallButton(label = "Instalar") {
-      installBtn.textContent = label;
-      installBtn.disabled = false;
-      installBtn.classList.remove("hidden");
-      installBtn.classList.add("installPromptPulse");
-    }
-
-    function hideInstallButton() {
-      installBtn.classList.add("hidden");
-      installBtn.classList.remove("installPromptPulse");
-      installBtn.disabled = false;
-    }
-
-    function showInstallWaitingButton() {
-      installBtn.textContent = "Instalar App SCaD";
-      installBtn.disabled = true;
-      installBtn.classList.remove("hidden");
-      installBtn.classList.remove("installPromptPulse");
-    }
-
-    function initializePWAInstallUI() {
-      if (isStandalone) {
-        pill.textContent = "App instalada";
-        hideInstallButton();
-        if (helpVideo) helpVideo.classList.add("hidden");
-        return;
-      }
-
-      if (isIOS) {
-        pill.textContent = isSafari ? "iPhone · Tutorial" : "iPhone";
-        hideInstallButton();
-        if (helpVideo) {
-          helpVideo.href = IOS_TUTORIAL_URL;
-          helpVideo.classList.remove("hidden");
-        }
-        return;
-      }
-
-      // Android/Chrome: mostramos el botón como en la experiencia original,
-      // pero queda deshabilitado hasta que Chrome entregue beforeinstallprompt.
-      // Cuando Chrome lo entrega, el botón se activa y abre el instalador nativo.
-      pill.textContent = "Instalación";
-      showInstallWaitingButton();
-      if (helpVideo) helpVideo.classList.add("hidden");
-    }
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (isIOS || isStandalone) return;
-
-      pill.textContent = "Instalable";
-      showInstallButton("Instalar App SCaD");
-    });
-
-    window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
-      pill.textContent = "App instalada";
-      hideInstallButton();
-    });
-
-    installBtn.addEventListener("click", async () => {
-      if (isIOS) {
-        openUrl(IOS_TUTORIAL_URL);
-        return;
-      }
-
-      if (!deferredPrompt) return;
-
-      installBtn.disabled = true;
-
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-
-        if (choice && choice.outcome === "dismissed") {
-          installBtn.disabled = false;
-          pill.textContent = "Instalable";
-          showInstallButton("Instalar App SCaD");
-        } else {
-          pill.textContent = "Instalando...";
-        }
-      } catch (err) {
-        console.warn(err);
-        installBtn.disabled = false;
-        pill.textContent = "Instalable";
-        showInstallButton("Instalar App SCaD");
-      } finally {
-        deferredPrompt = null;
-      }
-    });
 
     let activeMemberId = null;
     let activeContactMemberId = null;
@@ -2367,7 +2338,19 @@
       resourcesChevron.textContent = open ? "▴" : "▾";
     });
 
-    initializePWAInstallUI();
+    if (isStandalone || !isIOS) {
+      helpVideo.classList.add("hidden");
+    }
+
+    if (isStandalone) {
+      setInstalledState();
+    } else if (isIOS) {
+      pill.textContent = isSafari ? "iOS Safari" : "iOS";
+      hideInstallAction();
+      helpVideo.href = IOS_TUTORIAL_URL;
+    } else {
+      setAndroidWaitingState();
+    }
 
     if (versionPill) versionPill.textContent = APP_VERSION;
     if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
@@ -2383,8 +2366,17 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v058", { scope: "/" });
-          if (registration && registration.update) await registration.update();
+          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v060", { scope: "/" });
+          await registration.update();
+          await navigator.serviceWorker.ready;
+
+          // En primera carga después de actualizar SW, recargar una sola vez para que la página quede controlada.
+          // Esto ayuda a que Chrome evalúe la PWA como instalable y dispare beforeinstallprompt.
+          const reloadKey = "scad_sw_controlled_v060";
+          if (!navigator.serviceWorker.controller && !sessionStorage.getItem(reloadKey)) {
+            sessionStorage.setItem(reloadKey, "1");
+            window.location.reload();
+          }
         } catch (e) {
           console.warn("SW no registrado:", e);
         }
