@@ -310,6 +310,21 @@
 
     .hidden{ display:none!important; }
 
+    .installNote{
+  font-size:11px;
+  color:rgba(15,23,42,.50);
+  font-weight:650;
+  line-height:1.2;
+  animation:installNotePulse 1.4s ease-in-out infinite;
+  white-space:normal;
+  max-width:150px;
+  text-align:right;
+}
+
+@keyframes installNotePulse{
+  0%,100%{ opacity:.45; }
+  50%{ opacity:1; }
+}
     .card{
       background:var(--card);
       border:1px solid var(--border);
@@ -785,7 +800,15 @@
 <span class="pill versionPill hidden" id="versionPill">v---</span>
 <span class="statusText" id="pill">Estado</span>
 <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
-<button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">Tutorial iOS</button>
+
+<span class="installNote hidden" id="installNote">
+  Instalando... puede tardar unos minutos.
+</span>
+
+<button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
+  Ver tutorial de instalación
+</button>
+
 <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
         </div>
       </header>
@@ -1015,6 +1038,7 @@
     const splashScreen = document.getElementById("splashScreen");
 const pill = document.getElementById("pill");
 const installBtn = document.getElementById("installBtn");
+const installNote = document.getElementById("installNote");
 const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
 const helpVideo = document.getElementById("helpVideo");
@@ -1044,28 +1068,40 @@ installBtn.addEventListener("click", async () => {
 
     const choice = await deferredPrompt.userChoice;
 
-    // choice.outcome: 'accepted' | 'dismissed'
     if (choice && choice.outcome === "accepted") {
-      pill.textContent = "Instalación iniciada. ✅";
+      pill.textContent = "Instalando...";
+      installBtn.classList.add("hidden");
+      installNote.classList.remove("hidden");
+
+      window.setTimeout(() => {
+        if (!isIOS) {
+          pill.textContent = "App instalada.";
+          installNote.classList.add("hidden");
+        }
+      }, 60000);
+
     } else {
-      pill.textContent = "Instalación cancelada. Puedes intentarlo después.";
+      pill.textContent = "Instalación cancelada.";
       installBtn.disabled = false;
+      installNote.classList.add("hidden");
     }
   } catch (err) {
     console.warn(err);
-    pill.textContent = "No se pudo abrir el instalador en este navegador.";
+    pill.textContent = "No se pudo abrir el instalador.";
     installBtn.disabled = false;
+    installNote.classList.add("hidden");
   } finally {
     deferredPrompt = null;
   }
 });
 
-window.addEventListener("appinstalled", () => {
+    window.addEventListener("appinstalled", () => {
   pill.textContent = "SCaD instalada. ✅";
   installBtn.classList.add("hidden");
   iosInstallBtn.classList.add("hidden");
+  installNote.classList.add("hidden");
 });
-
+    
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
     const msChevron = document.getElementById("msChevron");
@@ -2302,12 +2338,15 @@ if (isStandalone) {
   pill.textContent = "App instalada";
   installBtn.classList.add("hidden");
   iosInstallBtn.classList.add("hidden");
+  installNote.classList.add("hidden");
 } else if (isIOS) {
   pill.textContent = isSafari ? "iOS Safari" : "iOS";
   installBtn.classList.add("hidden");
+  installNote.classList.add("hidden");
   iosInstallBtn.classList.remove("hidden");
 } else {
   iosInstallBtn.classList.add("hidden");
+  installNote.classList.add("hidden");
 
   if (!deferredPrompt) {
     pill.textContent = "Web";
