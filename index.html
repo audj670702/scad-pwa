@@ -265,6 +265,37 @@
       font-size:12.5px;
     }
 
+
+    .installPromptPulse{
+      background:linear-gradient(180deg,#EF4444,#B91C1C);
+      color:#fff;
+      box-shadow:0 0 0 0 rgba(220,38,38,.34), 0 12px 24px rgba(220,38,38,.18);
+      animation:installPulse 1.55s ease-in-out infinite;
+      position:relative;
+    }
+
+    .installPromptPulse::after{
+      content:"";
+      position:absolute;
+      inset:-5px;
+      border-radius:999px;
+      border:1px solid rgba(220,38,38,.24);
+      opacity:.70;
+      animation:installRing 1.55s ease-in-out infinite;
+      pointer-events:none;
+    }
+
+    @keyframes installPulse{
+      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(220,38,38,.28), 0 12px 24px rgba(220,38,38,.16); }
+      50%{ transform:scale(1.035); box-shadow:0 0 0 8px rgba(220,38,38,.10), 0 14px 28px rgba(220,38,38,.22); }
+    }
+
+    @keyframes installRing{
+      0%{ transform:scale(.98); opacity:.62; }
+      70%{ transform:scale(1.13); opacity:.08; }
+      100%{ transform:scale(1.13); opacity:0; }
+    }
+
     .soundPrompt{
       color:#B91C1C;
       border-color:rgba(220,38,38,.24);
@@ -777,7 +808,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.5</p>
           </div>
         </div>
 
@@ -967,8 +998,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.4-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.5.4";
+    const APP_VERSION = "PWA MS v0.5.5-android-install-fix";
+    const APP_VERSION_SHORT = "v0.5.5";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -2241,20 +2272,86 @@
       resourcesChevron.textContent = open ? "▴" : "▾";
     });
 
+    function showInstallButton(label = "Instalar") {
+      installBtn.textContent = label;
+      installBtn.disabled = false;
+      installBtn.classList.remove("hidden");
+      installBtn.classList.add("installPromptPulse");
+    }
+
+    function hideInstallButton() {
+      installBtn.classList.add("hidden");
+      installBtn.classList.remove("installPromptPulse");
+      installBtn.disabled = false;
+    }
+
+    let deferredPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      if (isIOS || isStandalone) return;
+
+      showInstallButton("Instalar");
+      pill.textContent = "App instalable";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      hideInstallButton();
+      pill.textContent = "App instalada";
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (isIOS) {
+        openUrl(IOS_TUTORIAL_URL);
+        return;
+      }
+
+      if (!deferredPrompt) {
+        hideInstallButton();
+        pill.textContent = "Preparando instalación";
+        return;
+      }
+
+      installBtn.disabled = true;
+      pill.textContent = "Abriendo instalación...";
+
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+
+        if (choice && choice.outcome === "accepted") {
+          hideInstallButton();
+          pill.textContent = "Instalando...";
+        } else {
+          hideInstallButton();
+          pill.textContent = "Instalación cancelada";
+        }
+      } catch (err) {
+        console.warn(err);
+        hideInstallButton();
+        pill.textContent = "Error al instalar";
+      } finally {
+        deferredPrompt = null;
+      }
+    });
+
     if (isStandalone || !isIOS) {
       helpVideo.classList.add("hidden");
     }
 
     if (isStandalone) {
       pill.textContent = "App instalada";
-      installBtn.classList.add("hidden");
+      hideInstallButton();
     } else if (isIOS) {
-      pill.textContent = isSafari ? "iOS Safari" : "iOS";
-      installBtn.classList.add("hidden");
+      pill.textContent = isSafari ? "iPhone · Tutorial" : "iPhone";
+      hideInstallButton();
       helpVideo.href = IOS_TUTORIAL_URL;
     } else {
-      pill.textContent = "Web";
-      installBtn.classList.add("hidden");
+      pill.textContent = "Preparando instalación";
+      hideInstallButton();
     }
 
     if (versionPill) versionPill.textContent = APP_VERSION;
@@ -2271,50 +2368,13 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-android-install-fix", { scope: "/" });
+          if (registration && registration.update) registration.update();
         } catch (e) {
           console.warn("SW no registrado:", e);
         }
       });
     }
-
-    let deferredPrompt = null;
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (isIOS || isStandalone) return;
-
-      installBtn.classList.remove("hidden");
-      pill.textContent = "App instalable";
-    });
-
-    window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
-      installBtn.classList.add("hidden");
-      pill.textContent = "App instalada";
-    });
-
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) return;
-
-      installBtn.disabled = true;
-
-      try {
-        deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-
-        if (choice && choice.outcome === "dismissed") {
-          installBtn.disabled = false;
-        }
-      } catch (err) {
-        console.warn(err);
-        installBtn.disabled = false;
-      } finally {
-        deferredPrompt = null;
-      }
-    });
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
