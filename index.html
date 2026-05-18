@@ -781,22 +781,13 @@
           </div>
         </div>
 
-<div class="topActions">
-  <span class="pill versionPill hidden" id="versionPill">v---</span>
-  <span class="statusText" id="pill">Estado</span>
-
-  <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">
-    ⬇ Instalar
-  </button>
-
-  <button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
-    📱 Instalar en iPhone
-  </button>
-
-  <button class="btn btnGhost btnTop" id="enterBtn" type="button">
-    🌐 Entrar a SCaD →
-  </button>
-</div>
+        <div class="topActions">
+          <span class="pill versionPill hidden" id="versionPill">v---</span>
+          <span class="statusText" id="pill">Estado</span>
+<button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
+<button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">Tutorial iOS</button>
+<button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
+        </div>
       </header>
 
       <section class="card msCard">
@@ -1022,7 +1013,7 @@
     const versionPill = document.getElementById("versionPill");
     const brandMeta = document.getElementById("brandMeta");
     const splashScreen = document.getElementById("splashScreen");
-const pill = document.getElementById("pill");
+    const pill = document.getElementById("pill");
 const installBtn = document.getElementById("installBtn");
 const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
@@ -2084,7 +2075,6 @@ const helpVideo = document.getElementById("helpVideo");
     iosInstallBtn.addEventListener("click", () => {
   openUrl(IOS_TUTORIAL_URL);
 });
-    
     linkSessionBtn.addEventListener("click", openPWAAccess);
 
     openMSBtn.addEventListener("click", () => toggleContactTools());
@@ -2298,52 +2288,73 @@ if (isStandalone) {
 
     let deferredPrompt = null;
 
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      if (isIOS || isStandalone) return;
+
+      installBtn.classList.remove("hidden");
+      pill.textContent = "App instalable";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      installBtn.classList.add("hidden");
+      pill.textContent = "App instalada";
+    });
+
+let deferredPrompt = null;
+
+// Si ya está instalada, ocultamos el bloque de instalación
+if (isStandalone) {
+  pill.textContent = "App instalada";
+  installBtn.classList.add("hidden");
+  if (iosInstallBtn) iosInstallBtn.classList.add("hidden");
+}
+
 window.addEventListener("beforeinstallprompt", (e) => {
+  // Evita el mini-infobar automático
   e.preventDefault();
+
   deferredPrompt = e;
 
   if (isIOS || isStandalone) return;
 
-  installBtn.disabled = false;
   installBtn.classList.remove("hidden");
-  iosInstallBtn.classList.add("hidden");
   pill.textContent = "App instalable";
 });
 
-window.addEventListener("appinstalled", () => {
-  deferredPrompt = null;
-  installBtn.classList.add("hidden");
-  iosInstallBtn.classList.add("hidden");
-  pill.textContent = "App instalada";
-});
-
 installBtn.addEventListener("click", async () => {
-  if (!deferredPrompt) {
-    pill.textContent = "Instalación no disponible";
-    return;
-  }
+  if (!deferredPrompt) return;
 
   installBtn.disabled = true;
-  pill.textContent = "Abriendo instalador...";
 
   try {
     deferredPrompt.prompt();
+
     const choice = await deferredPrompt.userChoice;
 
+    // choice.outcome: 'accepted' | 'dismissed'
     if (choice && choice.outcome === "accepted") {
-      pill.textContent = "Instalación iniciada";
-      installBtn.classList.add("hidden");
+      pill.textContent = "Instalación iniciada. ✅";
     } else {
-      pill.textContent = "Instalación cancelada";
+      pill.textContent = "Instalación cancelada. Puedes intentarlo después.";
       installBtn.disabled = false;
     }
   } catch (err) {
     console.warn(err);
-    pill.textContent = "No se pudo instalar";
+    pill.textContent = "No se pudo abrir el instalador en este navegador.";
     installBtn.disabled = false;
   } finally {
     deferredPrompt = null;
   }
+});
+
+window.addEventListener("appinstalled", () => {
+  pill.textContent = "SCaD instalada. ✅";
+  installBtn.classList.add("hidden");
+  if (iosInstallBtn) iosInstallBtn.classList.add("hidden");
 });
 
     document.querySelectorAll(".quickLink").forEach(el => {
@@ -2351,6 +2362,7 @@ installBtn.addEventListener("click", async () => {
         if (e.key === "Enter" || e.key === " ") el.click();
       });
     });
+    
   </script>
 </body>
 </html>
