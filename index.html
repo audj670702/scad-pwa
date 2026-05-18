@@ -265,36 +265,6 @@
       font-size:12.5px;
     }
 
-    .installPromptPulse{
-      background:linear-gradient(180deg,#EF4444,#B91C1C);
-      color:#fff;
-      box-shadow:0 0 0 0 rgba(220,38,38,.34), 0 12px 24px rgba(220,38,38,.18);
-      animation:installPulse 1.55s ease-in-out infinite;
-      position:relative;
-    }
-
-    .installPromptPulse::after{
-      content:"";
-      position:absolute;
-      inset:-5px;
-      border-radius:999px;
-      border:1px solid rgba(220,38,38,.24);
-      opacity:.70;
-      animation:installRing 1.55s ease-in-out infinite;
-      pointer-events:none;
-    }
-
-    @keyframes installPulse{
-      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(220,38,38,.28), 0 12px 24px rgba(220,38,38,.16); }
-      50%{ transform:scale(1.035); box-shadow:0 0 0 8px rgba(220,38,38,.10), 0 14px 28px rgba(220,38,38,.22); }
-    }
-
-    @keyframes installRing{
-      0%{ transform:scale(.98); opacity:.62; }
-      70%{ transform:scale(1.13); opacity:.08; }
-      100%{ transform:scale(1.13); opacity:0; }
-    }
-
     .soundPrompt{
       color:#B91C1C;
       border-color:rgba(220,38,38,.24);
@@ -807,7 +777,7 @@
           </div>
           <div class="brandText">
             <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.6.0</p>
+            <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
           </div>
         </div>
 
@@ -997,8 +967,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.6.0-android-install-final";
-    const APP_VERSION_SHORT = "v0.6.0";
+    const APP_VERSION = "PWA MS v0.5.4-busqueda-codigo";
+    const APP_VERSION_SHORT = "v0.5.4";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1046,73 +1016,6 @@
     const installBtn = document.getElementById("installBtn");
     const enterBtn = document.getElementById("enterBtn");
     const helpVideo = document.getElementById("helpVideo");
-
-    // --- Instalación PWA Android/Chrome: flujo funcional original + actualización segura
-    let deferredPrompt = null;
-
-    function hideInstallAction() {
-      installBtn.classList.add("hidden");
-      installBtn.classList.remove("installPromptPulse");
-      installBtn.disabled = true;
-    }
-
-    function showInstallAction() {
-      installBtn.textContent = "Instalar App SCaD";
-      installBtn.disabled = false;
-      installBtn.classList.remove("hidden");
-      installBtn.classList.add("installPromptPulse");
-    }
-
-    function setInstalledState() {
-      deferredPrompt = null;
-      pill.textContent = "App instalada";
-      hideInstallAction();
-    }
-
-    function setAndroidWaitingState() {
-      pill.textContent = "Instalación";
-      hideInstallAction();
-    }
-
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
-      if (isIOS || isStandalone) return;
-
-      pill.textContent = "Instalable ✅";
-      showInstallAction();
-    });
-
-    window.addEventListener("appinstalled", () => {
-      setInstalledState();
-    });
-
-    installBtn.addEventListener("click", async () => {
-      if (isIOS || isStandalone) return;
-      if (!deferredPrompt) return;
-
-      installBtn.disabled = true;
-
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-
-        if (choice && choice.outcome === "dismissed") {
-          installBtn.disabled = false;
-          pill.textContent = "Instalable ✅";
-          return;
-        }
-
-        pill.textContent = "Instalando...";
-      } catch (err) {
-        console.warn("Instalador PWA no abierto:", err);
-        installBtn.disabled = false;
-        pill.textContent = "Instalable ✅";
-      } finally {
-        deferredPrompt = null;
-      }
-    });
 
     const msToggle = document.getElementById("msToggle");
     const msPanel = document.getElementById("msPanel");
@@ -2343,13 +2246,15 @@
     }
 
     if (isStandalone) {
-      setInstalledState();
+      pill.textContent = "App instalada";
+      installBtn.classList.add("hidden");
     } else if (isIOS) {
       pill.textContent = isSafari ? "iOS Safari" : "iOS";
-      hideInstallAction();
+      installBtn.classList.add("hidden");
       helpVideo.href = IOS_TUTORIAL_URL;
     } else {
-      setAndroidWaitingState();
+      pill.textContent = "Web";
+      installBtn.classList.add("hidden");
     }
 
     if (versionPill) versionPill.textContent = APP_VERSION;
@@ -2366,22 +2271,50 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("/sw.js?v=20260518-v060", { scope: "/" });
-          await registration.update();
-          await navigator.serviceWorker.ready;
-
-          // En primera carga después de actualizar SW, recargar una sola vez para que la página quede controlada.
-          // Esto ayuda a que Chrome evalúe la PWA como instalable y dispare beforeinstallprompt.
-          const reloadKey = "scad_sw_controlled_v060";
-          if (!navigator.serviceWorker.controller && !sessionStorage.getItem(reloadKey)) {
-            sessionStorage.setItem(reloadKey, "1");
-            window.location.reload();
-          }
+          await navigator.serviceWorker.register("/sw.js", { scope: "/" });
         } catch (e) {
           console.warn("SW no registrado:", e);
         }
       });
     }
+
+    let deferredPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      if (isIOS || isStandalone) return;
+
+      installBtn.classList.remove("hidden");
+      pill.textContent = "App instalable";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      installBtn.classList.add("hidden");
+      pill.textContent = "App instalada";
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+
+      installBtn.disabled = true;
+
+      try {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+
+        if (choice && choice.outcome === "dismissed") {
+          installBtn.disabled = false;
+        }
+      } catch (err) {
+        console.warn(err);
+        installBtn.disabled = false;
+      } finally {
+        deferredPrompt = null;
+      }
+    });
 
     document.querySelectorAll(".quickLink").forEach(el => {
       el.addEventListener("keydown", (e) => {
