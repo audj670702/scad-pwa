@@ -782,8 +782,8 @@
         </div>
 
         <div class="topActions">
-          <span class="pill versionPill hidden" id="versionPill">v---</span>
-          <span class="statusText" id="pill">Estado</span>
+<span class="pill versionPill hidden" id="versionPill">v---</span>
+<span class="statusText" id="pill">Estado</span>
 <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
 <button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">Tutorial iOS</button>
 <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
@@ -968,8 +968,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.5.5-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.5.5";
+    const APP_VERSION = "PWA MS v0.5.6-busqueda-codigo";
+    const APP_VERSION_SHORT = "v0.5.6";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1013,7 +1013,7 @@
     const versionPill = document.getElementById("versionPill");
     const brandMeta = document.getElementById("brandMeta");
     const splashScreen = document.getElementById("splashScreen");
-    const pill = document.getElementById("pill");
+const pill = document.getElementById("pill");
 const installBtn = document.getElementById("installBtn");
 const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
@@ -2292,7 +2292,7 @@ let deferredPrompt = null;
 if (isStandalone) {
   pill.textContent = "App instalada";
   installBtn.classList.add("hidden");
-  if (iosInstallBtn) iosInstallBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
 }
 
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -2336,7 +2336,7 @@ installBtn.addEventListener("click", async () => {
 window.addEventListener("appinstalled", () => {
   pill.textContent = "SCaD instalada. ✅";
   installBtn.classList.add("hidden");
-  if (iosInstallBtn) iosInstallBtn.classList.add("hidden");
+  iosInstallBtn.classList.add("hidden");
 });
 
     document.querySelectorAll(".quickLink").forEach(el => {
@@ -2344,7 +2344,6 @@ window.addEventListener("appinstalled", () => {
         if (e.key === "Enter" || e.key === " ") el.click();
       });
     });
-    
   </script>
 </body>
 </html>
