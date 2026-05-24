@@ -1837,22 +1837,35 @@ async function sendContactRequest() {
 
     const targetMemberId = data.contactMemberId || selectedSearchMember.memberId;
     const label = selectedSearchMember.displayName || "Usuario SCaD";
+    const conversation = data.conversation || null;
 
-    const message = err.message || "Por el momento no es posible iniciar conversación con este usuario.";
+    contactSearchResult.innerHTML = `
+      <div class="hint">
+        Conversación iniciada. Ya puedes enviar un mensaje.
+      </div>
+    `;
 
-contactSearchResult.innerHTML = `
-  <div class="hint">
-    ${escapeHtml(message)}
-  </div>
-`;
-
-msHint.textContent = message;
     contactSearchInput.value = "";
-
     selectedSearchMember = null;
 
-    await loadMSContacts();
+    activeContactMemberId = targetMemberId;
+    activeContactLabel = label;
 
+    if (conversation && conversation.conversationId) {
+      activeConversationId = conversation.conversationId;
+      activeConversationName.textContent = `Chat activo: ${activeContactLabel}`;
+      chatStatus.textContent = "Activa";
+      msHint.textContent = "Conversación iniciada. Escribe tu mensaje.";
+
+      await loadMSMessages(activeConversationId, { allowNotify: false });
+      await loadMSContacts();
+      msContactSelect.value = targetMemberId;
+
+      toggleContactTools(false);
+      return;
+    }
+
+    await loadMSContacts();
     msContactSelect.value = targetMemberId;
     await loadMSConversation(targetMemberId, label);
 
@@ -1860,7 +1873,17 @@ msHint.textContent = message;
 
   } catch (err) {
     console.warn(err);
-    contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "No se pudo iniciar el chat.")}</div>`;
+
+    const message = err.message || "Por el momento no es posible iniciar conversación con este usuario.";
+
+    contactSearchResult.innerHTML = `
+      <div class="hint">
+        ${escapeHtml(message)}
+      </div>
+    `;
+
+    msHint.textContent = message;
+
   } finally {
     if (btn) {
       btn.disabled = false;
