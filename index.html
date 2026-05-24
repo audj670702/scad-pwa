@@ -2333,7 +2333,11 @@ async function sendContactRequest() {
 
     tilePDE.addEventListener("click", () => openUrl(URL_PDE));
     tilePDO.addEventListener("click", () => openUrl(URL_PDO));
-    tileGestionContactos.addEventListener("click", () => openUrl(URL_PANEL_MS));
+ if (tileGestionContactos) {
+  tileGestionContactos.classList.add("hidden");
+  tileGestionContactos.setAttribute("aria-hidden", "true");
+  tileGestionContactos.removeAttribute("tabindex");
+}
 
     tileDespachoFiscal.addEventListener("click", () => {
       openUrl(withFreshParam(URL_DESPACHO_FISCAL, {
