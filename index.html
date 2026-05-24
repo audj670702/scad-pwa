@@ -886,9 +886,9 @@
               <div class="msToolsPanel hidden" id="contactToolsPanel">
                 <div class="myCodeLine">Mi código de contacto: <strong id="myContactCode">Cargando...</strong></div>
                 <div class="toolGroup">
-                  <div class="toolGroupTitle">Agregar contacto</div>
+                  <div class="toolGroupTitle">Buscar usuario</div>
                   <div class="toolRow">
-                    <input id="contactSearchInput" type="text" placeholder="Código o nombre..." autocomplete="off">
+                    <input id="contactSearchInput" type="text" placeholder="Nombre, correo o código..." autocomplete="off">
                     <button class="btn btnPrimary btnSmall" id="contactSearchBtn" type="button">Buscar</button>
                   </div>
                   <div class="toolResult" id="contactSearchResult"></div>
@@ -896,7 +896,7 @@
                 <hr class="toolDivider">
                 <div class="toolGroup">
                   <div class="toolRow">
-                    <div class="toolGroupTitle" style="flex:1;">Solicitudes recibidas</div>
+                    <div class="toolGroupTitle" style="flex:1;">Activar anterior</div>
                     <button class="btn btnGhost btnSmall" id="refreshRequestsBtn" type="button">Actualizar</button>
                   </div>
                   <div class="requestList" id="incomingRequestsList"><div class="hint">Sin solicitudes pendientes.</div></div>
@@ -979,10 +979,6 @@
           <span>Despacho Fiscal</span>
         </div>
 
-        <div class="quickLink" id="tileGestionContactos" role="button" tabindex="0">
-          <span class="quickIcon">👥</span>
-          <span>Gestión de contactos</span>
-        </div>
       </section>
 
       <a class="hidden" id="helpVideo" href="https://app.scad.mx/tutorial-ios/" target="_blank" rel="noopener noreferrer">Tutorial iOS</a>
@@ -1798,7 +1794,7 @@ installBtn.addEventListener("click", async () => {
               <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
               <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.memberId || "")}</span>
             </div>
-            <div class="miniCardActions"><button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Enviar solicitud</button></div>
+            <div class="miniCardActions"><button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">iniciar solicitud</button></div>
           </div>`;
         document.getElementById("sendRequestBtn").addEventListener("click", sendContactRequest);
       } catch (err) {
@@ -1809,22 +1805,47 @@ installBtn.addEventListener("click", async () => {
       }
     }
 
-    async function sendContactRequest() {
-      if (!selectedSearchMember?.memberId) return;
-      const btn = document.getElementById("sendRequestBtn");
-      if (btn) btn.disabled = true;
-      try {
-        const data = await postJson(MS_SEND_REQUEST_ENDPOINT, { memberId: activeMemberId, toMemberId: selectedSearchMember.memberId });
-        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(data.message || "Solicitud enviada.")}</div>`;
-        contactSearchInput.value = "";
-        selectedSearchMember = null;
-      } catch (err) {
-        console.warn(err);
-        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "No se pudo enviar solicitud.")}</div>`;
-      } finally {
-        if (btn) btn.disabled = false;
-      }
+async function sendContactRequest() {
+  if (!selectedSearchMember?.memberId) return;
+
+  const btn = document.getElementById("sendRequestBtn");
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Abriendo chat...";
+  }
+
+  try {
+    const data = await postJson(MS_SEND_REQUEST_ENDPOINT, {
+      memberId: activeMemberId,
+      toMemberId: selectedSearchMember.memberId
+    });
+
+    const targetMemberId = data.contactMemberId || selectedSearchMember.memberId;
+    const label = selectedSearchMember.displayName || "Usuario SCaD";
+
+    contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(data.message || "Conversación iniciada.")}</div>`;
+    contactSearchInput.value = "";
+
+    selectedSearchMember = null;
+
+    await loadMSContacts();
+
+    msContactSelect.value = targetMemberId;
+    await loadMSConversation(targetMemberId, label);
+
+    toggleContactTools(false);
+
+  } catch (err) {
+    console.warn(err);
+    contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "No se pudo iniciar el chat.")}</div>`;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Iniciar chat";
     }
+  }
+}
 
     async function acceptIncomingRequest(requestItemId, requestId) {
       try {
