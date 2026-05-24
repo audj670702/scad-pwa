@@ -1786,16 +1786,30 @@ installBtn.addEventListener("click", async () => {
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || "No se pudo buscar contacto.");
         const user = data.user || (Array.isArray(data.users) ? data.users[0] : null);
-        if (!user) { contactSearchResult.innerHTML = `<div class="hint">No se encontró ningún usuario.</div>`; return; }
+        if (!user) {
+  contactSearchResult.innerHTML = `
+    <div class="hint">
+      <strong>Contacto no disponible en Mensajería SCaD.</strong>
+      <br>
+      El usuario requiere entrar primero a la App SCaD para activar su mensajería.
+    </div>
+  `;
+  return;
+}
         selectedSearchMember = user;
-        contactSearchResult.innerHTML = `
+
+contactSearchResult.innerHTML = `
           <div class="miniCard">
             <div class="miniCardText">
               <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
-              <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.memberId || "")}</span>
+              <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.email || user.memberId || "")}</span>
+              <span>Disponible en Mensajería SCaD.</span>
             </div>
-            <div class="miniCardActions"><button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">iniciar solicitud</button></div>
+            <div class="miniCardActions">
+              <button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Iniciar chat</button>
+            </div>
           </div>`;
+        
         document.getElementById("sendRequestBtn").addEventListener("click", sendContactRequest);
       } catch (err) {
         console.warn(err);
@@ -1824,7 +1838,15 @@ async function sendContactRequest() {
     const targetMemberId = data.contactMemberId || selectedSearchMember.memberId;
     const label = selectedSearchMember.displayName || "Usuario SCaD";
 
-    contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(data.message || "Conversación iniciada.")}</div>`;
+    const message = err.message || "Por el momento no es posible iniciar conversación con este usuario.";
+
+contactSearchResult.innerHTML = `
+  <div class="hint">
+    ${escapeHtml(message)}
+  </div>
+`;
+
+msHint.textContent = message;
     contactSearchInput.value = "";
 
     selectedSearchMember = null;
@@ -2270,15 +2292,21 @@ async function sendContactRequest() {
         }
 
         msInput.value = "";
-        msHint.textContent = "Mensaje enviado.";
+        msHint.textContent = "Mensaje enviado. En espera de respuesta.";
+chatStatus.textContent = "En espera de respuesta";
         await loadMSMessages(activeConversationId, { allowNotify: false });
 
-      } catch (err) {
-        console.warn(err);
-        msHint.textContent = err.message || "Error enviando mensaje.";
-      } finally {
-        msSendBtn.disabled = false;
-      }
+} catch (err) {
+  console.warn(err);
+
+  const message = err.message || "No fue posible enviar el mensaje.";
+
+  msHint.textContent = message;
+  chatStatus.textContent = "No disponible";
+
+} finally {
+  msSendBtn.disabled = false;
+}
     });
 
     msInput.addEventListener("keydown", (e) => {
