@@ -898,7 +898,9 @@
 <div class="toolGroup">
   <div class="toolGroupTitle">Opciones del chat activo</div>
   <div class="msActions">
-    <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Eliminar conversación</button>
+    <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Vaciar chat</button>
+    <button class="btn btnGhost btnSmall dangerBtn" id="removeContactBtn" type="button">Eliminar contacto</button>
+    <button class="btn btnGhost btnSmall dangerBtn" id="blockContactBtn" type="button">Bloquear usuario</button>
   </div>
 </div>
               </div>
@@ -979,8 +981,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.6.1-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.6.1";
+    const APP_VERSION = "PWA MS v0.6.2-busqueda-codigo";
+    const APP_VERSION_SHORT = "v0.6.2";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1010,8 +1012,9 @@
     const MS_ACCEPT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msacceptrequest";
     const MS_REJECT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msrejectrequest";
     const MS_REMOVE_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msremovecontact";
-    const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
-    const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
+const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
+const MS_BLOCK_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msblockcontact";
+const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -1116,8 +1119,9 @@ installBtn.addEventListener("click", async () => {
     const contactSearchResult = document.getElementById("contactSearchResult");
     const refreshRequestsBtn = null;
     const incomingRequestsList = null;
-    const removeContactBtn = null;
-    const deleteConversationBtn = document.getElementById("deleteConversationBtn");
+const removeContactBtn = document.getElementById("removeContactBtn");
+const blockContactBtn = document.getElementById("blockContactBtn");
+const deleteConversationBtn = document.getElementById("deleteConversationBtn");
     const activeConversationName = document.getElementById("activeConversationName");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
@@ -1809,24 +1813,50 @@ async function sendContactRequest() {
       msPendingSelect.value = "";
     }
 
-    async function deleteActiveConversation() {
-      if (!activeConversationId) { msHint.textContent = "Selecciona una conversación primero."; return; }
-      if (!window.confirm("¿Eliminar la conversación activa? Esta acción ocultará sus mensajes.")) return;
-      deleteConversationBtn.disabled = true;
-      msHint.textContent = "Eliminando conversación...";
-      try {
-        await postJson(MS_DELETE_CONVERSATION_ENDPOINT, { memberId: activeMemberId, conversationId: activeConversationId });
-        resetActiveChat();
-        await loadMSPending({ silent: true });
-        msHint.textContent = "Conversación eliminada.";
-      } catch (err) {
-        console.warn(err);
-        msHint.textContent = err.message || "No se pudo eliminar conversación.";
-      } finally {
-        deleteConversationBtn.disabled = false;
-      }
+async function deleteActiveConversation() {
+  if (!activeConversationId) {
+    msHint.textContent = "Selecciona una conversación primero.";
+    return;
+  }
+
+  if (!window.confirm("¿Quieres vaciar este chat? Se eliminará el historial de mensajes.")) {
+    return;
+  }
+
+  deleteConversationBtn.disabled = true;
+  msHint.textContent = "Vaciando chat...";
+
+  try {
+    await postJson(MS_DELETE_CONVERSATION_ENDPOINT, {
+      memberId: activeMemberId,
+      conversationId: activeConversationId
+    });
+
+    msMessages = [];
+
+    msMessageBox.innerHTML = `
+      <div class="msg">
+        Chat vaciado.
+      </div>
+    `;
+
+    chatStatus.textContent = "Activo";
+    msHint.textContent = "Chat vaciado.";
+
+    await loadMSPending({ silent: true });
+    await loadMSContacts();
+
+    if (activeContactMemberId) {
+      msContactSelect.value = activeContactMemberId;
     }
 
+  } catch (err) {
+    console.warn(err);
+    msHint.textContent = err.message || "No se pudo vaciar el chat.";
+  } finally {
+    deleteConversationBtn.disabled = false;
+  }
+}
 
     function scrollMessagesToBottom() {
       window.requestAnimationFrame(() => {
@@ -1834,6 +1864,39 @@ async function sendContactRequest() {
       });
     }
 
+    async function removeActiveContact() {
+  if (!activeContactMemberId) {
+    msHint.textContent = "Selecciona una conversación primero.";
+    return;
+  }
+
+  if (!window.confirm("¿Quieres eliminar este contacto? Se quitará de tu lista y se borrará el historial de mensajes.")) {
+    return;
+  }
+
+  removeContactBtn.disabled = true;
+  msHint.textContent = "Eliminando contacto...";
+
+  try {
+    await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
+      memberId: activeMemberId,
+      contactMemberId: activeContactMemberId
+    });
+
+    resetActiveChat();
+    await loadMSPending({ silent: true });
+    await loadMSContacts();
+
+    msHint.textContent = "Contacto eliminado de tu lista.";
+
+  } catch (err) {
+    console.warn(err);
+    msHint.textContent = err.message || "No se pudo eliminar el contacto.";
+  } finally {
+    removeContactBtn.disabled = false;
+  }
+}
+    
     function renderMessages(messages) {
       msMessages = Array.isArray(messages) ? messages : [];
 
@@ -1873,7 +1936,39 @@ async function sendContactRequest() {
       `;
       scrollMessagesToBottom();
     }
+async function blockActiveContact() {
+  if (!activeContactMemberId) {
+    msHint.textContent = "Selecciona una conversación primero.";
+    return;
+  }
 
+  if (!window.confirm("¿Quieres bloquear a este usuario? Se eliminará el historial y no podrá enviarte mensajes.")) {
+    return;
+  }
+
+  blockContactBtn.disabled = true;
+  msHint.textContent = "Bloqueando usuario...";
+
+  try {
+    await postJson(MS_BLOCK_CONTACT_ENDPOINT, {
+      memberId: activeMemberId,
+      contactMemberId: activeContactMemberId
+    });
+
+    resetActiveChat();
+    await loadMSPending({ silent: true });
+    await loadMSContacts();
+
+    msHint.textContent = "Usuario bloqueado.";
+
+  } catch (err) {
+    console.warn(err);
+    msHint.textContent = err.message || "No se pudo bloquear al usuario.";
+  } finally {
+    blockContactBtn.disabled = false;
+  }
+}
+    
     async function loadMSConversation(contactMemberId, label) {
       if (!activeMemberId) {
         msHint.textContent = "Falta memberId para cargar conversación.";
@@ -2091,6 +2186,8 @@ await loadMSPending({ silent: true });
     contactSearchBtn.addEventListener("click", searchMSMember);
     contactSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchMSMember(); });
     deleteConversationBtn.addEventListener("click", deleteActiveConversation);
+    removeContactBtn.addEventListener("click", removeActiveContact);
+blockContactBtn.addEventListener("click", blockActiveContact);
 
     msContactSelect.addEventListener("change", async () => {
       const contactMemberId = msContactSelect.value;
