@@ -1015,7 +1015,6 @@
 const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
 const MS_BLOCK_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msblockcontact";
 const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
-    const MS_ACTIVATE_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msactivateprofile";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -1223,26 +1222,11 @@ async function postJson(url, payload) {
       openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
     }
 
-function showMSAuthRequired(mode = "login"){
+function showMSAuthRequired(){
   msAuthNotice.classList.remove("hidden");
   msContent.classList.add("hidden");
-  msBadge.textContent = "0";
-
-  const title = msAuthNotice.querySelector("strong");
-  const text = msAuthNotice.querySelector("p");
-
-  if (mode === "activate") {
-    if (title) title.textContent = "Activar mensajería";
-    if (text) text.textContent = "Activa para continuar.";
-    linkSessionBtn.textContent = "Activar mensajería";
-    msStatusText.textContent = "Activar mensajería";
-    return;
-  }
-
-  if (title) title.textContent = "Sesión requerida";
-  if (text) text.textContent = "Accede para continuar.";
-  linkSessionBtn.textContent = "Iniciar sesión";
   msStatusText.textContent = "Sesión requerida";
+  msBadge.textContent = "0";
 }
     
     function hideMSAuthRequired(){
@@ -2169,26 +2153,18 @@ async function loadMSContacts() {
   activeMemberId = getMemberIdFromUrlOrStorage();
 
   if (!activeMemberId) {
-    showMSAuthRequired("login");
-    return;
-  }
-
-  try {
-    const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-    const profileData = await profileRes.json();
-
-    if (!profileData.ok) {
-      showMSAuthRequired("activate");
-      return;
-    }
-
-  } catch (err) {
-    console.warn("Error validando perfil MS:", err);
-    showMSAuthRequired("activate");
+    showMSAuthRequired();
     return;
   }
 
   hideMSAuthRequired();
+
+  try {
+    await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+  } catch (err) {
+    console.warn("No se pudo validar perfil MS:", err);
+  }
+
   loadMyContactCode();
   resetSelect(msContactSelect, "Cargando contactos...");
   resetSelect(msPendingSelect, "Sin mensajes pendientes");
@@ -2239,7 +2215,6 @@ async function loadMSContacts() {
     msHint.textContent = "Error cargando contactos MS.";
   }
 }
-
 loadMyContactCode();
 resetSelect(msContactSelect, "Cargando contactos...");
       resetSelect(msPendingSelect, "Sin mensajes pendientes");
@@ -2301,14 +2276,7 @@ await loadMSPending({ silent: true });
   openUrl(IOS_TUTORIAL_URL);
 });
 
-    linkSessionBtn.addEventListener("click", () => {
-  if (!activeMemberId) {
-    openPWAAccess();
-    return;
-  }
-
-  activateMSProfile();
-});
+linkSessionBtn.addEventListener("click", openPWAAccess);
 
     openMSBtn.addEventListener("click", () => toggleContactTools());
 
