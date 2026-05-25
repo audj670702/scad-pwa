@@ -2127,15 +2127,25 @@ loadMSPending({ silent: true, allowNotify: true });
         return;
       }
 
-hideMSAuthRequired();
-
 try {
-  await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+  const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+  const profileData = await profileRes.json();
+
+  if (!profileData.ok) {
+    showMSAuthRequired();
+    return;
+  }
 } catch (err) {
-  console.warn("No se pudo activar perfil MS:", err);
+  console.warn("No se pudo validar perfil MS:", err);
+  showMSAuthRequired();
+  return;
 }
 
+hideMSAuthRequired();
+
 loadMyContactCode();
+resetSelect(msContactSelect, "Cargando contactos...");
+      
 resetSelect(msContactSelect, "Cargando contactos...");
       resetSelect(msPendingSelect, "Sin mensajes pendientes");
       msHint.textContent = "Cargando contactos MS...";
