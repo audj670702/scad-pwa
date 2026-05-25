@@ -1168,16 +1168,21 @@ const deleteConversationBtn = document.getElementById("deleteConversationBtn");
       if (!w) window.location.href = url;
     }
 
-    async function postJson(url, payload) {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload || {})
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || data.message || "Operación no completada.");
-      return data;
-    }
+async function postJson(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {})
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    throw new Error(data.error || data.message || "Operación no completada.");
+  }
+
+  return data;
+}
 
     function withFreshParam(url, extraParams = {}) {
       const u = new URL(url);
@@ -2118,9 +2123,16 @@ loadMSPending({ silent: true, allowNotify: true });
         return;
       }
 
-      hideMSAuthRequired();
-      loadMyContactCode();
-      resetSelect(msContactSelect, "Cargando contactos...");
+hideMSAuthRequired();
+
+try {
+  await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+} catch (err) {
+  console.warn("No se pudo activar perfil MS:", err);
+}
+
+loadMyContactCode();
+resetSelect(msContactSelect, "Cargando contactos...");
       resetSelect(msPendingSelect, "Sin mensajes pendientes");
       msHint.textContent = "Cargando contactos MS...";
 
