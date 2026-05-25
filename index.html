@@ -436,7 +436,7 @@
       gap:10px;
     }
 
-    .authNotice strong{
+    .authNotice {
       font-size:14px;
       color:rgba(15,23,42,.92);
     }
@@ -832,9 +832,9 @@
         <div class="msPanel hidden" id="msPanel">
 
           <div class="authNotice hidden" id="msAuthNotice">
-            <strong>Inicia Mensajería</strong>
-            <p>Conecta tu sesión SCaD para cargar tus contactos y conversaciones.</p>
-            <button class="btn btnPrimary btnSmall" id="linkSessionBtn" type="button">Iniciar Mensajería</button>
+<strong>Sesión requerida</strong>
+<p>Accede para continuar.</p>
+<button class="btn btnPrimary btnSmall" id="linkSessionBtn" type="button">Iniciar sesión</button>
           </div>
 
           <div class="msContent" id="msContent">
@@ -1222,12 +1222,12 @@ async function postJson(url, payload) {
       openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
     }
 
-    function showMSAuthRequired(){
-      msAuthNotice.classList.remove("hidden");
-      msContent.classList.add("hidden");
-      msStatusText.textContent = "Inicia Mensajería";
-      msBadge.textContent = "0";
-    }
+function showMSAuthRequired(){
+  msAuthNotice.classList.remove("hidden");
+  msContent.classList.add("hidden");
+  msStatusText.textContent = "Sesión requerida";
+  msBadge.textContent = "0";
+}
 
     function hideMSAuthRequired(){
       msAuthNotice.classList.add("hidden");
@@ -1690,7 +1690,11 @@ if (shouldOpen) {
     async function searchMSMember() {
       const q = contactSearchInput.value.trim();
       selectedSearchMember = null;
-      if (!activeMemberId) { contactSearchResult.innerHTML = `<div class="hint">Primero inicia Mensajería.</div>`; return; }
+  if (!activeMemberId) {
+  contactSearchResult.innerHTML = `<div class="hint">Sesión requerida.</div>`;
+  openPWAAccess();
+  return;
+}
       if (!q) { contactSearchResult.innerHTML = `<div class="hint">Escribe un código SCaD o nombre.</div>`; return; }
       contactSearchBtn.disabled = true;
       contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
@@ -2242,7 +2246,8 @@ blockContactBtn.addEventListener("click", blockActiveContact);
       const value = msInput.value.trim();
 
       if (!activeContactMemberId) {
-        msHint.textContent = "Primero selecciona un contacto.";
+msHint.textContent = activeMemberId ? "Selecciona una conversación." : "Sesión requerida.";
+if (!activeMemberId) openPWAAccess();
         toggleMS(true);
         return;
       }
