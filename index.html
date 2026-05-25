@@ -1015,6 +1015,7 @@
 const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
 const MS_BLOCK_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msblockcontact";
 const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
+const MS_ACTIVATE_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msactivateprofile";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -2118,7 +2119,32 @@ async function blockActiveContact() {
 loadMSPending({ silent: true, allowNotify: true });
       }, MS_REFRESH_MS);
     }
+async function activateMSProfile() {
+  if (!activeMemberId) {
+    openPWAAccess();
+    return;
+  }
 
+  linkSessionBtn.disabled = true;
+  linkSessionBtn.textContent = "Activando...";
+
+  try {
+    await postJson(MS_ACTIVATE_PROFILE_ENDPOINT, {
+      memberId: activeMemberId
+    });
+
+    msHint.textContent = "Mensajería activada.";
+    await loadMSContacts();
+
+  } catch (err) {
+    console.warn(err);
+    msHint.textContent = err.message || "No se pudo activar mensajería.";
+  } finally {
+    linkSessionBtn.disabled = false;
+    linkSessionBtn.textContent = "Iniciar sesión";
+  }
+}
+    
     async function loadMSContacts() {
       activeMemberId = getMemberIdFromUrlOrStorage();
 
@@ -2205,7 +2231,14 @@ await loadMSPending({ silent: true });
     iosInstallBtn.addEventListener("click", () => {
   openUrl(IOS_TUTORIAL_URL);
 });
-    linkSessionBtn.addEventListener("click", openPWAAccess);
+linkSessionBtn.addEventListener("click", () => {
+  if (!activeMemberId) {
+    openPWAAccess();
+    return;
+  }
+
+  activateMSProfile();
+});
 
     openMSBtn.addEventListener("click", () => toggleContactTools());
 
