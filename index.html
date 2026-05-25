@@ -1015,6 +1015,7 @@
 const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
 const MS_BLOCK_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msblockcontact";
 const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
+    const MS_ACTIVATE_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msactivateprofile";
     const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
 
     const ua = navigator.userAgent || "";
@@ -1222,13 +1223,28 @@ async function postJson(url, payload) {
       openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
     }
 
-function showMSAuthRequired(){
+function showMSAuthRequired(mode = "login"){
   msAuthNotice.classList.remove("hidden");
   msContent.classList.add("hidden");
-  msStatusText.textContent = "Sesión requerida";
   msBadge.textContent = "0";
-}
 
+  const title = msAuthNotice.querySelector("strong");
+  const text = msAuthNotice.querySelector("p");
+
+  if (mode === "activate") {
+    if (title) title.textContent = "Activar mensajería";
+    if (text) text.textContent = "Activa para continuar.";
+    linkSessionBtn.textContent = "Activar mensajería";
+    msStatusText.textContent = "Activar mensajería";
+    return;
+  }
+
+  if (title) title.textContent = "Sesión requerida";
+  if (text) text.textContent = "Accede para continuar.";
+  linkSessionBtn.textContent = "Iniciar sesión";
+  msStatusText.textContent = "Sesión requerida";
+}
+    
     function hideMSAuthRequired(){
       msAuthNotice.classList.add("hidden");
       msContent.classList.remove("hidden");
@@ -2119,20 +2135,109 @@ loadMSPending({ silent: true, allowNotify: true });
       }, MS_REFRESH_MS);
     }
 
-    async function loadMSContacts() {
-      activeMemberId = getMemberIdFromUrlOrStorage();
+async function activateMSProfile() {
+  if (!activeMemberId) {
+    openPWAAccess();
+    return;
+  }
 
-      if (!activeMemberId) {
-        showMSAuthRequired();
-        return;
-      }
+  linkSessionBtn.disabled = true;
+  linkSessionBtn.textContent = "Activando...";
 
-hideMSAuthRequired();
+  try {
+    const data = await postJson(MS_ACTIVATE_PROFILE_ENDPOINT, {
+      memberId: activeMemberId
+    });
 
-try {
-  await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-} catch (err) {
-  console.warn("No se pudo activar perfil MS:", err);
+    if (!data.ok) {
+      throw new Error(data.error || "No se pudo activar mensajería.");
+    }
+
+    msHint.textContent = "Mensajería activada.";
+    await loadMSContacts();
+
+  } catch (err) {
+    console.warn(err);
+    msHint.textContent = err.message || "No se pudo activar mensajería.";
+    showMSAuthRequired("activate");
+  } finally {
+    linkSessionBtn.disabled = false;
+  }
+}
+    
+async function loadMSContacts() {
+  activeMemberId = getMemberIdFromUrlOrStorage();
+
+  if (!activeMemberId) {
+    showMSAuthRequired("login");
+    return;
+  }
+
+  try {
+    const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+    const profileData = await profileRes.json();
+
+    if (!profileData.ok) {
+      showMSAuthRequired("activate");
+      return;
+    }
+
+  } catch (err) {
+    console.warn("Error validando perfil MS:", err);
+    showMSAuthRequired("activate");
+    return;
+  }
+
+  hideMSAuthRequired();
+  loadMyContactCode();
+  resetSelect(msContactSelect, "Cargando contactos...");
+  resetSelect(msPendingSelect, "Sin mensajes pendientes");
+  msHint.textContent = "Cargando contactos MS...";
+
+  try {
+    const res = await fetch(
+      `${MS_CONTACTS_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`
+    );
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      resetSelect(msContactSelect, "No se pudieron cargar contactos");
+      msStatusText.textContent = "Error cargando contactos";
+      msHint.textContent = data.reason || data.error || "No se pudieron cargar contactos.";
+      return;
+    }
+
+    msContacts = Array.isArray(data.contacts) ? data.contacts : [];
+    pendingByContact = {};
+
+    msContactSelect.innerHTML = "";
+
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = msContacts.length ? "Seleccionar conversación" : "Sin conversaciones disponibles";
+    msContactSelect.appendChild(first);
+
+    msContacts.forEach((contact, index) => {
+      const opt = document.createElement("option");
+      opt.value = contact.contactMemberId;
+      opt.textContent = getContactLabel(contact, index);
+      msContactSelect.appendChild(opt);
+    });
+
+    renderPendingSelect();
+    await loadMSPending({ silent: true });
+
+    msHint.textContent = msContacts.length
+      ? "Selecciona una conversación."
+      : "Busca un usuario activo para iniciar conversación.";
+
+  } catch (err) {
+    console.warn(err);
+    resetSelect(msContactSelect, "Error cargando contactos");
+    msStatusText.textContent = "Error MS";
+    msHint.textContent = "Error cargando contactos MS.";
+  }
 }
 
 loadMyContactCode();
@@ -2195,7 +2300,15 @@ await loadMSPending({ silent: true });
     iosInstallBtn.addEventListener("click", () => {
   openUrl(IOS_TUTORIAL_URL);
 });
-    linkSessionBtn.addEventListener("click", openPWAAccess);
+
+    linkSessionBtn.addEventListener("click", () => {
+  if (!activeMemberId) {
+    openPWAAccess();
+    return;
+  }
+
+  activateMSProfile();
+});
 
     openMSBtn.addEventListener("click", () => toggleContactTools());
 
