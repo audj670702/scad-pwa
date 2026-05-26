@@ -885,6 +885,9 @@
             <div class="msTools">
               <div class="msToolsPanel hidden" id="contactToolsPanel">
                 <div class="myCodeLine">Mi código de contacto: <strong id="myContactCode">Cargando...</strong></div>
+                <div class="msActions">
+  <button class="btn btnGhost btnSmall" id="changeUserBtn" type="button">Cambiar usuario</button>
+</div>
                 <div class="toolGroup">
                   <div class="toolGroupTitle">Buscar usuario</div>
                   <div class="toolRow">
@@ -905,12 +908,6 @@
 </div>
               </div>
             </div>
-
-<p class="hint" id="msHint">
-  Cargando contactos de Mensajería SCaD...
-</p>
-
-<p class="hint" id="msDebug" style="font-size:11px;color:#B91C1C;word-break:break-all;"></p>
           </div>
         </div>
       </section>
@@ -983,8 +980,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.6.7-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.6.7";
+    const APP_VERSION = "PWA MS v0.6.8-busqueda-codigo";
+    const APP_VERSION_SHORT = "v0.6.8";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1125,10 +1122,10 @@ installBtn.addEventListener("click", async () => {
 const removeContactBtn = document.getElementById("removeContactBtn");
 const blockContactBtn = document.getElementById("blockContactBtn");
 const deleteConversationBtn = document.getElementById("deleteConversationBtn");
+    const changeUserBtn = document.getElementById("changeUserBtn");
     const activeConversationName = document.getElementById("activeConversationName");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
-    const msDebug = document.getElementById("msDebug");
 
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
@@ -1225,6 +1222,17 @@ async function postJson(url, payload) {
     function openPWAAccess(){
       openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
     }
+
+function changePWAUser(){
+  localStorage.removeItem("scad_memberId");
+  localStorage.removeItem("scad_myScadCode");
+
+  activeMemberId = null;
+  activeContactMemberId = null;
+  activeConversationId = null;
+
+  openPWAAccess();
+}
 
 function showMSAuthRequired(){
   msAuthNotice.classList.remove("hidden");
@@ -2151,11 +2159,6 @@ async function activateMSProfile() {
     async function loadMSContacts() {
 activeMemberId = getMemberIdFromUrlOrStorage();
 
-if (msDebug) {
-  msDebug.textContent = `memberId móvil: ${activeMemberId || "SIN MEMBER ID"}`;
-}
-      console.log("SMS ACTIVE MEMBER ID:", activeMemberId);
-
       if (!activeMemberId) {
         showMSAuthRequired();
         return;
@@ -2164,11 +2167,6 @@ if (msDebug) {
 try {
   const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
 const profileData = await profileRes.json();
-
-if (msDebug) {
-  msDebug.textContent = `memberId móvil: ${activeMemberId || "SIN MEMBER ID"} | msmyprofile: ${JSON.stringify(profileData)}`;
-}
-  console.log("SMS PROFILE DATA:", profileData);
 
   if (!profileData.ok) {
     showMSAuthRequired();
@@ -2260,6 +2258,7 @@ linkSessionBtn.addEventListener("click", () => {
     deleteConversationBtn.addEventListener("click", deleteActiveConversation);
     removeContactBtn.addEventListener("click", removeActiveContact);
 blockContactBtn.addEventListener("click", blockActiveContact);
+    changeUserBtn.addEventListener("click", changePWAUser);
 
     msContactSelect.addEventListener("change", async () => {
       const contactMemberId = msContactSelect.value;
