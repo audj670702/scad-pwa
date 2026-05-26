@@ -117,6 +117,24 @@
       justify-content:flex-end;
     }
 
+    .statusLogoutRow{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  width:100%;
+}
+
+.logoutMiniBtn{
+  width:34px;
+  min-width:34px;
+  height:34px;
+  min-height:34px;
+  padding:0;
+  border-radius:999px;
+  font-size:15px;
+}
+    
     .pill{
       display:inline-flex;
       align-items:center;
@@ -454,12 +472,20 @@
       gap:12px;
     }
 
-    .selectorGrid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      padding-top:12px;
-    }
+.selectorGrid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:8px;
+  padding-top:12px;
+}
+
+.selectorBlock{
+  min-width:0;
+}
+
+.msSelect{
+  min-width:0;
+}
 
     .selectorBlock{
       display:flex;
@@ -754,7 +780,21 @@
         padding:0 11px;
       }
 
-      .selectorGrid{ grid-template-columns:1fr; }
+.selectorGrid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:8px;
+}
+
+.selectorBlock label{
+  font-size:11.5px;
+}
+
+.msSelect{
+  min-height:36px;
+  padding:0 8px;
+  font-size:12px;
+  border-radius:999px;
+}
 
       .quickGrid{ grid-template-columns:1fr; }
 
@@ -796,22 +836,25 @@
           </div>
         </div>
 
-        <div class="topActions">
-<span class="pill versionPill hidden" id="versionPill">v---</span>
-<span class="statusText" id="pill">Estado</span>
-<button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
+<div class="topActions">
+  <div class="statusLogoutRow">
+    <span class="pill versionPill hidden" id="versionPill">v---</span>
+    <span class="statusText" id="pill">Estado</span>
+    <button class="btn btnGhost btnTop logoutMiniBtn" id="logoutPWABtn" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
+  </div>
 
-<span class="installNote hidden" id="installNote">
-  Instalando... puede tardar unos minutos.
-</span>
+  <button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
 
-<button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
-  Ver tutorial de instalación
-</button>
+  <span class="installNote hidden" id="installNote">
+    Instalando... puede tardar unos minutos.
+  </span>
 
-<button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
-          <button class="btn btnGhost btnTop" id="logoutPWABtn" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
-        </div>
+  <button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
+    Ver tutorial de instalación
+  </button>
+
+  <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
+</div>
       </header>
 
       <section class="card msCard">
