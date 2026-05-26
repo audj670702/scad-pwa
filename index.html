@@ -1,2488 +1,1588 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SCaD</title>
+import { ok, serverError } from 'wix-http-functions';
+import { members } from 'wix-members.v2';
+import wixData from 'wix-data';
 
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#F7F8FC">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SCaD">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <meta name="description" content="SCaD HUB • Acceso rápido a tus herramientas." />
+const HEADERS = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
 
-  <style>
-    :root{
-      --bg:#F7F8FC;
-      --card:#FFFFFF;
-      --border:rgba(15,23,42,.10);
-      --text:#0F172A;
-      --muted:rgba(15,23,42,.62);
-      --accent:#2F6BFF;
-      --accent2:#1E4BD8;
-      --green:#16A34A;
-      --shadow:0 18px 55px rgba(2,6,23,.10);
-      --shadow2:0 10px 25px rgba(2,6,23,.08);
-      --radius:22px;
-      --radius2:16px;
+const CONTACT_REQUEST_COLLECTIONS = ["MS_ContactRequests", "MS_ContactRequest"];
+let CONTACT_REQUEST_COLLECTION_CACHE = "";
+
+async function getContactRequestsCollection() {
+  if (CONTACT_REQUEST_COLLECTION_CACHE) return CONTACT_REQUEST_COLLECTION_CACHE;
+
+  let lastError = null;
+
+  for (const collectionName of CONTACT_REQUEST_COLLECTIONS) {
+    try {
+      await wixData
+        .query(collectionName)
+        .limit(1)
+        .find({ suppressAuth: true });
+
+      CONTACT_REQUEST_COLLECTION_CACHE = collectionName;
+      return collectionName;
+    } catch (err) {
+      lastError = err;
     }
+  }
 
-    *{box-sizing:border-box;}
-
-    html,body{
-      margin:0;
-      min-height:100%;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      color:var(--text);
-      background:
-        radial-gradient(900px 520px at 15% 5%, rgba(47,107,255,.14), transparent 55%),
-        radial-gradient(900px 520px at 85% 15%, rgba(34,197,94,.10), transparent 55%),
-        linear-gradient(180deg,var(--bg),#EEF1FA);
-    }
-
-    .wrap{
-      min-height:100vh;
-      display:flex;
-      justify-content:center;
-      padding:18px;
-    }
-
-    .shell{
-      width:min(780px,96vw);
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:12px;
-      border-radius:var(--radius);
-      background:rgba(255,255,255,.78);
-      border:1px solid var(--border);
-      box-shadow:var(--shadow2);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-
-    .logo{
-      width:44px;
-      height:44px;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid var(--border);
-      background:#fff;
-      flex:0 0 auto;
-    }
-
-    .logo img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-
-    .brandText{ min-width:0; }
-
-    .brandText h1{
-      margin:0;
-      font-size:18px;
-      line-height:1.1;
-    }
-
-    .brandText p{
-      margin:4px 0 0;
-      font-size:12.5px;
-      color:var(--muted);
-      line-height:1.2;
-    }
-
-    .topActions{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height:34px;
-      padding:0 11px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:850;
-      background:rgba(15,23,42,.05);
-      border:1px solid var(--border);
-      color:rgba(15,23,42,.82);
-      white-space:nowrap;
-    }
-
-    .statusText{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height:34px;
-      font-size:12.5px;
-      font-weight:450;
-      color:rgba(15,23,42,.56);
-      white-space:nowrap;
-    }
-
-    .brandMeta{
-      color:var(--muted);
-      font-weight:650;
-      letter-spacing:.01em;
-    }
-
-    .versionPill{
-      display:none!important;
-    }
-
-    .splash{
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      display:grid;
-      place-items:center;
-      background:
-        radial-gradient(680px 420px at 50% 20%, rgba(47,107,255,.10), transparent 60%),
-        #fff;
-      transition:opacity .55s ease, visibility .55s ease;
-    }
-
-    .splash.hide{
-      opacity:0;
-      visibility:hidden;
-      pointer-events:none;
-    }
-
-    .splashCard{
-      width:min(260px,72vw);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:14px;
-      padding:30px 24px;
-      border-radius:28px;
-      background:#fff;
-      border:1px solid rgba(15,23,42,.08);
-      box-shadow:0 24px 70px rgba(2,6,23,.12);
-      animation:splashRise .9s ease both;
-    }
-
-    .splashLogo{
-      width:86px;
-      height:86px;
-      border-radius:24px;
-      display:grid;
-      place-items:center;
-      background:#fff;
-      border:1px solid rgba(15,23,42,.10);
-      overflow:hidden;
-      box-shadow:0 10px 24px rgba(2,6,23,.08);
-    }
-
-    .splashLogo img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-    }
-
-    .splashHub{
-      font-size:20px;
-      font-weight:950;
-      letter-spacing:.28em;
-      color:rgba(15,23,42,.76);
-      transform:translateX(.14em);
-      animation:hubPulse 1.6s ease-in-out infinite;
-    }
-
-    @keyframes splashRise{
-      from{ opacity:0; transform:translateY(10px) scale(.97); }
-      to{ opacity:1; transform:translateY(0) scale(1); }
-    }
-
-    @keyframes hubPulse{
-      0%,100%{ opacity:.62; letter-spacing:.24em; }
-      50%{ opacity:1; letter-spacing:.34em; }
-    }
-
-    .btn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      min-height:40px;
-      padding:0 14px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:13px;
-      user-select:none;
-      white-space:nowrap;
-    }
-
-    .btn:active{
-      transform:translateY(1px);
-      opacity:.94;
-    }
-
-    .btnPrimary{
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      color:white;
-      box-shadow:0 12px 24px rgba(47,107,255,.18);
-    }
-
-    .btnGhost{
-      background:rgba(15,23,42,.04);
-      color:rgba(15,23,42,.88);
-      border:1px solid var(--border);
-    }
-
-    .btnSmall{
-      min-height:34px;
-      padding:0 12px;
-      font-size:12.5px;
-    }
-
-    .soundPrompt{
-      color:#B91C1C;
-      border-color:rgba(220,38,38,.24);
-      background:rgba(220,38,38,.055);
-      animation:soundWavePrompt 1.55s ease-in-out infinite;
-      position:relative;
-    }
-
-    .soundPrompt::after{
-      content:"";
-      position:absolute;
-      inset:-4px;
-      border-radius:999px;
-      border:1px solid rgba(220,38,38,.24);
-      opacity:.72;
-      animation:soundWaveRing 1.55s ease-in-out infinite;
-      pointer-events:none;
-    }
-
-    .soundOn{
-      color:#166534;
-      border-color:rgba(22,101,52,.18);
-      background:rgba(22,163,74,.07);
-    }
-
-    .gestionOpen{
-      color:#1E4BD8;
-      border-color:rgba(47,107,255,.26);
-      background:rgba(47,107,255,.08);
-      box-shadow:0 8px 18px rgba(47,107,255,.10);
-    }
-
-    @keyframes soundWavePrompt{
-      0%,100%{ box-shadow:0 0 0 0 rgba(220,38,38,.22); }
-      50%{ box-shadow:0 0 0 7px rgba(220,38,38,.10); }
-    }
-
-    @keyframes soundWaveRing{
-      0%{ transform:scale(.98); opacity:.62; }
-      70%{ transform:scale(1.12); opacity:.08; }
-      100%{ transform:scale(1.12); opacity:0; }
-    }
-
-    .hidden{ display:none!important; }
-
-    .installNote{
-  font-size:11px;
-  color:rgba(15,23,42,.50);
-  font-weight:650;
-  line-height:1.2;
-  animation:installNotePulse 1.4s ease-in-out infinite;
-  white-space:normal;
-  max-width:150px;
-  text-align:right;
+  throw new Error(
+    "No encuentro la colección de solicitudes MS. Crea MS_ContactRequests o ajusta CONTACT_REQUEST_COLLECTIONS. " +
+    (lastError?.message || "")
+  );
 }
 
-@keyframes installNotePulse{
-  0%,100%{ opacity:.45; }
-  50%{ opacity:1; }
+function normalizeScadCodeInput(value) {
+  const raw = String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[–—]/g, "-");
+
+  const match = raw.match(/SCAD-[A-Z0-9]{6}/);
+  return match ? match[0] : raw;
 }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:16px;
-    }
 
-    .msCard{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      padding:0;
-      overflow:hidden;
-    }
-
-    .msTop{
-      width:100%;
-      appearance:none;
-      border:none;
-      background:transparent;
-      cursor:pointer;
-      padding:16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      text-align:left;
-    }
-
-    .msHeaderLeft{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-
-    .msIcon{
-      width:40px;
-      height:40px;
-      display:grid;
-      place-items:center;
-      border-radius:14px;
-      background:rgba(47,107,255,.10);
-      border:1px solid rgba(47,107,255,.16);
-      font-size:20px;
-      flex:0 0 auto;
-    }
-
-    .msTitle{ min-width:0; }
-
-    .msTitle h2{
-      margin:0;
-      font-size:18px;
-      line-height:1.1;
-      color:var(--text);
-    }
-
-    .msTitle p{
-      margin:3px 0 0;
-      font-size:12.5px;
-      color:var(--muted);
-    }
-
-    .msHeaderRight{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex:0 0 auto;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:28px;
-      height:28px;
-      border-radius:999px;
-      background:var(--green);
-      color:white;
-      font-size:12px;
-      font-weight:950;
-    }
-
-    .msChevron{
-      font-size:24px;
-      line-height:1;
-      font-weight:950;
-      color:rgba(15,23,42,.60);
-      width:30px;
-      text-align:center;
-    }
-
-    .msPanel{
-      padding:0 16px 16px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      border-top:1px solid var(--border);
-    }
-
-    .authNotice{
-      border:1px solid rgba(47,107,255,.18);
-      background:rgba(47,107,255,.06);
-      border-radius:var(--radius2);
-      padding:14px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .authNotice {
-      font-size:14px;
-      color:rgba(15,23,42,.92);
-    }
-
-    .authNotice p{
-      margin:0;
-      font-size:12.8px;
-      line-height:1.35;
-      color:var(--muted);
-    }
-
-    .msContent{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    .selectorGrid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      padding-top:12px;
-    }
-
-    .selectorBlock{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .selectorLabelRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      min-height:20px;
-    }
-
-    .selectorBlock label{
-      font-size:12.5px;
-      font-weight:950;
-      color:rgba(15,23,42,.76);
-    }
-
-    .pendingMiniBadge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:22px;
-      height:22px;
-      padding:0 7px;
-      border-radius:999px;
-      background:#DC2626;
-      color:white;
-      font-size:11px;
-      font-weight:950;
-    }
-
-    .pendingMiniBadge.flash,
-    .badge.flash{
-      animation:redBadgePulse 1.35s ease-in-out infinite;
-    }
-
-    .badge.alert{
-      background:#DC2626;
-    }
-
-    @keyframes redBadgePulse{
-      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(220,38,38,.34); }
-      50%{ transform:scale(1.08); box-shadow:0 0 0 7px rgba(220,38,38,.12); }
-    }
-
-    .msSelect{
-      width:100%;
-      min-height:42px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#fff;
-      padding:0 12px;
-      font-size:14px;
-      font-weight:800;
-      color:rgba(15,23,42,.86);
-      outline:none;
-    }
-
-    #msPendingSelect{
-      color:rgba(15,23,42,.58);
-      font-weight:650;
-    }
-
-    .msSelect:focus{
-      border-color:rgba(47,107,255,.45);
-      box-shadow:0 0 0 3px rgba(47,107,255,.10);
-    }
-
-    .pendingAlert{
-      border-color:rgba(47,107,255,.55);
-      box-shadow:0 0 0 3px rgba(47,107,255,.10);
-      animation:pendingPulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes pendingPulse{
-      0%,100%{ box-shadow:0 0 0 3px rgba(47,107,255,.08); }
-      50%{ box-shadow:0 0 0 6px rgba(47,107,255,.18); }
-    }
-
-    .chatPanel{
-      border:1px solid var(--border);
-      border-radius:var(--radius2);
-      background:linear-gradient(180deg,rgba(15,23,42,.025),#fff);
-      overflow:hidden;
-    }
-
-    .panelHeader{
-      min-height:38px;
-      padding:0 11px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      border-bottom:1px solid var(--border);
-      font-size:12.5px;
-      font-weight:950;
-      color:rgba(15,23,42,.78);
-    }
-
-    .chatStatus{
-      font-size:11.5px;
-      color:rgba(15,23,42,.52);
-      font-weight:850;
-    }
-
-    .messageBox{
-      height:clamp(190px, 34vh, 310px);
-      min-height:190px;
-      padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow-y:auto;
-      overflow-x:hidden;
-      overscroll-behavior:contain;
-      -webkit-overflow-scrolling:touch;
-    }
-
-    .messageBox::-webkit-scrollbar{
-      width:6px;
-    }
-
-    .messageBox::-webkit-scrollbar-thumb{
-      background:rgba(15,23,42,.18);
-      border-radius:999px;
-    }
-
-    .msg{
-      max-width:86%;
-      padding:9px 11px;
-      border-radius:14px;
-      font-size:13px;
-      line-height:1.3;
-      background:rgba(15,23,42,.055);
-      color:rgba(15,23,42,.82);
-    }
-
-    .msg.me{
-      align-self:flex-end;
-      background:rgba(47,107,255,.10);
-    }
-
-    .composer{
-      display:flex;
-      gap:8px;
-      padding:0 10px 10px;
-    }
-
-    .composer input{
-      width:100%;
-      min-height:42px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      padding:0 14px;
-      font-size:14px;
-      outline:none;
-      background:#fff;
-    }
-
-    .composer input:focus{
-      border-color:rgba(47,107,255,.45);
-      box-shadow:0 0 0 3px rgba(47,107,255,.10);
-    }
-
-    .msActions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:center;
-      align-items:center;
-    }
-
-
-    .msTools{border:1px solid var(--border);border-radius:var(--radius2);background:rgba(255,255,255,.76);overflow:hidden;}
-    .msToolsToggle{width:100%;appearance:none;border:none;background:transparent;min-height:42px;padding:0 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;color:rgba(15,23,42,.78);}
-    .msToolsToggleLeft{display:flex;align-items:center;gap:8px;min-width:0;}
-    .requestBadge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:#DC2626;color:#fff;font-size:11px;font-weight:950;}
-    .myCodeLine{font-size:12.5px;color:rgba(15,23,42,.62);line-height:1.35;background:rgba(15,23,42,.035);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:10px 12px;}
-    .myCodeLine strong{color:rgba(15,23,42,.88);font-weight:950;letter-spacing:.02em;}
-    .msToolsPanel{border-top:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:12px;}
-    .toolGroup{display:flex;flex-direction:column;gap:8px;}
-    .toolGroupTitle{font-size:12.5px;font-weight:950;color:rgba(15,23,42,.70);}
-    .toolRow{display:flex;gap:8px;align-items:center;}
-    .toolRow input{width:100%;min-height:38px;border-radius:999px;border:1px solid var(--border);padding:0 13px;font-size:13px;outline:none;background:#fff;}
-    .toolRow input:focus{border-color:rgba(47,107,255,.45);box-shadow:0 0 0 3px rgba(47,107,255,.10);}
-    .toolResult,.requestList{display:flex;flex-direction:column;gap:8px;}
-    .miniCard{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.82);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-    .miniCardText{min-width:0;display:flex;flex-direction:column;gap:2px;font-size:12.8px;color:rgba(15,23,42,.76);}
-    .miniCardText strong{color:rgba(15,23,42,.90);font-size:13.5px;}
-    .miniCardActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
-    .dangerBtn{color:#B91C1C;border-color:rgba(185,28,28,.20);background:rgba(185,28,28,.05);}
-    .toolDivider{height:1px;background:var(--border);border:0;margin:0;}
-
-    .sectionTitle{
-      margin:2px 2px 0;
-      font-size:13px;
-      font-weight:950;
-      color:rgba(15,23,42,.76);
-    }
-
-    .quickGrid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:8px;
-    }
-
-    .quickLink{
-      min-height:46px;
-      border-radius:15px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.78);
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:0 12px;
-      cursor:pointer;
-      font-weight:850;
-      font-size:13.5px;
-      color:rgba(15,23,42,.88);
-      user-select:none;
-    }
-
-    .quickLink:active{
-      transform:translateY(1px);
-      opacity:.94;
-    }
-
-    .quickIcon{
-      width:26px;
-      text-align:center;
-      font-size:18px;
-      flex:0 0 auto;
-    }
-
-    .resourcesToggle{
-      width:min(340px,100%);
-      align-self:center;
-      appearance:none;
-      border:none;
-      border-radius:999px;
-      min-height:40px;
-      padding:0 13px 0 15px;
-      font-weight:850;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      color:rgba(15,23,42,.62);
-      background:rgba(15,23,42,.055);
-      border:1px solid rgba(15,23,42,.09);
-      box-shadow:none;
-    }
-
-    #resourcesChevron{
-      font-size:24px;
-      line-height:1;
-      font-weight:950;
-      color:rgba(15,23,42,.55);
-      width:28px;
-      text-align:center;
-    }
-
-    .resourcePanel{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:8px;
-      margin-top:-6px;
-    }
-
-    .hint{
-      margin:0;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
-    }
-
-    @media(max-width:560px){
-      .topbar{ align-items:flex-start; }
-
-      .topActions{
-        flex-direction:column;
-        align-items:flex-end;
-      }
-
-      .btnTop{
-        min-height:34px;
-        padding:0 11px;
-      }
-
-      .selectorGrid{ grid-template-columns:1fr; }
-
-      .quickGrid{ grid-template-columns:1fr; }
-
-      .resourcePanel{ grid-template-columns:1fr; }
-
-      .messageBox{
-        height:240px;
-        min-height:240px;
-      }
-
-      .composer{ flex-direction:column; }
-
-      .composer .btn{ width:100%; }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="splash" id="splashScreen" aria-hidden="true">
-    <div class="splashCard">
-      <div class="splashLogo">
-        <img src="/icons/icon-192.png" alt="SCaD">
-      </div>
-      <div class="splashHub">HUB</div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div class="shell">
-
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo">
-            <img src="/icons/icon-192.png" alt="">
-          </div>
-          <div class="brandText">
-            <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
-          </div>
-        </div>
-
-        <div class="topActions">
-<span class="pill versionPill hidden" id="versionPill">v---</span>
-<span class="statusText" id="pill">Estado</span>
-<button class="btn btnPrimary btnTop hidden" id="installBtn" type="button">Instalar</button>
-
-<span class="installNote hidden" id="installNote">
-  Instalando... puede tardar unos minutos.
-</span>
-
-<button class="btn btnPrimary btnTop hidden" id="iosInstallBtn" type="button">
-  Ver tutorial de instalación
-</button>
-
-<button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
-        </div>
-      </header>
-
-      <section class="card msCard">
-        <button class="msTop" id="msToggle" type="button" aria-expanded="false" aria-controls="msPanel">
-          <div class="msHeaderLeft">
-            <div class="msIcon">💬</div>
-            <div class="msTitle">
-              <h2>Mensajería SCaD</h2>
-              <p id="msStatusText">Sin mensajes nuevos</p>
-            </div>
-          </div>
-
-          <div class="msHeaderRight">
-            <span class="badge" id="msBadge">0</span>
-            <span class="msChevron" id="msChevron">▾</span>
-          </div>
-        </button>
-
-        <div class="msPanel hidden" id="msPanel">
-
-          <div class="authNotice hidden" id="msAuthNotice">
-<strong>Sesión requerida</strong>
-<p>Accede para continuar.</p>
-<button class="btn btnPrimary btnSmall" id="linkSessionBtn" type="button">Iniciar sesión</button>
-          </div>
-
-          <div class="msContent" id="msContent">
-            <div class="selectorGrid">
-              <div class="selectorBlock">
-                <div class="selectorLabelRow">
-                  <label for="msContactSelect">Conversaciones</label>
-                </div>
-                <select class="msSelect" id="msContactSelect">
-                  <option value="">Cargando contactos...</option>
-                </select>
-              </div>
-
-              <div class="selectorBlock">
-                <div class="selectorLabelRow">
-                  <label for="msPendingSelect">Mensajes pendientes</label>
-                  <span class="pendingMiniBadge hidden" id="pendingBadge">0</span>
-                </div>
-                <select class="msSelect" id="msPendingSelect">
-                  <option value="">Sin mensajes pendientes</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="chatPanel">
-              <div class="panelHeader">
-                <span id="activeConversationName">Chat activo</span>
-                <span class="chatStatus" id="chatStatus">Pendiente</span>
-              </div>
-
-              <div class="messageBox" id="msMessageBox">
-                <div class="msg">
-                  Selecciona un contacto para cargar la conversación.
-                </div>
-              </div>
-
-              <div class="composer">
-                <input id="msInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
-                <button class="btn btnPrimary" id="msSendBtn" type="button">Enviar</button>
-              </div>
-            </div>
-
-            <div class="msActions">
-              <button class="btn btnGhost btnSmall soundPrompt" id="soundBtn" type="button">🔊 Activar sonido</button>
-              <button class="btn btnGhost btnSmall" id="openMSBtn" type="button"><span id="gestionLabel">🔎 Buscar usuario ▾</span></button>
-            </div>
-
-            <div class="msTools">
-              <div class="msToolsPanel hidden" id="contactToolsPanel">
-                <div class="myCodeLine">Mi código de contacto: <strong id="myContactCode">Cargando...</strong></div>
-                <div class="msActions">
-  <button class="btn btnGhost btnSmall" id="changeUserBtn" type="button">Cambiar usuario</button>
-</div>
-                <div class="toolGroup">
-                  <div class="toolGroupTitle">Buscar usuario</div>
-                  <div class="toolRow">
-                    <input id="contactSearchInput" type="text" placeholder="Nombre, correo o código..." autocomplete="off">
-                    <button class="btn btnPrimary btnSmall" id="contactSearchBtn" type="button">Buscar</button>
-                  </div>
-                  <div class="toolResult" id="contactSearchResult"></div>
-                </div>
-
-                <hr class="toolDivider">
-<div class="toolGroup">
-  <div class="toolGroupTitle">Opciones del chat activo</div>
-  <div class="msActions">
-    <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Vaciar chat</button>
-    <button class="btn btnGhost btnSmall dangerBtn" id="removeContactBtn" type="button">Eliminar contacto</button>
-    <button class="btn btnGhost btnSmall dangerBtn" id="blockContactBtn" type="button">Bloquear usuario</button>
-  </div>
-</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <p class="sectionTitle">Mis accesos</p>
-
-      <section class="quickGrid">
-        <div class="quickLink" id="tileCursos" role="button" tabindex="0">
-          <span class="quickIcon">🎓</span>
-          <span>Mis cursos</span>
-        </div>
-
-        <div class="quickLink" id="tileMiPlan" role="button" tabindex="0">
-          <span class="quickIcon">🏋️</span>
-          <span>Mi entrenamiento</span>
-        </div>
-
-        <div class="quickLink" id="tileCPC" role="button" tabindex="0">
-          <span class="quickIcon">🧑‍🏫</span>
-          <span>Centro Privado de Capacitación</span>
-        </div>
-
-        <div class="quickLink" id="tileNovedades" role="button" tabindex="0">
-          <span class="quickIcon">✨</span>
-          <span>Novedades</span>
-        </div>
-
-        <div class="quickLink" id="tilePricing" role="button" tabindex="0">
-          <span class="quickIcon">💳</span>
-          <span>Planes y servicios</span>
-        </div>
-
-        <div class="quickLink" id="tileSoporte" role="button" tabindex="0">
-          <span class="quickIcon">💬</span>
-          <span>Soporte</span>
-        </div>
-
-        <div class="quickLink" id="tileFacturacion" role="button" tabindex="0">
-          <span class="quickIcon">🧾</span>
-          <span>Servicio de facturación</span>
-        </div>
-      </section>
-
-      <button class="resourcesToggle" id="resourcesToggle" type="button" aria-expanded="false">
-        <span>🗂️ Paneles de control</span>
-        <span id="resourcesChevron">▾</span>
-      </button>
-
-      <section class="resourcePanel hidden" id="resourcesPanel">
-        <div class="quickLink" id="tilePDE" role="button" tabindex="0">
-          <span class="quickIcon">💪</span>
-          <span>Panel de Entrenador</span>
-        </div>
-
-        <div class="quickLink" id="tilePDO" role="button" tabindex="0">
-          <span class="quickIcon">🦷</span>
-          <span>Panel ODIN</span>
-        </div>
-
-        <div class="quickLink" id="tileDespachoFiscal" role="button" tabindex="0">
-          <span class="quickIcon">🧮</span>
-          <span>Despacho Fiscal</span>
-        </div>
-
-      </section>
-
-      <a class="hidden" id="helpVideo" href="https://app.scad.mx/tutorial-ios/" target="_blank" rel="noopener noreferrer">Tutorial iOS</a>
-
-    </div>
-  </div>
-
-  <script>
-    const APP_VERSION = "PWA MS v0.6.8-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.6.8";
-    const MS_SOUND_URL = "/Mensaje.mp3";
-    const MS_REFRESH_MS = 5000;
-
-    const URL_HOME = "https://www.scad.mx";
-    const URL_MENSAJERIA = "https://www.scad.mx/mensajeria";
-    const URL_MIS_CURSOS = "https://www.scad.mx/mis-cursos";
-    const URL_CONTACT = "https://www.scad.mx/contact";
-    const URL_NOVEDADES = "https://www.scad.mx/novedades";
-    const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
-    const URL_CPC = "https://www.scad.mx/cpc";
-    const URL_FACT_GESTION = "https://www.scad.mx/fact";
-    const URL_MIPLAN = "https://www.scad.mx/registrogym";
-    const URL_PDE = "https://www.scad.mx/hub-pde";
-    const URL_PDO = "https://www.scad.mx/odin-citas";
-    const URL_DESPACHO_FISCAL = "https://www.scad.mx/fact-pwa-acceso";
-    const URL_PANEL_MS = "https://www.scad.mx/panel-ms";
-    const IOS_TUTORIAL_URL = "https://app.scad.mx/tutorial-ios/";
-    const MS_CONTACTS_ENDPOINT = "https://www.scad.mx/_functions/mscontacts";
-    const MS_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msconversation";
-    const MS_MESSAGES_ENDPOINT = "https://www.scad.mx/_functions/msmessages";
-    const MS_SEND_MESSAGE_ENDPOINT = "https://www.scad.mx/_functions/mssendmessage";
-    const MS_PENDING_ENDPOINT = "https://www.scad.mx/_functions/mspending";
-    const MS_MARK_READ_ENDPOINT = "https://www.scad.mx/_functions/msmarkread";
-    const MS_SEARCH_MEMBER_ENDPOINT = "https://www.scad.mx/_functions/mssearchmember";
-    const MS_SEND_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/mssendrequest";
-    const MS_INCOMING_REQUESTS_ENDPOINT = "https://www.scad.mx/_functions/msincomingrequests";
-    const MS_ACCEPT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msacceptrequest";
-    const MS_REJECT_REQUEST_ENDPOINT = "https://www.scad.mx/_functions/msrejectrequest";
-    const MS_REMOVE_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msremovecontact";
-const MS_DELETE_CONVERSATION_ENDPOINT = "https://www.scad.mx/_functions/msdeleteconversation";
-const MS_BLOCK_CONTACT_ENDPOINT = "https://www.scad.mx/_functions/msblockcontact";
-const MS_MY_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msmyprofile";
-const MS_ACTIVATE_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msactivateprofile";
-    const PWA_ACCESS_URL = "https://www.scad.mx/pwa-acceso";
-
-    const ua = navigator.userAgent || "";
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-    const isStandalone =
-      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-      window.navigator.standalone === true;
-
-    const versionPill = document.getElementById("versionPill");
-    const brandMeta = document.getElementById("brandMeta");
-    const splashScreen = document.getElementById("splashScreen");
-const pill = document.getElementById("pill");
-const installBtn = document.getElementById("installBtn");
-const installNote = document.getElementById("installNote");
-const iosInstallBtn = document.getElementById("iosInstallBtn");
-const enterBtn = document.getElementById("enterBtn");
-const helpVideo = document.getElementById("helpVideo");
-
-    let deferredPrompt = null;
-
-// --- Flujo de instalación PWA tomado del código original
-window.addEventListener("beforeinstallprompt", (e) => {
-  // Evita el mini-infobar automático
-  e.preventDefault();
-
-  deferredPrompt = e;
-
-  if (isIOS || isStandalone) return;
-
-  installBtn.classList.remove("hidden");
-  pill.textContent = "App instalable";
-});
-
-installBtn.addEventListener("click", async () => {
-  if (!deferredPrompt) return;
-
-  installBtn.disabled = true;
-
+function getDisplayName(profile, fallback = "Usuario SCaD") {
+  return (
+    profile?.displayName ||
+    profile?.fullName ||
+    profile?.name ||
+    profile?.title ||
+    profile?.nombre ||
+    profile?.scadCode ||
+    fallback
+  );
+}
+
+async function getWixMemberData(memberId) {
   try {
-    deferredPrompt.prompt();
-
-    const choice = await deferredPrompt.userChoice;
-
-    if (choice && choice.outcome === "accepted") {
-      pill.textContent = "Instalando...";
-      installBtn.classList.add("hidden");
-      installNote.classList.remove("hidden");
-
-      window.setTimeout(() => {
-        if (!isIOS) {
-          pill.textContent = "App instalada.";
-          installNote.classList.add("hidden");
-        }
-      }, 60000);
-
-    } else {
-      pill.textContent = "Instalación cancelada.";
-      installBtn.disabled = false;
-      installNote.classList.add("hidden");
-    }
-  } catch (err) {
-    console.warn(err);
-    pill.textContent = "No se pudo abrir el instalador.";
-    installBtn.disabled = false;
-    installNote.classList.add("hidden");
-  } finally {
-    deferredPrompt = null;
-  }
-});
-
-    window.addEventListener("appinstalled", () => {
-  pill.textContent = "SCaD instalada. ✅";
-  installBtn.classList.add("hidden");
-  iosInstallBtn.classList.add("hidden");
-  installNote.classList.add("hidden");
-});
-    
-    const msToggle = document.getElementById("msToggle");
-    const msPanel = document.getElementById("msPanel");
-    const msChevron = document.getElementById("msChevron");
-    const msStatusText = document.getElementById("msStatusText");
-    const msBadge = document.getElementById("msBadge");
-    const msAuthNotice = document.getElementById("msAuthNotice");
-    const msContent = document.getElementById("msContent");
-    const linkSessionBtn = document.getElementById("linkSessionBtn");
-
-    const msContactSelect = document.getElementById("msContactSelect");
-    const msPendingSelect = document.getElementById("msPendingSelect");
-    const pendingBadge = document.getElementById("pendingBadge");
-    const msInput = document.getElementById("msInput");
-    const msSendBtn = document.getElementById("msSendBtn");
-    const msHint = document.getElementById("msHint");
-    const soundBtn = document.getElementById("soundBtn");
-    const openMSBtn = document.getElementById("openMSBtn");
-    const gestionLabel = document.getElementById("gestionLabel");
-    const contactToolsPanel = document.getElementById("contactToolsPanel");
-    const requestBadge = null;
-    const myContactCode = document.getElementById("myContactCode");
-    const contactSearchInput = document.getElementById("contactSearchInput");
-    const contactSearchBtn = document.getElementById("contactSearchBtn");
-    const contactSearchResult = document.getElementById("contactSearchResult");
-    const refreshRequestsBtn = null;
-    const incomingRequestsList = null;
-const removeContactBtn = document.getElementById("removeContactBtn");
-const blockContactBtn = document.getElementById("blockContactBtn");
-const deleteConversationBtn = document.getElementById("deleteConversationBtn");
-    const changeUserBtn = document.getElementById("changeUserBtn");
-    const activeConversationName = document.getElementById("activeConversationName");
-    const chatStatus = document.getElementById("chatStatus");
-    const msMessageBox = document.getElementById("msMessageBox");
-
-    const tileCursos = document.getElementById("tileCursos");
-    const tileMiPlan = document.getElementById("tileMiPlan");
-    const tileCPC = document.getElementById("tileCPC");
-    const tileNovedades = document.getElementById("tileNovedades");
-    const tilePricing = document.getElementById("tilePricing");
-    const tileSoporte = document.getElementById("tileSoporte");
-    const tileFacturacion = document.getElementById("tileFacturacion");
-
-    const resourcesToggle = document.getElementById("resourcesToggle");
-    const resourcesPanel = document.getElementById("resourcesPanel");
-    const resourcesChevron = document.getElementById("resourcesChevron");
-
-    const tilePDE = document.getElementById("tilePDE");
-    const tilePDO = document.getElementById("tilePDO");
-    const tileDespachoFiscal = document.getElementById("tileDespachoFiscal");
-    const tileGestionContactos = document.getElementById("tileGestionContactos");
-
-    let activeMemberId = null;
-    let activeContactMemberId = null;
-    let activeContactLabel = "";
-    let activeConversationId = null;
-    let msContacts = [];
-    let msMessages = [];
-    let pendingByContact = {};
-    let lastIncomingMessageKey = "";
-    let isRefreshingActiveChat = false;
-    let soundEnabled = false;
-    let audioContext = null;
-    let notificationAudio = null;
-    let selectedSearchMember = null;
-    let incomingRequests = [];
-
-    function openUrl(url){
-      if (isStandalone) {
-        window.location.href = url;
-        return;
-      }
-
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) window.location.href = url;
-    }
-
-async function postJson(url, payload) {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload || {})
-  });
-
-  const data = await res.json();
-
-  if (!data.ok) {
-    throw new Error(data.error || data.message || "Operación no completada.");
-  }
-
-  return data;
-}
-
-    function withFreshParam(url, extraParams = {}) {
-      const u = new URL(url);
-
-      Object.entries(extraParams).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          u.searchParams.set(key, String(value));
-        }
-      });
-
-      u.searchParams.set("from", "pwa");
-      u.searchParams.set("t", String(Date.now()));
-
-      return u.toString();
-    }
-
-    function openMS(extraParams = {}) {
-      openUrl(withFreshParam(URL_MENSAJERIA, {
-        target: "mensajeria-scad",
-        memberId: activeMemberId || "",
-        contactMemberId: activeContactMemberId || "",
-        ...extraParams
-      }));
-    }
-
-    function toggleMS(forceOpen){
-      const shouldOpen = typeof forceOpen === "boolean"
-        ? forceOpen
-        : msPanel.classList.contains("hidden");
-
-      msPanel.classList.toggle("hidden", !shouldOpen);
-      msToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-      msChevron.textContent = shouldOpen ? "▴" : "▾";
-    }
-
-    function openPWAAccess(){
-      openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
-    }
-
-function changePWAUser(){
-  localStorage.removeItem("scad_memberId");
-  localStorage.removeItem("scad_myScadCode");
-
-  activeMemberId = null;
-  activeContactMemberId = null;
-  activeConversationId = null;
-
-  openPWAAccess();
-}
-
-function showMSAuthRequired(){
-  msAuthNotice.classList.remove("hidden");
-  msContent.classList.add("hidden");
-  msStatusText.textContent = "Sesión requerida";
-  msBadge.textContent = "0";
-}
-
-    function hideMSAuthRequired(){
-      msAuthNotice.classList.add("hidden");
-      msContent.classList.remove("hidden");
-    }
-
-    function getMemberIdFromUrlOrStorage() {
-      const params = new URLSearchParams(window.location.search);
-      const urlMemberId = params.get("memberId");
-
-      if (urlMemberId) {
-        localStorage.setItem("scad_memberId", urlMemberId);
-        return urlMemberId;
-      }
-
-      return localStorage.getItem("scad_memberId");
-    }
-
-    function shortId(value) {
-      if (!value) return "";
-      return String(value).slice(0, 8);
-    }
-
-    function cleanContactCode(value) {
-      return String(value || "")
-        .replace(/^SCAD-/i, "")
-        .trim()
-        .toUpperCase();
-    }
-
-    function normalizeContactSearchQuery(value) {
-      const raw = String(value || "")
-        .trim()
-        .toUpperCase()
-        .replace(/[–—]/g, "-")
-        .replace(/\s+/g, "");
-
-      if (/^[A-Z0-9]{6}$/.test(raw)) {
-        return `SCAD-${raw}`;
-      }
-
-      return raw;
-    }
-
-    function getContactLabel(contact, index) {
-      return (
-        contact.displayName ||
-        contact.contactName ||
-        contact.name ||
-        contact.fullName ||
-        contact.title ||
-        `Contacto ${index + 1} · ${shortId(contact.contactMemberId)}`
-      );
-    }
-
-    function getUnreadCount(contact) {
-      const raw =
-        contact.unreadCount ??
-        contact.unread ??
-        contact.pendingCount ??
-        contact.pendingMessages ??
-        contact.newMessages ??
-        0;
-
-      const count = Number(raw);
-      return Number.isFinite(count) && count > 0 ? count : 0;
-    }
-
-    function escapeHtml(value) {
-      return String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
-
-    function formatDate(value) {
-      if (!value) return "";
-      try {
-        const d = new Date(value);
-        if (Number.isNaN(d.getTime())) return "";
-        return d.toLocaleTimeString("es-MX", {
-          hour: "2-digit",
-          minute: "2-digit"
-        });
-      } catch (err) {
-        return "";
-      }
-    }
-
-    function getMessageKey(message) {
-      if (!message) return "";
-      return String(
-        message.messageId ||
-        message._id ||
-        `${message.senderMemberId || ""}-${message.createdAt || message._createdDate || ""}-${message.text || message.message || ""}`
-      );
-    }
-
-    function getLatestIncomingMessageKey(messages) {
-      const incoming = (Array.isArray(messages) ? messages : [])
-        .filter(message => message.senderMemberId && message.senderMemberId !== activeMemberId);
-
-      if (!incoming.length) return "";
-
-      return getMessageKey(incoming[incoming.length - 1]);
-    }
-
-    function getNotificationAudio() {
-      if (!notificationAudio) {
-        notificationAudio = new Audio(MS_SOUND_URL);
-        notificationAudio.preload = "auto";
-        notificationAudio.volume = 1;
-        notificationAudio.playsInline = true;
-      }
-
-      return notificationAudio;
-    }
-
-    async function playAudioFile(options = {}) {
-      const force = Boolean(options.force);
-
-      if (!force && !soundEnabled) return false;
-
-      try {
-        const audio = getNotificationAudio();
-        audio.pause();
-        audio.currentTime = 0;
-        await audio.play();
-        return true;
-      } catch (err) {
-        console.warn("Audio MP3 no reproducido:", err);
-        return false;
-      }
-    }
-
-    async function ensureAudioContext() {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-
-      if (!AudioCtx) return null;
-
-      if (!audioContext) {
-        audioContext = new AudioCtx();
-      }
-
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      return audioContext;
-    }
-
-    async function unlockNotificationSound() {
-      try {
-        getNotificationAudio();
-
-        // El audio debe intentar sonar en el mismo toque del usuario.
-        const mp3Played = await playAudioFile({ force: true });
-
-        if (mp3Played) {
-          return true;
-        }
-
-        // Fallback por si el MP3 falla en algún navegador.
-        await ensureAudioContext();
-        const oscillatorPlayed = playOscillatorSound({
-          force: true,
-          frequency: 880,
-          duration: 0.25,
-          volume: 0.22
-        });
-
-        return Boolean(oscillatorPlayed);
-
-      } catch (err) {
-        console.warn(err);
-        msHint.textContent = err.message || "No se pudo activar el sonido.";
-        return false;
-      }
-    }
-
-    function playOscillatorSound(options = {}) {
-      const force = Boolean(options.force);
-      const frequency = Number(options.frequency || 880);
-      const duration = Number(options.duration || 0.24);
-      const volume = Number(options.volume || 0.18);
-
-      if (!force && !soundEnabled) return false;
-      if (!audioContext) return false;
-
-      try {
-        const now = audioContext.currentTime;
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-
-        oscillator.type = "square";
-        oscillator.frequency.setValueAtTime(frequency, now);
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(volume, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-
-        oscillator.start(now);
-        oscillator.stop(now + duration + 0.03);
-
-        return true;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-
-    async function playNotificationSound(options = {}) {
-      const force = Boolean(options.force);
-
-      if (!force && !soundEnabled) return;
-
-      const mp3Played = await playAudioFile({ force });
-
-      if (mp3Played) return;
-
-      try {
-        await ensureAudioContext();
-        playOscillatorSound(options);
-      } catch (err) {
-        console.warn(err);
-      }
-    }
-
-    function resetSelect(selectEl, message) {
-      selectEl.innerHTML = "";
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = message;
-      selectEl.appendChild(opt);
-    }
-
-    function renderPendingSelect() {
-      const pendingContacts = msContacts.filter(contact => {
-        const id = contact.contactMemberId;
-        return id && (pendingByContact[id] || 0) > 0;
-      });
-
-      const totalPending = pendingContacts.reduce((sum, contact) => {
-        return sum + (pendingByContact[contact.contactMemberId] || 0);
-      }, 0);
-
-      msPendingSelect.innerHTML = "";
-
-      const first = document.createElement("option");
-      first.value = "";
-      first.textContent = totalPending > 0
-        ? `Mensajes pendientes · ${totalPending}`
-        : "Sin mensajes pendientes";
-      msPendingSelect.appendChild(first);
-
-      pendingContacts.forEach((contact, index) => {
-        const id = contact.contactMemberId;
-        const count = pendingByContact[id] || 0;
-        const opt = document.createElement("option");
-        opt.value = id;
-        opt.textContent = `${getContactLabel(contact, index)} · ${count} nuevo${count === 1 ? "" : "s"}`;
-        msPendingSelect.appendChild(opt);
-      });
-
-      if (totalPending > 0) {
-        pendingBadge.textContent = String(totalPending);
-        pendingBadge.classList.remove("hidden");
-        pendingBadge.classList.add("flash");
-        msPendingSelect.classList.add("pendingAlert");
-      } else {
-        pendingBadge.textContent = "0";
-        pendingBadge.classList.add("hidden");
-        pendingBadge.classList.remove("flash");
-        msPendingSelect.classList.remove("pendingAlert");
-      }
-
-      updateMSHeaderStatus();
-    }
-
-function updateMSHeaderStatus() {
-  const pendingTotal = getPendingTotal();
-
-  msBadge.textContent = String(pendingTotal);
-
-  if (pendingTotal > 0) {
-    msBadge.classList.add("alert", "flash");
-    msStatusText.textContent = `${pendingTotal} mensaje${pendingTotal === 1 ? "" : "s"} pendiente${pendingTotal === 1 ? "" : "s"}`;
-    return;
-  }
-
-  msBadge.classList.remove("alert", "flash");
-  msStatusText.textContent = msContacts.length
-    ? `${msContacts.length} conversación${msContacts.length === 1 ? "" : "es"} disponible${msContacts.length === 1 ? "" : "s"}`
-    : "Sin conversaciones disponibles";
-}
-
-    function clearPendingForContact(contactMemberId) {
-      if (!contactMemberId) return;
-
-      if (pendingByContact[contactMemberId]) {
-        delete pendingByContact[contactMemberId];
-        renderPendingSelect();
-      }
-    }
-
-    function getPendingTotal() {
-      return Object.values(pendingByContact).reduce((sum, value) => {
-        const count = Number(value || 0);
-        return sum + (Number.isFinite(count) && count > 0 ? count : 0);
-      }, 0);
-    }
-
-    async function loadMSPending(options = {}) {
-      if (!activeMemberId) return;
-
-      try {
-        const previousTotal = getPendingTotal();
-
-        const url = `${MS_PENDING_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(data.error || "No se pudieron cargar pendientes.");
-        }
-
-        pendingByContact = {};
-
-        const pendingContacts = Array.isArray(data.contacts) ? data.contacts : [];
-
-        pendingContacts.forEach((item) => {
-          const id = item.contactMemberId;
-          const count = Number(item.count || 0);
-
-          if (!id || !count) return;
-
-          pendingByContact[id] = count;
-
-          const exists = msContacts.some(contact => contact.contactMemberId === id);
-          if (!exists) {
-            msContacts.push({
-              contactMemberId: id,
-              displayName: item.displayName || item.scadCode || `Contacto ${shortId(id)}`,
-              scadCode: item.scadCode || "",
-              photo: item.photo || ""
-            });
-          }
-        });
-
-        const newTotal = Number(data.total || getPendingTotal() || 0);
-        const hasNewPending =
-          Boolean(options.allowNotify) &&
-          newTotal > previousTotal;
-
-        renderPendingSelect();
-
-        if (hasNewPending) {
-          playNotificationSound();
-          msHint.textContent = `${newTotal} mensaje${newTotal === 1 ? "" : "s"} pendiente${newTotal === 1 ? "" : "s"}.`;
-          return;
-        }
-
-        if (!options.silent && newTotal > 0) {
-          msHint.textContent = `${newTotal} mensaje${newTotal === 1 ? "" : "s"} pendiente${newTotal === 1 ? "" : "s"}.`;
-        }
-
-      } catch (err) {
-        console.warn(err);
-        if (!options.silent) {
-          msHint.textContent = err.message || "Error cargando mensajes pendientes.";
-        }
-      }
-    }
-
-    async function markMSRead(contactMemberId, conversationId = "") {
-      if (!activeMemberId || !contactMemberId) return;
-
-      try {
-        const res = await fetch(MS_MARK_READ_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            memberId: activeMemberId,
-            contactMemberId,
-            conversationId: conversationId || activeConversationId || ""
-          })
-        });
-
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(data.error || "No se pudo marcar como leído.");
-        }
-
-        clearPendingForContact(contactMemberId);
-
-      } catch (err) {
-        console.warn(err);
-      }
-    }
-
-
-    function toggleContactTools(forceOpen) {
-      const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : contactToolsPanel.classList.contains("hidden");
-      contactToolsPanel.classList.toggle("hidden", !shouldOpen);
-      openMSBtn.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-      openMSBtn.classList.toggle("gestionOpen", shouldOpen);
-      if (gestionLabel) gestionLabel.textContent = shouldOpen ? "🔎 Buscar usuario ▴" : "🔎 Buscar usuario ▾";
-if (shouldOpen) {
-  loadMyContactCode();
-}
-    }
-
-    function getMyStoredScadCode() {
-      const params = new URLSearchParams(window.location.search);
-      const urlCode = params.get("scadCode") || params.get("contactCode") || params.get("codigoScad");
-      if (urlCode) {
-        localStorage.setItem("scad_myScadCode", urlCode);
-        return urlCode;
-      }
-      return localStorage.getItem("scad_myScadCode") || "";
-    }
-
-    async function loadMyContactCode() {
-      const stored = getMyStoredScadCode();
-      if (stored) {
-        myContactCode.textContent = cleanContactCode(stored);
-        return;
-      }
-
-      if (!activeMemberId) {
-        myContactCode.textContent = "No disponible";
-        return;
-      }
-
-      try {
-        const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-        const data = await res.json();
-        const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
-
-        if (data.ok && code) {
-          localStorage.setItem("scad_myScadCode", code);
-          myContactCode.textContent = cleanContactCode(code);
-        } else {
-          myContactCode.textContent = "No disponible";
-        }
-      } catch (err) {
-        console.warn(err);
-        myContactCode.textContent = "No disponible";
-      }
-    }
-
-    async function searchMSMember() {
-      const q = contactSearchInput.value.trim();
-      selectedSearchMember = null;
-  if (!activeMemberId) {
-  contactSearchResult.innerHTML = `<div class="hint">Sesión requerida.</div>`;
-  openPWAAccess();
-  return;
-}
-      if (!q) { contactSearchResult.innerHTML = `<div class="hint">Escribe un código SCaD o nombre.</div>`; return; }
-      contactSearchBtn.disabled = true;
-      contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
-      try {
-        const normalizedQ = normalizeContactSearchQuery(q);
-        const res = await fetch(`${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(normalizedQ)}`);
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || "No se pudo buscar contacto.");
-        const user = data.user || (Array.isArray(data.users) ? data.users[0] : null);
-        if (!user) {
-  contactSearchResult.innerHTML = `
-    <div class="hint">
-      <strong>Contacto no disponible en Mensajería SCaD.</strong>
-      <br>
-      El usuario requiere entrar primero a la App SCaD para activar su mensajería.
-    </div>
-  `;
-  return;
-}
-        selectedSearchMember = user;
-
-contactSearchResult.innerHTML = `
-          <div class="miniCard">
-            <div class="miniCardText">
-              <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
-              <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.email || user.memberId || "")}</span>
-              <span>Disponible en Mensajería SCaD.</span>
-            </div>
-            <div class="miniCardActions">
-              <button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Iniciar chat</button>
-            </div>
-          </div>`;
-        
-        document.getElementById("sendRequestBtn").addEventListener("click", sendContactRequest);
-      } catch (err) {
-        console.warn(err);
-        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "Error buscando contacto.")}</div>`;
-      } finally {
-        contactSearchBtn.disabled = false;
-      }
-    }
-
-async function sendContactRequest() {
-  if (!selectedSearchMember?.memberId) return;
-
-  const btn = document.getElementById("sendRequestBtn");
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Abriendo chat...";
-  }
-
-  try {
-    const data = await postJson(MS_SEND_REQUEST_ENDPOINT, {
-      memberId: activeMemberId,
-      toMemberId: selectedSearchMember.memberId
+    const member = await members.getMember(memberId, {
+      fieldsets: ["FULL"]
     });
 
-    const targetMemberId = data.contactMemberId || selectedSearchMember.memberId;
-    const label = selectedSearchMember.displayName || "Usuario SCaD";
-    const conversation = data.conversation || null;
+    const firstName = member?.contactDetails?.firstName || "";
+    const lastName = member?.contactDetails?.lastName || "";
+    const fullName = `${firstName} ${lastName}`.trim();
 
-    contactSearchResult.innerHTML = `
-      <div class="hint">
-        Conversación iniciada. Ya puedes enviar un mensaje.
-      </div>
-    `;
+    const displayName =
+      fullName ||
+      member?.profile?.nickname ||
+      member?.loginEmail ||
+      "Usuario SCaD";
 
-    contactSearchInput.value = "";
-    selectedSearchMember = null;
+    const email =
+      member?.loginEmail ||
+      member?.contactDetails?.emails?.[0]?.email ||
+      "";
 
-    activeContactMemberId = targetMemberId;
-    activeContactLabel = label;
+    const photo =
+      member?.profile?.profilePhoto?.url ||
+      "";
+
+    return {
+      displayName,
+      email,
+      photo
+    };
+
+  } catch (err) {
+    console.warn("No se pudo obtener perfil Wix:", err);
+    return {
+      displayName: "Usuario SCaD",
+      email: "",
+      photo: ""
+    };
+  }
+}
+async function getMSMemberProfile(memberId) {
+  if (!memberId) return null;
+
+  const result = await wixData
+    .query("MS_Members")
+    .eq("memberId", memberId)
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  return result.items[0] || null;
+}
+
+function publicMember(profile) {
+  return {
+    memberId: profile.memberId,
+    displayName: getDisplayName(profile),
+    scadCode: profile.scadCode || "",
+    photo: profile.photo || profile.profilePhoto || profile.image || ""
+  };
+}
+
+async function hasBlocked(blockedByMemberId, blockedMemberId) {
+  if (!blockedByMemberId || !blockedMemberId) return false;
+
+  const result = await wixData
+    .query("MS_Contacts")
+    .eq("ownerMemberId", blockedByMemberId)
+    .eq("contactMemberId", blockedMemberId)
+    .eq("blocked", true)
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  return result.items.length > 0;
+}
+
+async function assertCanStartOrSend(senderMemberId, receiverMemberId) {
+  if (!senderMemberId) throw new Error("Falta memberId");
+  if (!receiverMemberId) throw new Error("Falta contactMemberId");
+
+  if (senderMemberId === receiverMemberId) {
+    throw new Error("No puedes iniciar conversación contigo mismo.");
+  }
+
+  const sender = await getMSMemberProfile(senderMemberId);
+
+  if (!sender || sender.status !== "active") {
+    throw new Error("Tu perfil de Mensajería SCaD no está activo.");
+  }
+
+  const receiver = await getMSMemberProfile(receiverMemberId);
+
+  if (!receiver || receiver.status !== "active") {
+    throw new Error(
+      "Contacto no disponible en Mensajería SCaD. El usuario requiere entrar primero a la App SCaD para activar su mensajería."
+    );
+  }
+
+  const receiverBlockedSender = await hasBlocked(receiverMemberId, senderMemberId);
+
+  if (receiverBlockedSender) {
+    throw new Error(
+      "Por el momento no es posible iniciar conversación con este usuario."
+    );
+  }
+
+  return {
+    sender,
+    receiver
+  };
+}
+
+async function ensureDirectContactIndex(ownerMemberId, contactMemberId, sourceRequestId = "DIRECT") {
+  const profile = await getMSMemberProfile(contactMemberId);
+
+  if (!profile) {
+    throw new Error("El usuario destino no tiene perfil MS.");
+  }
+
+  const existing = await wixData
+    .query("MS_Contacts")
+    .eq("ownerMemberId", ownerMemberId)
+    .eq("contactMemberId", contactMemberId)
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  const now = new Date();
+
+  const payload = {
+    ownerMemberId,
+    contactMemberId,
+    displayName: getDisplayName(profile),
+    scadCode: profile.scadCode || "",
+    photo: profile.photo || profile.profilePhoto || profile.image || "",
+    status: "accepted",
+    blocked: false,
+    sourceRequestId,
+    acceptedAt: now,
+    updatedAt: now
+  };
+
+  if (existing.items.length) {
+    const item = existing.items[0];
+
+    /*
+      Si el dueño de este registro bloqueó al contacto,
+      no se debe desbloquear automáticamente.
+    */
+    if (item.blocked === true || item.status === "blocked") {
+      return item;
+    }
+
+    Object.assign(item, payload);
+    return await wixData.update("MS_Contacts", item, { suppressAuth: true });
+  }
+
+  return await wixData.insert("MS_Contacts", {
+    ...payload,
+    createdAt: now
+  }, { suppressAuth: true });
+}
+
+async function ensureAcceptedContact(ownerMemberId, contactMemberId, sourceRequestId = "") {
+  const profile = await getMSMemberProfile(contactMemberId);
+
+  if (!profile) {
+    throw new Error(`No existe perfil MS para el contacto ${contactMemberId}`);
+  }
+
+  const firstLastName =
+    profile?.firstName && profile?.lastName
+      ? `${profile.firstName} ${profile.lastName}`
+      : "";
+
+  const contactDisplayName =
+    profile?.displayName ||
+    profile?.fullName ||
+    profile?.name ||
+    profile?.title ||
+    profile?.nombre ||
+    firstLastName ||
+    profile?.scadCode ||
+    "Usuario SCaD";
+
+  const contactScadCode = profile?.scadCode || "";
+  const contactPhoto = profile?.photo || profile?.profilePhoto || profile?.image || "";
+
+  const existing = await wixData
+    .query("MS_Contacts")
+    .eq("ownerMemberId", ownerMemberId)
+    .eq("contactMemberId", contactMemberId)
+    .eq("status", "accepted")
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  if (existing.items.length) {
+    const item = existing.items[0];
+
+    item.displayName = contactDisplayName;
+    item.scadCode = contactScadCode;
+    item.photo = contactPhoto;
+    item.blocked = false;
+    item.updatedAt = new Date();
+
+    return await wixData.update("MS_Contacts", item, { suppressAuth: true });
+  }
+
+  const now = new Date();
+
+  return await wixData.insert("MS_Contacts", {
+    ownerMemberId,
+    contactMemberId,
+    displayName: contactDisplayName,
+    scadCode: contactScadCode,
+    photo: contactPhoto,
+    status: "accepted",
+    blocked: false,
+    sourceRequestId,
+    createdAt: now,
+    acceptedAt: now,
+    updatedAt: now
+  }, { suppressAuth: true });
+}
+
+async function getRequestItem(collectionName, requestId, requestItemId) {
+  if (requestItemId) {
+    return await wixData.get(collectionName, requestItemId, { suppressAuth: true });
+  }
+
+  const result = await wixData
+    .query(collectionName)
+    .eq("requestId", requestId)
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  return result.items[0] || null;
+}
+
+async function getConversationForDelete(conversationId, memberId) {
+  const result = await wixData
+    .query("MS_Conversations")
+    .eq("conversationId", conversationId)
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  const conversation = result.items[0] || null;
+
+  if (!conversation) throw new Error("Conversación no encontrada");
+
+  const allowed = conversation.participantA === memberId || conversation.participantB === memberId;
+  if (!allowed) throw new Error("No tienes acceso a esta conversación");
+
+  return conversation;
+}
+
+async function deleteMessagesByConversationId(conversationId) {
+  if (!conversationId) return 0;
+
+  let deleted = 0;
+
+  while (true) {
+    const res = await wixData
+      .query("MS_Messages")
+      .eq("conversationId", conversationId)
+      .limit(1000)
+      .find({ suppressAuth: true });
+
+    if (!res.items.length) break;
+
+    const ids = res.items.map(item => item._id);
+
+    await wixData.bulkRemove("MS_Messages", ids, {
+      suppressAuth: true
+    });
+
+    deleted += ids.length;
+
+    if (res.items.length < 1000) break;
+  }
+
+  return deleted;
+}
+
+async function findDirectConversation(memberId, contactMemberId) {
+  const resA = await wixData
+    .query("MS_Conversations")
+    .eq("participantA", memberId)
+    .eq("participantB", contactMemberId)
+    .eq("type", "direct")
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  if (resA.items.length) return resA.items[0];
+
+  const resB = await wixData
+    .query("MS_Conversations")
+    .eq("participantA", contactMemberId)
+    .eq("participantB", memberId)
+    .eq("type", "direct")
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  return resB.items[0] || null;
+}
+
+async function resetConversationPreview(conversation) {
+  if (!conversation || !conversation._id) return;
+
+  conversation.lastMessage = "";
+  conversation.lastSenderMemberId = "";
+  conversation.lastMessageAt = new Date();
+  conversation.updatedAt = new Date();
+
+  await wixData.update("MS_Conversations", conversation, {
+    suppressAuth: true
+  });
+}
+
+/* PING */
+
+export function get_ping(request) {
+  return ok({
+    headers: HEADERS,
+    body: {
+      ok: true,
+      message: "PING OK"
+    }
+  });
+}
+
+/* MS CONTACTOS */
+
+export function options_mscontacts(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function get_mscontacts(request) {
+  try {
+    const memberId = request.query.memberId;
+
+    if (!memberId) {
+      return ok({
+        headers: HEADERS,
+        body: {
+          ok: false,
+          reason: "FALTA_MEMBER_ID",
+          contacts: []
+        }
+      });
+    }
+
+    const contactsResult = await wixData
+      .query("MS_Contacts")
+      .eq("ownerMemberId", memberId)
+      .eq("status", "accepted")
+      .eq("blocked", false)
+      .find({ suppressAuth: true });
+
+    const contacts = contactsResult.items || [];
+    const enrichedContacts = [];
+
+    for (let i = 0; i < contacts.length; i++) {
+      const contact = contacts[i];
+      let profile = null;
+
+      if (contact.contactMemberId) {
+        const profileResult = await wixData
+          .query("MS_Members")
+          .eq("memberId", contact.contactMemberId)
+          .limit(1)
+          .find({ suppressAuth: true });
+
+        profile = profileResult.items[0] || null;
+      }
+
+const firstLastName =
+  profile?.firstName && profile?.lastName
+    ? `${profile.firstName} ${profile.lastName}`
+    : "";
+
+const displayName =
+  contact.displayName ||
+  profile?.displayName ||
+  profile?.fullName ||
+  profile?.name ||
+  profile?.title ||
+  profile?.nombre ||
+  firstLastName ||
+  contact.scadCode ||
+  profile?.scadCode ||
+  `Contacto ${i + 1}`;
+
+      enrichedContacts.push({
+        _id: contact._id,
+        ownerMemberId: contact.ownerMemberId,
+        contactMemberId: contact.contactMemberId,
+        status: contact.status,
+        blocked: contact.blocked,
+        sourceRequestId: contact.sourceRequestId,
+        acceptedAt: contact.acceptedAt,
+        createdAt: contact.createdAt,
+        displayName,
+scadCode: contact.scadCode || profile?.scadCode || "",
+photo: contact.photo || profile?.photo || profile?.profilePhoto || profile?.image || ""
+      });
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        memberId,
+        total: enrichedContacts.length,
+        contacts: enrichedContacts
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS BUSCAR MIEMBRO */
+
+export function options_mssearchmember(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function get_mssearchmember(request) {
+  try {
+    const memberId = request.query.memberId;
+    const q = String(request.query.q || "").trim();
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!q) throw new Error("Falta búsqueda");
+
+    const normalized = normalizeScadCodeInput(q);
+    const seen = {};
+    let found = [];
+
+    async function addResults(queryBuilder) {
+      const result = await queryBuilder
+        .limit(10)
+        .find({ suppressAuth: true });
+
+      for (const item of result.items || []) {
+        if (!item.memberId) continue;
+        if (item.memberId === memberId) continue;
+        if (item.status && item.status !== "active") continue;
+        if (seen[item.memberId]) continue;
+
+        seen[item.memberId] = true;
+        found.push(item);
+      }
+    }
+
+    await addResults(
+      wixData.query("MS_Members").eq("scadCode", normalized)
+    );
+
+    await addResults(
+      wixData.query("MS_Members").contains("displayName", q)
+    );
+
+    await addResults(
+      wixData.query("MS_Members").contains("email", q)
+    );
+
+    await addResults(
+      wixData.query("MS_Members").eq("memberId", q)
+    );
+
+const users = found.map(publicMember);
+const foundAny = users.length > 0;
+
+return ok({
+  headers: HEADERS,
+  body: {
+    ok: true,
+    found: foundAny,
+    users,
+    user: users[0] || null,
+    message: foundAny
+      ? "Usuario disponible en Mensajería SCaD."
+      : "Contacto no disponible en Mensajería SCaD. El usuario requiere entrar primero a la App SCaD para activar su mensajería."
+  }
+});
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS ENVIAR SOLICITUD */
+
+export function options_mssendrequest(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_mssendrequest(request) {
+  try {
+    const body = await request.body.json();
+
+    const fromMemberId = body.memberId || body.fromMemberId;
+    const toMemberId = body.toMemberId || body.contactMemberId;
+
+    if (!fromMemberId) throw new Error("Falta memberId");
+    if (!toMemberId) throw new Error("Falta toMemberId");
+
+    const conversation = await getOrCreateConversation(fromMemberId, toMemberId);
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        mode: "direct",
+        message: "Conversación iniciada.",
+        contactMemberId: toMemberId,
+        conversation
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
+
+/* MS SOLICITUDES RECIBIDAS */
+
+export function options_msincomingrequests(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function get_msincomingrequests(request) {
+  try {
+    const memberId = request.query.memberId;
+    if (!memberId) throw new Error("Falta memberId");
+
+    const collectionName = await getContactRequestsCollection();
+
+    const result = await wixData
+      .query(collectionName)
+      .eq("toMemberId", memberId)
+      .eq("status", "pending")
+      .descending("createdAt")
+      .find({ suppressAuth: true });
+
+    const requests = [];
+
+    for (const item of result.items || []) {
+      const profile = await getMSMemberProfile(item.fromMemberId);
+
+      requests.push({
+        _id: item._id,
+        requestId: item.requestId,
+        fromMemberId: item.fromMemberId,
+        toMemberId: item.toMemberId,
+        displayName: getDisplayName(profile, "Contacto"),
+        scadCode: profile?.scadCode || "",
+        photo: profile?.photo || profile?.profilePhoto || profile?.image || "",
+        message: item.message || "",
+        createdAt: item.createdAt
+      });
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        memberId,
+        total: requests.length,
+        requests
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS ACEPTAR SOLICITUD */
+
+export function options_msacceptrequest(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msacceptrequest(request) {
+  try {
+    const body = await request.body.json();
+    const memberId = body.memberId;
+    const requestId = body.requestId;
+    const requestItemId = body.requestItemId || body._id;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!requestId && !requestItemId) throw new Error("Falta requestId");
+
+    const collectionName = await getContactRequestsCollection();
+    const requestItem = await getRequestItem(collectionName, requestId, requestItemId);
+
+    if (!requestItem) throw new Error("Solicitud no encontrada");
+    if (requestItem.toMemberId !== memberId) throw new Error("Solicitud no válida para este usuario");
+    if (requestItem.status !== "pending") throw new Error("Esta solicitud ya fue procesada");
+
+    const senderProfile = await getMSMemberProfile(requestItem.fromMemberId);
+    const receiverProfile = await getMSMemberProfile(requestItem.toMemberId);
+
+    if (!senderProfile) {
+      throw new Error("No se puede aceptar: el perfil MS del solicitante no existe en MS_Members.");
+    }
+
+    if (!receiverProfile) {
+      throw new Error("No se puede aceptar: tu perfil MS no existe en MS_Members.");
+    }
+
+    const now = new Date();
+    requestItem.status = "accepted";
+    requestItem.respondedAt = now;
+    requestItem.updatedAt = now;
+
+    await wixData.update(collectionName, requestItem, { suppressAuth: true });
+
+    await ensureAcceptedContact(requestItem.toMemberId, requestItem.fromMemberId, requestItem.requestId);
+    await ensureAcceptedContact(requestItem.fromMemberId, requestItem.toMemberId, requestItem.requestId);
+
+    const conversation = await getOrCreateConversation(requestItem.toMemberId, requestItem.fromMemberId);
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Solicitud aceptada.",
+        contactMemberId: requestItem.fromMemberId,
+        conversationId: conversation.conversationId
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS RECHAZAR SOLICITUD */
+
+export function options_msrejectrequest(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msrejectrequest(request) {
+  try {
+    const body = await request.body.json();
+    const memberId = body.memberId;
+    const requestId = body.requestId;
+    const requestItemId = body.requestItemId || body._id;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!requestId && !requestItemId) throw new Error("Falta requestId");
+
+    const collectionName = await getContactRequestsCollection();
+    const requestItem = await getRequestItem(collectionName, requestId, requestItemId);
+
+    if (!requestItem) throw new Error("Solicitud no encontrada");
+    if (requestItem.toMemberId !== memberId) throw new Error("Solicitud no válida para este usuario");
+    if (requestItem.status !== "pending") throw new Error("Esta solicitud ya fue procesada");
+
+    const now = new Date();
+    requestItem.status = "rejected";
+    requestItem.respondedAt = now;
+    requestItem.updatedAt = now;
+
+    await wixData.update(collectionName, requestItem, { suppressAuth: true });
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Solicitud rechazada."
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS ELIMINAR CONTACTO */
+
+export function options_msremovecontact(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msremovecontact(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const contactMemberId = body.contactMemberId;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!contactMemberId) throw new Error("Falta contactMemberId");
+
+    const conversation = await findDirectConversation(memberId, contactMemberId);
+
+    let deletedMessages = 0;
 
     if (conversation && conversation.conversationId) {
-      activeConversationId = conversation.conversationId;
-      activeConversationName.textContent = `Chat activo: ${activeContactLabel}`;
-      chatStatus.textContent = "Activa";
-      msHint.textContent = "Conversación iniciada. Escribe tu mensaje.";
-
-      await loadMSMessages(activeConversationId, { allowNotify: false });
-      await loadMSContacts();
-      msContactSelect.value = targetMemberId;
-
-      toggleContactTools(false);
-      return;
+      deletedMessages = await deleteMessagesByConversationId(conversation.conversationId);
+      await resetConversationPreview(conversation);
     }
 
-    await loadMSContacts();
-    msContactSelect.value = targetMemberId;
-    await loadMSConversation(targetMemberId, label);
+    const contactResult = await wixData
+      .query("MS_Contacts")
+      .eq("ownerMemberId", memberId)
+      .eq("contactMemberId", contactMemberId)
+      .limit(100)
+      .find({ suppressAuth: true });
 
-    toggleContactTools(false);
-
-  } catch (err) {
-    console.warn(err);
-
-    const message = err.message || "Por el momento no es posible iniciar conversación con este usuario.";
-
-    contactSearchResult.innerHTML = `
-      <div class="hint">
-        ${escapeHtml(message)}
-      </div>
-    `;
-
-    msHint.textContent = message;
-
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Iniciar chat";
-    }
-  }
-}
-
-    function resetActiveChat() {
-      activeContactMemberId = null;
-      activeContactLabel = "";
-      activeConversationId = null;
-      msMessages = [];
-      activeConversationName.textContent = "Chat activo";
-      chatStatus.textContent = "Pendiente";
-      msMessageBox.innerHTML = `<div class="msg">Selecciona un contacto para cargar la conversación.</div>`;
-      msContactSelect.value = "";
-      msPendingSelect.value = "";
-    }
-
-async function deleteActiveConversation() {
-  if (!activeConversationId) {
-    msHint.textContent = "Selecciona una conversación primero.";
-    return;
-  }
-
-  if (!window.confirm("¿Quieres vaciar este chat? Se eliminará el historial de mensajes.")) {
-    return;
-  }
-
-  deleteConversationBtn.disabled = true;
-  msHint.textContent = "Vaciando chat...";
-
-  try {
-    await postJson(MS_DELETE_CONVERSATION_ENDPOINT, {
-      memberId: activeMemberId,
-      conversationId: activeConversationId
-    });
-
-    msMessages = [];
-
-    msMessageBox.innerHTML = `
-      <div class="msg">
-        Chat vaciado.
-      </div>
-    `;
-
-    chatStatus.textContent = "Activo";
-    msHint.textContent = "Chat vaciado.";
-
-    await loadMSPending({ silent: true });
-    await loadMSContacts();
-
-    if (activeContactMemberId) {
-      msContactSelect.value = activeContactMemberId;
-    }
-
-  } catch (err) {
-    console.warn(err);
-    msHint.textContent = err.message || "No se pudo vaciar el chat.";
-  } finally {
-    deleteConversationBtn.disabled = false;
-  }
-}
-
-    function scrollMessagesToBottom() {
-      window.requestAnimationFrame(() => {
-        msMessageBox.scrollTop = msMessageBox.scrollHeight;
+    for (const contact of contactResult.items || []) {
+      await wixData.remove("MS_Contacts", contact._id, {
+        suppressAuth: true
       });
     }
 
-    async function removeActiveContact() {
-  if (!activeContactMemberId) {
-    msHint.textContent = "Selecciona una conversación primero.";
-    return;
-  }
-
-  if (!window.confirm("¿Quieres eliminar este contacto? Se quitará de tu lista y se borrará el historial de mensajes.")) {
-    return;
-  }
-
-  removeContactBtn.disabled = true;
-  msHint.textContent = "Eliminando contacto...";
-
-  try {
-    await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
-      memberId: activeMemberId,
-      contactMemberId: activeContactMemberId
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Contacto eliminado de tu lista.",
+        deletedMessages,
+        removedContacts: contactResult.items.length
+      }
     });
 
-    resetActiveChat();
-    await loadMSPending({ silent: true });
-    await loadMSContacts();
-
-    msHint.textContent = "Contacto eliminado de tu lista.";
-
   } catch (err) {
-    console.warn(err);
-    msHint.textContent = err.message || "No se pudo eliminar el contacto.";
-  } finally {
-    removeContactBtn.disabled = false;
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
   }
 }
-    
-    function renderMessages(messages) {
-      msMessages = Array.isArray(messages) ? messages : [];
 
-      if (!msMessages.length) {
-        msMessageBox.innerHTML = `
-          <div class="msg">
-            No hay mensajes todavía con ${escapeHtml(activeContactLabel || "este contacto")}.
-          </div>
-          <div class="msg me">
-            Escribe un mensaje para continuar la conversación.
-          </div>
-        `;
-        scrollMessagesToBottom();
-        return;
-      }
+/* MS CONVERSACIÓN */
 
-      msMessageBox.innerHTML = msMessages.map((message) => {
-        const isMine = message.senderMemberId === activeMemberId;
-        const text = escapeHtml(message.text || message.message || "");
-        const time = formatDate(message.createdAt || message._createdDate);
+export function options_msconversation(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
 
-        return `
-          <div class="msg ${isMine ? "me" : ""}">
-            ${text || "(Mensaje sin texto)"}
-            ${time ? `<br><small>${time}</small>` : ""}
-          </div>
-        `;
-      }).join("");
-      scrollMessagesToBottom();
-    }
-
-    function setMessageBoxLoading(label) {
-      msMessageBox.innerHTML = `
-        <div class="msg">
-          Cargando conversación con ${escapeHtml(label)}...
-        </div>
-      `;
-      scrollMessagesToBottom();
-    }
-async function blockActiveContact() {
-  if (!activeContactMemberId) {
-    msHint.textContent = "Selecciona una conversación primero.";
-    return;
-  }
-
-  if (!window.confirm("¿Quieres bloquear a este usuario? Se eliminará el historial y no podrá enviarte mensajes.")) {
-    return;
-  }
-
-  blockContactBtn.disabled = true;
-  msHint.textContent = "Bloqueando usuario...";
-
+export async function get_msconversation(request) {
   try {
-    await postJson(MS_BLOCK_CONTACT_ENDPOINT, {
-      memberId: activeMemberId,
-      contactMemberId: activeContactMemberId
+    const memberId = request.query.memberId;
+    const contactMemberId = request.query.contactMemberId;
+
+    const conversation = await getOrCreateConversation(memberId, contactMemberId);
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        conversation
+      }
     });
 
-    resetActiveChat();
-    await loadMSPending({ silent: true });
-    await loadMSContacts();
-
-    msHint.textContent = "Usuario bloqueado.";
-
   } catch (err) {
-    console.warn(err);
-    msHint.textContent = err.message || "No se pudo bloquear al usuario.";
-  } finally {
-    blockContactBtn.disabled = false;
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
   }
 }
-    
-    async function loadMSConversation(contactMemberId, label) {
-      if (!activeMemberId) {
-        msHint.textContent = "Falta memberId para cargar conversación.";
-        return;
-      }
 
-      if (!contactMemberId) {
-        msHint.textContent = "Selecciona un contacto.";
-        return;
-      }
-
-      activeConversationId = null;
-      activeContactMemberId = contactMemberId;
-      activeContactLabel = label || "Contacto";
-
-      activeConversationName.textContent = `Chat activo: ${activeContactLabel}`;
-      chatStatus.textContent = "Cargando";
-      msHint.textContent = "Cargando conversación...";
-      setMessageBoxLoading(activeContactLabel);
-
-      try {
-        const url = `${MS_CONVERSATION_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&contactMemberId=${encodeURIComponent(contactMemberId)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data.ok || !data.conversation) {
-          throw new Error(data.error || "No se pudo cargar conversación.");
-        }
-
-        const conversation = data.conversation;
-        activeConversationId = conversation.conversationId;
-
-        chatStatus.textContent = "Activa";
-        msHint.textContent = "Conversación activa. Cargando mensajes...";
-
-        lastIncomingMessageKey = "";
-        await loadMSMessages(activeConversationId, { allowNotify: false });
-        await markMSRead(contactMemberId, activeConversationId);
-        await loadMSPending({ silent: true });
-
-      } catch (err) {
-        console.warn(err);
-        chatStatus.textContent = "Error";
-        msHint.textContent = err.message || "Error cargando conversación.";
-        msMessageBox.innerHTML = `
-          <div class="msg">
-            No se pudo cargar la conversación.
-          </div>
-        `;
-      }
-    }
-
-    async function loadMSMessages(conversationId, options = {}) {
-      if (!conversationId) {
-        msHint.textContent = "Falta conversationId.";
-        return;
-      }
-
-      if (isRefreshingActiveChat && options.silent) return;
-
-      try {
-        if (options.silent) {
-          isRefreshingActiveChat = true;
-        }
-
-        const url = `${MS_MESSAGES_ENDPOINT}?conversationId=${encodeURIComponent(conversationId)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(data.error || "No se pudieron cargar mensajes.");
-        }
-
-        const messages = data.messages || [];
-        const latestIncomingKey = getLatestIncomingMessageKey(messages);
-        const hasNewIncoming =
-          Boolean(options.allowNotify) &&
-          Boolean(lastIncomingMessageKey) &&
-          Boolean(latestIncomingKey) &&
-          latestIncomingKey !== lastIncomingMessageKey;
-
-        renderMessages(messages);
-
-        if (latestIncomingKey) {
-          lastIncomingMessageKey = latestIncomingKey;
-        }
-
-        if (hasNewIncoming) {
-          playNotificationSound();
-          msHint.textContent = "Mensaje nuevo recibido.";
-          await markMSRead(activeContactMemberId, activeConversationId);
-          await loadMSPending({ silent: true });
-        } else if (!options.silent) {
-          msHint.textContent = messages.length
-            ? "Mensajes cargados."
-            : "No hay mensajes todavía.";
-        }
-
-      } catch (err) {
-        console.warn(err);
-
-        if (!options.silent) {
-          msHint.textContent = err.message || "Error cargando mensajes.";
-          msMessageBox.innerHTML = `
-            <div class="msg">
-              Error cargando mensajes.
-            </div>
-          `;
-        }
-      } finally {
-        if (options.silent) {
-          isRefreshingActiveChat = false;
-        }
-      }
-    }
-
-    function startActiveChatAutoRefresh() {
-      window.setInterval(() => {
-        const panelIsOpen = !msPanel.classList.contains("hidden");
-        const canRefresh = panelIsOpen && activeConversationId && activeMemberId;
-
-        if (!canRefresh) return;
-
-        loadMSMessages(activeConversationId, {
-          silent: true,
-          allowNotify: true
-        });
-      }, MS_REFRESH_MS);
-    }
-
-    function startPendingAutoRefresh() {
-      window.setInterval(() => {
-        const panelIsOpen = !msPanel.classList.contains("hidden");
-        const canRefresh = panelIsOpen && activeMemberId;
-
-        if (!canRefresh) return;
-
-loadMSPending({ silent: true, allowNotify: true });
-      }, MS_REFRESH_MS);
-    }
-async function activateMSProfile() {
-  if (!activeMemberId) {
-    openPWAAccess();
-    return;
-  }
-
-  linkSessionBtn.disabled = true;
-  linkSessionBtn.textContent = "Activando...";
-
+export async function post_msconversation(request) {
   try {
-    await postJson(MS_ACTIVATE_PROFILE_ENDPOINT, {
-      memberId: activeMemberId
+    const body = await request.body.json();
+    const conversation = await getOrCreateConversation(body.memberId, body.contactMemberId);
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        conversation
+      }
     });
 
-    msHint.textContent = "Mensajería activada.";
-    await loadMSContacts();
-
   } catch (err) {
-    console.warn(err);
-    msHint.textContent = err.message || "No se pudo activar mensajería.";
-  } finally {
-    linkSessionBtn.disabled = false;
-    linkSessionBtn.textContent = "Iniciar sesión";
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
   }
 }
-    
-    async function loadMSContacts() {
-activeMemberId = getMemberIdFromUrlOrStorage();
 
-      if (!activeMemberId) {
-        showMSAuthRequired();
-        return;
+async function getOrCreateConversation(memberId, contactMemberId) {
+  await assertCanStartOrSend(memberId, contactMemberId);
+
+  const existingA = await wixData
+    .query("MS_Conversations")
+    .eq("participantA", memberId)
+    .eq("participantB", contactMemberId)
+    .eq("type", "direct")
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  if (existingA.items.length) return existingA.items[0];
+
+  const existingB = await wixData
+    .query("MS_Conversations")
+    .eq("participantA", contactMemberId)
+    .eq("participantB", memberId)
+    .eq("type", "direct")
+    .limit(1)
+    .find({ suppressAuth: true });
+
+  if (existingB.items.length) return existingB.items[0];
+
+  const now = new Date();
+
+  await ensureDirectContactIndex(memberId, contactMemberId, "DIRECT");
+  await ensureDirectContactIndex(contactMemberId, memberId, "DIRECT");
+
+  const newConversation = {
+    conversationId: `CONV-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    resourceKey: "MS",
+    type: "direct",
+    status: "active",
+    participantA: memberId,
+    participantB: contactMemberId,
+    participants: `${memberId},${contactMemberId}`,
+    lastMessage: "",
+    lastMessageAt: now,
+    lastSenderMemberId: "",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  return await wixData.insert("MS_Conversations", newConversation, {
+    suppressAuth: true
+  });
+}
+
+/* MS MENSAJES */
+
+export function options_msmessages(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function get_msmessages(request) {
+  try {
+    const conversationId = request.query.conversationId;
+
+    if (!conversationId) throw new Error("Falta conversationId");
+
+    const result = await wixData
+      .query("MS_Messages")
+      .eq("conversationId", conversationId)
+      .ne("status", "deleted")
+      .ascending("createdAt")
+      .limit(100)
+      .find({ suppressAuth: true });
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        conversationId,
+        total: result.totalCount,
+        messages: result.items || []
       }
+    });
 
-try {
-  const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-const profileData = await profileRes.json();
-
-  if (!profileData.ok) {
-    showMSAuthRequired();
-    return;
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
   }
+}
+
+/* MS ENVIAR MENSAJE */
+
+export function options_mssendmessage(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_mssendmessage(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const contactMemberId = body.contactMemberId;
+    const conversationId = body.conversationId;
+    const text = String(body.text || "").trim();
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!contactMemberId) throw new Error("Falta contactMemberId");
+    if (!conversationId) throw new Error("Falta conversationId");
+    if (!text) throw new Error("Mensaje vacío");
+
+    try {
+  await assertCanStartOrSend(memberId, contactMemberId);
 } catch (err) {
-  console.warn("No se pudo validar perfil MS:", err);
-  showMSAuthRequired();
-  return;
+  if (
+    String(err.message || "").includes("Por el momento no es posible iniciar conversación")
+  ) {
+    throw new Error(
+      "Por el momento no es posible enviar mensajes a este usuario. El mensaje no fue enviado."
+    );
+  }
+
+  throw err;
 }
 
-hideMSAuthRequired();
+    const convResult = await wixData
+      .query("MS_Conversations")
+      .eq("conversationId", conversationId)
+      .limit(1)
+      .find({ suppressAuth: true });
 
-loadMyContactCode();
-resetSelect(msContactSelect, "Cargando contactos...");
-      
-resetSelect(msContactSelect, "Cargando contactos...");
-      resetSelect(msPendingSelect, "Sin mensajes pendientes");
-      msHint.textContent = "Cargando contactos MS...";
-
-      try {
-        const res = await fetch(
-          `${MS_CONTACTS_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`
-        );
-
-        const data = await res.json();
-
-        if (!data.ok) {
-          resetSelect(msContactSelect, "No se pudieron cargar contactos");
-          msStatusText.textContent = "Error cargando contactos";
-          msHint.textContent = data.reason || data.error || "No se pudieron cargar contactos.";
-          return;
-        }
-
-        msContacts = Array.isArray(data.contacts) ? data.contacts : [];
-        pendingByContact = {};
-
-        msContactSelect.innerHTML = "";
-
-        const first = document.createElement("option");
-        first.value = "";
-        first.textContent = msContacts.length ? "Seleccionar conversación" : "Sin conversaciones disponibles";
-        msContactSelect.appendChild(first);
-
-        msContacts.forEach((contact, index) => {
-          const opt = document.createElement("option");
-          opt.value = contact.contactMemberId;
-          opt.textContent = getContactLabel(contact, index);
-          msContactSelect.appendChild(opt);
-        });
-
-        renderPendingSelect();
-await loadMSPending({ silent: true });
-
-        msHint.textContent = msContacts.length
-          ? "Selecciona un contacto para abrir el chat activo."
-          : "Busca un usuario activo para iniciar conversación.";
-
-      } catch (err) {
-        console.warn(err);
-        resetSelect(msContactSelect, "Error cargando contactos");
-        msStatusText.textContent = "Error MS";
-        msHint.textContent = "Error cargando contactos MS.";
-      }
+    if (!convResult.items.length) {
+      throw new Error("Conversación no encontrada.");
     }
 
-    msToggle.addEventListener("click", () => toggleMS());
+    const conversation = convResult.items[0];
 
-    enterBtn.addEventListener("click", () => {
-      openUrl(withFreshParam(URL_HOME, { target: "home" }));
+    const isParticipant =
+      conversation.participantA === memberId ||
+      conversation.participantB === memberId;
+
+    if (!isParticipant) {
+      throw new Error("No tienes acceso a esta conversación.");
+    }
+
+    const expectedReceiver =
+      conversation.participantA === memberId
+        ? conversation.participantB
+        : conversation.participantA;
+
+    if (expectedReceiver !== contactMemberId) {
+      throw new Error("El destinatario no corresponde a la conversación.");
+    }
+
+    const now = new Date();
+
+    const message = {
+      messageId: `MSG-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      conversationId,
+      senderMemberId: memberId,
+      receiverMemberId: contactMemberId,
+      text,
+      messageType: "text",
+      status: "sent",
+      sourceResource: "MS",
+      deletedFor: "",
+      metadata: "",
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const inserted = await wixData.insert("MS_Messages", message, {
+      suppressAuth: true
     });
 
-    iosInstallBtn.addEventListener("click", () => {
-  openUrl(IOS_TUTORIAL_URL);
-});
-linkSessionBtn.addEventListener("click", () => {
-  if (!activeMemberId) {
-    openPWAAccess();
-    return;
-  }
+    conversation.lastMessage = text.length > 120
+      ? `${text.substring(0, 120)}...`
+      : text;
 
-  activateMSProfile();
-});
+    conversation.lastMessageAt = now;
+    conversation.lastSenderMemberId = memberId;
+    conversation.updatedAt = now;
 
-    openMSBtn.addEventListener("click", () => toggleContactTools());
+    await wixData.update("MS_Conversations", conversation, {
+      suppressAuth: true
+    });
 
-    contactSearchBtn.addEventListener("click", searchMSMember);
-    contactSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchMSMember(); });
-    deleteConversationBtn.addEventListener("click", deleteActiveConversation);
-    removeContactBtn.addEventListener("click", removeActiveContact);
-blockContactBtn.addEventListener("click", blockActiveContact);
-    changeUserBtn.addEventListener("click", changePWAUser);
-
-    msContactSelect.addEventListener("change", async () => {
-      const contactMemberId = msContactSelect.value;
-
-      if (!contactMemberId) {
-        activeContactMemberId = null;
-        activeContactLabel = "";
-        activeConversationId = null;
-        msMessages = [];
-        activeConversationName.textContent = "Chat activo";
-        chatStatus.textContent = "Pendiente";
-        msHint.textContent = "Selecciona un contacto.";
-        msMessageBox.innerHTML = `
-          <div class="msg">
-            Selecciona un contacto para cargar la conversación.
-          </div>
-        `;
-        return;
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: inserted
       }
-
-      const selectedText = msContactSelect.options[msContactSelect.selectedIndex]?.textContent || "Contacto";
-      await loadMSConversation(contactMemberId, selectedText);
-      msPendingSelect.value = "";
     });
 
-    msPendingSelect.addEventListener("change", async () => {
-      const contactMemberId = msPendingSelect.value;
-
-      if (!contactMemberId) return;
-
-      const contact = msContacts.find(item => item.contactMemberId === contactMemberId);
-      const label = contact ? getContactLabel(contact, 0) : "Contacto";
-
-      msContactSelect.value = contactMemberId;
-      await loadMSConversation(contactMemberId, label);
-      msPendingSelect.value = "";
-    });
-
-    msSendBtn.addEventListener("click", async () => {
-      const value = msInput.value.trim();
-
-      if (!activeContactMemberId) {
-msHint.textContent = activeMemberId ? "Selecciona una conversación." : "Sesión requerida.";
-if (!activeMemberId) openPWAAccess();
-        toggleMS(true);
-        return;
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
       }
-
-      if (!activeConversationId) {
-        msHint.textContent = "Primero carga la conversación.";
-        await loadMSConversation(activeContactMemberId, activeContactLabel);
-        return;
-      }
-
-      if (!value) {
-        msHint.textContent = "Escribe un mensaje.";
-        return;
-      }
-
-      msSendBtn.disabled = true;
-      msHint.textContent = "Enviando mensaje...";
-
-      try {
-        const res = await fetch(MS_SEND_MESSAGE_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            memberId: activeMemberId,
-            contactMemberId: activeContactMemberId,
-            conversationId: activeConversationId,
-            text: value
-          })
-        });
-
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(data.error || "No se pudo enviar el mensaje.");
-        }
-
-        msInput.value = "";
-        msHint.textContent = "Mensaje enviado. En espera de respuesta.";
-chatStatus.textContent = "En espera de respuesta";
-        await loadMSMessages(activeConversationId, { allowNotify: false });
-
-} catch (err) {
-  console.warn(err);
-
-  const message = err.message || "No fue posible enviar el mensaje.";
-
-  msHint.textContent = message;
-  chatStatus.textContent = "No disponible";
-
-} finally {
-  msSendBtn.disabled = false;
-}
     });
-
-    msInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") msSendBtn.click();
-    });
-
-    soundBtn.addEventListener("click", async () => {
-      if (!soundEnabled) {
-        soundBtn.disabled = true;
-        msHint.textContent = "Activando sonido...";
-
-        const activated = await unlockNotificationSound();
-
-        soundEnabled = Boolean(activated);
-        soundBtn.textContent = soundEnabled ? "🔊 Sonido activo" : "🔊 Activar sonido";
-        soundBtn.classList.toggle("soundPrompt", !soundEnabled);
-        soundBtn.classList.toggle("soundOn", soundEnabled);
-        msHint.textContent = soundEnabled
-          ? "Sonido activado. Debiste escuchar un beep de confirmación."
-          : "No se pudo activar el sonido. Revisa volumen/permisos del dispositivo.";
-
-        soundBtn.disabled = false;
-        return;
-      }
-
-      soundEnabled = false;
-      soundBtn.textContent = "🔊 Activar sonido";
-      soundBtn.classList.add("soundPrompt");
-      soundBtn.classList.remove("soundOn");
-      msHint.textContent = "Sonido desactivado.";
-    });
-
-    tileCursos.addEventListener("click", () => {
-      openUrl(withFreshParam(URL_MIS_CURSOS, { target: "mis-cursos" }));
-    });
-
-    tileMiPlan.addEventListener("click", () => {
-      openUrl(withFreshParam(URL_MIPLAN, { target: "mi-entrenamiento" }));
-    });
-
-    tileCPC.addEventListener("click", () => openUrl(URL_CPC));
-    tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
-    tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
-    tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
-
-    tileFacturacion.addEventListener("click", () => {
-      openUrl(withFreshParam(URL_FACT_GESTION, {
-        target: "facturacion",
-        program: "Ⓟ SERVICIO DE FACTURACIÓN"
-      }));
-    });
-
-    tilePDE.addEventListener("click", () => openUrl(URL_PDE));
-    tilePDO.addEventListener("click", () => openUrl(URL_PDO));
- if (tileGestionContactos) {
-  tileGestionContactos.classList.add("hidden");
-  tileGestionContactos.setAttribute("aria-hidden", "true");
-  tileGestionContactos.removeAttribute("tabindex");
-}
-
-    tileDespachoFiscal.addEventListener("click", () => {
-      openUrl(withFreshParam(URL_DESPACHO_FISCAL, {
-        target: "despacho-fiscal",
-        role: "DespachoFiscal",
-        access: "admin-facturacion"
-      }));
-    });
-
-    resourcesToggle.addEventListener("click", () => {
-      const open = resourcesPanel.classList.contains("hidden");
-      resourcesPanel.classList.toggle("hidden", !open);
-      resourcesToggle.setAttribute("aria-expanded", open ? "true" : "false");
-      resourcesChevron.textContent = open ? "▴" : "▾";
-    });
-
-if (helpVideo) {
-  helpVideo.classList.add("hidden");
-  helpVideo.href = IOS_TUTORIAL_URL;
-}
-
-if (isStandalone) {
-  pill.textContent = "App instalada";
-  installBtn.classList.add("hidden");
-  iosInstallBtn.classList.add("hidden");
-  installNote.classList.add("hidden");
-} else if (isIOS) {
-  pill.textContent = isSafari ? "iOS Safari" : "iOS";
-  installBtn.classList.add("hidden");
-  installNote.classList.add("hidden");
-  iosInstallBtn.classList.remove("hidden");
-} else {
-  iosInstallBtn.classList.add("hidden");
-  installNote.classList.add("hidden");
-
-  if (!deferredPrompt) {
-    pill.textContent = "Web";
-    installBtn.classList.add("hidden");
   }
 }
 
-    if (versionPill) versionPill.textContent = APP_VERSION;
-    if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
+/* MS PENDIENTES */
 
-    window.setTimeout(() => {
-      if (splashScreen) splashScreen.classList.add("hide");
-    }, 1800);
+export function options_mspending(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
 
-    loadMSContacts();
-    startActiveChatAutoRefresh();
-    startPendingAutoRefresh();
+export async function get_mspending(request) {
+  try {
+    const memberId = request.query.memberId;
 
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
-        try {
-          await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-        } catch (e) {
-          console.warn("SW no registrado:", e);
+    if (!memberId) throw new Error("Falta memberId");
+
+    const messagesResult = await wixData
+      .query("MS_Messages")
+      .eq("receiverMemberId", memberId)
+      .ne("status", "read")
+      .ne("status", "deleted")
+      .descending("createdAt")
+      .limit(1000)
+      .find({ suppressAuth: true });
+
+    const messages = messagesResult.items || [];
+    const grouped = {};
+
+    messages.forEach((message) => {
+      const senderId = message.senderMemberId;
+      if (!senderId) return;
+
+      if (!grouped[senderId]) {
+        grouped[senderId] = {
+          contactMemberId: senderId,
+          count: 0,
+          lastMessage: "",
+          lastMessageAt: null
+        };
+      }
+
+      grouped[senderId].count += 1;
+
+      const currentDate = new Date(message.createdAt || message._createdDate || 0);
+      const storedDate = new Date(grouped[senderId].lastMessageAt || 0);
+
+      if (!grouped[senderId].lastMessageAt || currentDate > storedDate) {
+        grouped[senderId].lastMessage = message.text || message.message || "";
+        grouped[senderId].lastMessageAt = message.createdAt || message._createdDate || null;
+      }
+    });
+
+    const pending = Object.values(grouped);
+
+    for (let i = 0; i < pending.length; i++) {
+      const item = pending[i];
+
+      const profileResult = await wixData
+        .query("MS_Members")
+        .eq("memberId", item.contactMemberId)
+        .limit(1)
+        .find({ suppressAuth: true });
+
+      const profile = profileResult.items[0] || null;
+
+      item.displayName =
+        profile?.displayName ||
+        profile?.fullName ||
+        profile?.name ||
+        profile?.title ||
+        profile?.nombre ||
+        profile?.scadCode ||
+        `Contacto ${i + 1}`;
+
+      item.scadCode = profile?.scadCode || "";
+      item.photo = profile?.photo || profile?.profilePhoto || profile?.image || "";
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        memberId,
+        total: pending.reduce((sum, item) => sum + item.count, 0),
+        contacts: pending
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS MARCAR LEÍDO */
+
+export function options_msmarkread(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msmarkread(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const contactMemberId = body.contactMemberId;
+    const conversationId = body.conversationId || "";
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!contactMemberId) throw new Error("Falta contactMemberId");
+
+    let query = wixData
+      .query("MS_Messages")
+      .eq("receiverMemberId", memberId)
+      .eq("senderMemberId", contactMemberId)
+      .ne("status", "read")
+      .limit(1000);
+
+    if (conversationId) {
+      query = query.eq("conversationId", conversationId);
+    }
+
+    const result = await query.find({ suppressAuth: true });
+    const messages = result.items || [];
+    const now = new Date();
+
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      message.status = "read";
+      message.readAt = now;
+      message.updatedAt = now;
+
+      await wixData.update("MS_Messages", message, {
+        suppressAuth: true
+      });
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        memberId,
+        contactMemberId,
+        conversationId,
+        updated: messages.length
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message
+      }
+    });
+  }
+}
+
+/* MS ELIMINAR CONVERSACIÓN */
+
+export function options_msdeleteconversation(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msdeleteconversation(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const conversationId = body.conversationId;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!conversationId) throw new Error("Falta conversationId");
+
+    const conversation = await getConversationForDelete(conversationId, memberId);
+
+    const deletedMessages = await deleteMessagesByConversationId(conversationId);
+    await resetConversationPreview(conversation);
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Chat vaciado.",
+        deletedMessages
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
+
+/* MS MI PERFIL */
+
+export function options_msmyprofile(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function get_msmyprofile(request) {
+  try {
+    const memberId = request.query.memberId;
+
+    if (!memberId) throw new Error("Falta memberId");
+
+    const result = await wixData
+      .query("MS_Members")
+      .eq("memberId", memberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+
+    const profile = result.items[0] || null;
+
+    if (!profile || profile.status !== "active") {
+      return ok({
+        headers: HEADERS,
+        body: {
+          ok: false,
+          reason: "PROFILE_NOT_FOUND",
+          message: "Activar mensajería"
         }
       });
     }
 
-    document.querySelectorAll(".quickLink").forEach(el => {
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") el.click();
-      });
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        profile
+      }
     });
-  </script>
-</body>
-</html>
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
+
+/* MS BLOQUEAR USUARIO */
+
+export function options_msblockcontact(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msblockcontact(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const contactMemberId = body.contactMemberId;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!contactMemberId) throw new Error("Falta contactMemberId");
+    if (memberId === contactMemberId) throw new Error("No puedes bloquearte a ti mismo.");
+
+    const now = new Date();
+
+    const conversation = await findDirectConversation(memberId, contactMemberId);
+
+    let deletedMessages = 0;
+
+    if (conversation && conversation.conversationId) {
+      deletedMessages = await deleteMessagesByConversationId(conversation.conversationId);
+      await resetConversationPreview(conversation);
+    }
+
+    const existing = await wixData
+      .query("MS_Contacts")
+      .eq("ownerMemberId", memberId)
+      .eq("contactMemberId", contactMemberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+
+    if (existing.items.length) {
+      const item = existing.items[0];
+
+      item.blocked = true;
+      item.status = "blocked";
+      item.blockedAt = now;
+      item.updatedAt = now;
+
+      await wixData.update("MS_Contacts", item, {
+        suppressAuth: true
+      });
+
+    } else {
+      const profile = await getMSMemberProfile(contactMemberId);
+
+      await wixData.insert("MS_Contacts", {
+        ownerMemberId: memberId,
+        contactMemberId,
+        displayName: getDisplayName(profile),
+        scadCode: profile?.scadCode || "",
+        photo: profile?.photo || profile?.profilePhoto || profile?.image || "",
+        status: "blocked",
+        blocked: true,
+        sourceRequestId: "BLOCK",
+        createdAt: now,
+        acceptedAt: null,
+        blockedAt: now,
+        updatedAt: now
+      }, {
+        suppressAuth: true
+      });
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Usuario bloqueado.",
+        deletedMessages
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
+
+/* MS DESBLOQUEAR USUARIO */
+
+export function options_msunblockcontact(request) {
+  return ok({ headers: HEADERS, body: {} });
+}
+
+export async function post_msunblockcontact(request) {
+  try {
+    const body = await request.body.json();
+
+    const memberId = body.memberId;
+    const contactMemberId = body.contactMemberId;
+
+    if (!memberId) throw new Error("Falta memberId");
+    if (!contactMemberId) throw new Error("Falta contactMemberId");
+
+    const result = await wixData
+      .query("MS_Contacts")
+      .eq("ownerMemberId", memberId)
+      .eq("contactMemberId", contactMemberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+
+    if (result.items.length) {
+      const item = result.items[0];
+
+      item.blocked = false;
+      item.status = "accepted";
+      item.unblockedAt = new Date();
+      item.updatedAt = new Date();
+
+      await wixData.update("MS_Contacts", item, { suppressAuth: true });
+    }
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        message: "Usuario desbloqueado."
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
+
+export function options_msactivateprofile(request) {
+  return ok({
+    headers: HEADERS,
+    body: {}
+  });
+}
+
+export async function post_msactivateprofile(request) {
+  try {
+    const body = await request.body.json();
+    const memberId = body.memberId;
+
+    if (!memberId) {
+      throw new Error("Falta memberId");
+    }
+
+    const now = new Date();
+    const wixMemberData = await getWixMemberData(memberId);
+
+    const existing = await wixData
+      .query("MS_Members")
+      .eq("memberId", memberId)
+      .limit(1)
+      .find({ suppressAuth: true });
+
+if (existing.items.length) {
+  const profile = existing.items[0];
+
+  profile.status = "active";
+  profile.updatedAt = now;
+
+  if (!profile.displayName || profile.displayName === "Usuario SCaD") {
+    profile.displayName = wixMemberData.displayName;
+  }
+
+  if (!profile.email) {
+    profile.email = wixMemberData.email;
+  }
+
+  if (!profile.photo) {
+    profile.photo = wixMemberData.photo;
+  }
+
+  const updated = await wixData.update("MS_Members", profile, {
+    suppressAuth: true
+  });
+
+  return ok({
+    headers: HEADERS,
+    body: {
+      ok: true,
+      profile: updated,
+      message: "Mensajería activada."
+    }
+  });
+}
+
+const created = await wixData.insert("MS_Members", {
+  memberId,
+  displayName: wixMemberData.displayName,
+  email: wixMemberData.email,
+  photo: wixMemberData.photo,
+  scadCode: `SCAD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+  status: "active",
+  createdAt: now,
+  updatedAt: now
+}, {
+  suppressAuth: true
+});
+
+    return ok({
+      headers: HEADERS,
+      body: {
+        ok: true,
+        profile: created,
+        message: "Mensajería activada."
+      }
+    });
+
+  } catch (err) {
+    return serverError({
+      headers: HEADERS,
+      body: {
+        ok: false,
+        error: err.message,
+        message: err.message
+      }
+    });
+  }
+}
