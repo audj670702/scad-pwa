@@ -2147,6 +2147,7 @@ async function activateMSProfile() {
     
     async function loadMSContacts() {
       activeMemberId = getMemberIdFromUrlOrStorage();
+      console.log("SMS ACTIVE MEMBER ID:", activeMemberId);
 
       if (!activeMemberId) {
         showMSAuthRequired();
@@ -2156,6 +2157,7 @@ async function activateMSProfile() {
 try {
   const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
   const profileData = await profileRes.json();
+  console.log("SMS PROFILE DATA:", profileData);
 
   if (!profileData.ok) {
     showMSAuthRequired();
