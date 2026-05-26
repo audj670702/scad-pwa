@@ -681,6 +681,18 @@
     .miniCardText strong{color:rgba(15,23,42,.90);font-size:13.5px;}
     .miniCardActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
     .dangerBtn{color:#B91C1C;border-color:rgba(185,28,28,.20);background:rgba(185,28,28,.05);}
+    .chatDangerActions{
+  flex-wrap:nowrap;
+  gap:6px;
+}
+
+.chatDangerActions .dangerBtn{
+  min-height:30px;
+  padding:0 8px;
+  font-size:10.5px;
+  line-height:1;
+  gap:4px;
+}
     .toolDivider{height:1px;background:var(--border);border:0;margin:0;}
 
     .sectionTitle{
@@ -941,11 +953,11 @@
                 <hr class="toolDivider">
 <div class="toolGroup">
   <div class="toolGroupTitle">Opciones del chat activo</div>
-  <div class="msActions">
-    <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Vaciar chat</button>
-    <button class="btn btnGhost btnSmall dangerBtn" id="removeContactBtn" type="button">Eliminar contacto</button>
-    <button class="btn btnGhost btnSmall dangerBtn" id="blockContactBtn" type="button">Bloquear usuario</button>
-  </div>
+<div class="msActions chatDangerActions">
+  <button class="btn btnGhost btnSmall dangerBtn" id="deleteConversationBtn" type="button">Vaciar chat</button>
+  <button class="btn btnGhost btnSmall dangerBtn" id="removeContactBtn" type="button">Eliminar contacto</button>
+  <button class="btn btnGhost btnSmall dangerBtn" id="blockContactBtn" type="button">Bloquear usuario</button>
+</div>
 </div>
               </div>
             </div>
@@ -1025,8 +1037,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.2-ui-topbar-selectores";
-    const APP_VERSION_SHORT = "v0.7.2";
+    const APP_VERSION = "PWA MS v0.7.3-ui-topbar-selectores";
+    const APP_VERSION_SHORT = "v0.7.3";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
