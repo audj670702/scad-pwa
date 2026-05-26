@@ -898,7 +898,7 @@
                   <span class="pendingMiniBadge hidden" id="pendingBadge">0</span>
                 </div>
                 <select class="msSelect" id="msPendingSelect">
-                  <option value="">Sin mensajes pendientes</option>
+                  <option value="">Sin mensajes</option>
                 </select>
               </div>
             </div>
@@ -2285,7 +2285,7 @@ resetSelect(msContactSelect, "Cargando contactos...");
 
         const first = document.createElement("option");
         first.value = "";
-        first.textContent = msContacts.length ? "Seleccionar conversación" : "Sin conversaciones disponibles";
+        first.textContent = msContacts.length ? "Seleccionar" : "No disponibles";
         msContactSelect.appendChild(first);
 
         msContacts.forEach((contact, index) => {
