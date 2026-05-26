@@ -1025,8 +1025,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.1-ui-topbar-selectores";
-    const APP_VERSION_SHORT = "v0.7.1";
+    const APP_VERSION = "PWA MS v0.7.2-ui-topbar-selectores";
+    const APP_VERSION_SHORT = "v0.7.2";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1574,7 +1574,7 @@ function showMSAuthRequired(){
       first.value = "";
       first.textContent = totalPending > 0
         ? `Mensajes pendientes · ${totalPending}`
-        : "Sin mensajes pendientes";
+        : "Sin mensajes";
       msPendingSelect.appendChild(first);
 
       pendingContacts.forEach((contact, index) => {
