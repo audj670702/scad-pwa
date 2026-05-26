@@ -810,6 +810,7 @@
 </button>
 
 <button class="btn btnGhost btnTop" id="enterBtn" type="button">🌐 Entrar a SCaD →</button>
+          <button class="btn btnGhost btnTop" id="logoutPWABtn" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
         </div>
       </header>
 
@@ -981,8 +982,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.6.8-busqueda-codigo";
-    const APP_VERSION_SHORT = "v0.6.8";
+    const APP_VERSION = "PWA MS v0.6.9-cierre-sesion";
+    const APP_VERSION_SHORT = "v0.6.9";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1033,6 +1034,7 @@ const installBtn = document.getElementById("installBtn");
 const installNote = document.getElementById("installNote");
 const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
+    const logoutPWABtn = document.getElementById("logoutPWABtn");
 const helpVideo = document.getElementById("helpVideo");
 
     let deferredPrompt = null;
@@ -1219,9 +1221,29 @@ async function postJson(url, payload) {
       msChevron.textContent = shouldOpen ? "▴" : "▾";
     }
 
-    function openPWAAccess(){
-      openUrl(withFreshParam(PWA_ACCESS_URL, { target: "pwa-access" }));
-    }
+function openPWAAccess(extraParams = {}){
+  openUrl(withFreshParam(PWA_ACCESS_URL, {
+    target: "pwa-access",
+    ...extraParams
+  }));
+}
+
+function logoutPWA(){
+  const confirmed = window.confirm("Se cerrará tu sesión de SCaD en este dispositivo. ¿Deseas continuar?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  localStorage.removeItem("scad_memberId");
+  localStorage.removeItem("scad_myScadCode");
+
+  activeMemberId = null;
+  activeContactMemberId = null;
+  activeConversationId = null;
+
+  openPWAAccess({ logout: "1" });
+}
 
 function showMSAuthRequired(){
   msAuthNotice.classList.remove("hidden");
@@ -2227,6 +2249,8 @@ await loadMSPending({ silent: true });
     enterBtn.addEventListener("click", () => {
       openUrl(withFreshParam(URL_HOME, { target: "home" }));
     });
+
+  logoutPWABtn.addEventListener("click", logoutPWA);
 
     iosInstallBtn.addEventListener("click", () => {
   openUrl(IOS_TUTORIAL_URL);
