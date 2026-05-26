@@ -982,8 +982,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.6.9-cierre-sesion";
-    const APP_VERSION_SHORT = "v0.6.9";
+    const APP_VERSION = "PWA MS v0.7.0-cierre-sesion";
+    const APP_VERSION_SHORT = "v0.7.0";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1240,7 +1240,30 @@ function logoutPWA(){
 
   activeMemberId = null;
   activeContactMemberId = null;
+  activeContactLabel = "";
   activeConversationId = null;
+  msContacts = [];
+  msMessages = [];
+  pendingByContact = {};
+
+  resetSelect(msContactSelect, "Sesión requerida");
+  resetSelect(msPendingSelect, "Sin mensajes pendientes");
+
+  msMessageBox.innerHTML = `
+    <div class="msg">
+      Sesión cerrada.
+    </div>
+  `;
+
+  activeConversationName.textContent = "Chat activo";
+  chatStatus.textContent = "Pendiente";
+  msHint.textContent = "Sesión cerrada.";
+  msStatusText.textContent = "Sesión requerida";
+  msBadge.textContent = "0";
+  pendingBadge.classList.add("hidden");
+
+  showMSAuthRequired();
+  toggleMS(false);
 
   openPWAAccess({ logout: "1" });
 }
