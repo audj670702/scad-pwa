@@ -909,8 +909,6 @@
 <p class="hint" id="msHint">
   Cargando contactos de Mensajería SCaD...
 </p>
-
-<p class="hint" id="msDebug" style="font-size:11px;color:#B91C1C;word-break:break-all;"></p>
           </div>
         </div>
       </section>
@@ -1128,7 +1126,6 @@ const deleteConversationBtn = document.getElementById("deleteConversationBtn");
     const activeConversationName = document.getElementById("activeConversationName");
     const chatStatus = document.getElementById("chatStatus");
     const msMessageBox = document.getElementById("msMessageBox");
-    const msDebug = document.getElementById("msDebug");
 
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
@@ -2151,11 +2148,6 @@ async function activateMSProfile() {
     async function loadMSContacts() {
 activeMemberId = getMemberIdFromUrlOrStorage();
 
-if (msDebug) {
-  msDebug.textContent = `memberId móvil: ${activeMemberId || "SIN MEMBER ID"}`;
-}
-      console.log("SMS ACTIVE MEMBER ID:", activeMemberId);
-
       if (!activeMemberId) {
         showMSAuthRequired();
         return;
@@ -2164,11 +2156,6 @@ if (msDebug) {
 try {
   const profileRes = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
 const profileData = await profileRes.json();
-
-if (msDebug) {
-  msDebug.textContent = `memberId móvil: ${activeMemberId || "SIN MEMBER ID"} | msmyprofile: ${JSON.stringify(profileData)}`;
-}
-  console.log("SMS PROFILE DATA:", profileData);
 
   if (!profileData.ok) {
     showMSAuthRequired();
