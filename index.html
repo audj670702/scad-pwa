@@ -632,6 +632,17 @@
       background:rgba(47,107,255,.10);
     }
 
+    .dateDivider{
+  align-self:center;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(15,23,42,.07);
+  color:rgba(15,23,42,.62);
+  font-size:11.5px;
+  font-weight:850;
+  margin:6px 0 2px;
+}
+
     .composer{
       display:flex;
       gap:8px;
@@ -1425,6 +1436,37 @@ function normalizeContactSearchQuery(value) {
       }
     }
 
+    function formatMessageDateLabel(value) {
+  if (!value) return "";
+
+  try {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const sameDay = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+
+    if (sameDay(d, today)) return "Hoy";
+    if (sameDay(d, yesterday)) return "Ayer";
+
+    return d.toLocaleDateString("es-MX", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+
+  } catch (err) {
+    return "";
+  }
+}
+
     function getMessageKey(message) {
       if (!message) return "";
       return String(
@@ -2071,36 +2113,49 @@ async function removeActiveContact() {
   }
 }
     
-    function renderMessages(messages) {
-      msMessages = Array.isArray(messages) ? messages : [];
+function renderMessages(messages) {
+  msMessages = Array.isArray(messages) ? messages : [];
 
-      if (!msMessages.length) {
-        msMessageBox.innerHTML = `
-          <div class="msg">
-            No hay mensajes todavía con ${escapeHtml(activeContactLabel || "este contacto")}.
-          </div>
-          <div class="msg me">
-            Escribe un mensaje para continuar la conversación.
-          </div>
-        `;
-        scrollMessagesToBottom();
-        return;
-      }
+  if (!msMessages.length) {
+    msMessageBox.innerHTML = `
+      <div class="msg">
+        No hay mensajes todavía con ${escapeHtml(activeContactLabel || "este contacto")}.
+      </div>
+      <div class="msg me">
+        Escribe un mensaje para continuar la conversación.
+      </div>
+    `;
+    scrollMessagesToBottom();
+    return;
+  }
 
-      msMessageBox.innerHTML = msMessages.map((message) => {
-        const isMine = message.senderMemberId === activeMemberId;
-        const text = escapeHtml(message.text || message.message || "");
-        const time = formatDate(message.createdAt || message._createdDate);
+  let lastDateLabel = "";
 
-        return `
-          <div class="msg ${isMine ? "me" : ""}">
-            ${text || "(Mensaje sin texto)"}
-            ${time ? `<br><small>${time}</small>` : ""}
-          </div>
-        `;
-      }).join("");
-      scrollMessagesToBottom();
+  msMessageBox.innerHTML = msMessages.map((message) => {
+    const isMine = message.senderMemberId === activeMemberId;
+    const text = escapeHtml(message.text || message.message || "");
+    const rawDate = message.createdAt || message._createdDate;
+    const time = formatDate(rawDate);
+    const dateLabel = formatMessageDateLabel(rawDate);
+
+    let dividerHtml = "";
+
+    if (dateLabel && dateLabel !== lastDateLabel) {
+      lastDateLabel = dateLabel;
+      dividerHtml = `<div class="dateDivider">${escapeHtml(dateLabel)}</div>`;
     }
+
+    return `
+      ${dividerHtml}
+      <div class="msg ${isMine ? "me" : ""}">
+        ${text || "(Mensaje sin texto)"}
+        ${time ? `<br><small>${time}</small>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  scrollMessagesToBottom();
+}
 
     function setMessageBoxLoading(label) {
       msMessageBox.innerHTML = `
