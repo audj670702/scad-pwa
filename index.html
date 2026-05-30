@@ -2034,14 +2034,15 @@ async function deleteActiveConversation() {
       });
     }
 
-let contactIdToRemove = activeContactMemberId || msContactSelect.value || "";
+async function removeActiveContact() {
+  let contactIdToRemove = activeContactMemberId || msContactSelect.value || "";
 
-if (!contactIdToRemove) {
-  msHint.textContent = "Selecciona una conversación primero.";
-  return;
-}
+  if (!contactIdToRemove) {
+    msHint.textContent = "Selecciona una conversación primero.";
+    return;
+  }
 
-activeContactMemberId = contactIdToRemove;
+  activeContactMemberId = contactIdToRemove;
 
   if (!window.confirm("¿Quieres eliminar este contacto? Se quitará de tu lista y se borrará el historial de mensajes.")) {
     return;
@@ -2051,10 +2052,10 @@ activeContactMemberId = contactIdToRemove;
   msHint.textContent = "Eliminando contacto...";
 
   try {
-await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
-  memberId: activeMemberId,
-  contactMemberId: contactIdToRemove
-});
+    await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
+      memberId: activeMemberId,
+      contactMemberId: contactIdToRemove
+    });
 
     resetActiveChat();
     await loadMSPending({ silent: true });
