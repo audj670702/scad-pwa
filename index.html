@@ -2034,11 +2034,14 @@ async function deleteActiveConversation() {
       });
     }
 
-    async function removeActiveContact() {
-  if (!activeContactMemberId) {
-    msHint.textContent = "Selecciona una conversación primero.";
-    return;
-  }
+let contactIdToRemove = activeContactMemberId || msContactSelect.value || "";
+
+if (!contactIdToRemove) {
+  msHint.textContent = "Selecciona una conversación primero.";
+  return;
+}
+
+activeContactMemberId = contactIdToRemove;
 
   if (!window.confirm("¿Quieres eliminar este contacto? Se quitará de tu lista y se borrará el historial de mensajes.")) {
     return;
@@ -2048,10 +2051,10 @@ async function deleteActiveConversation() {
   msHint.textContent = "Eliminando contacto...";
 
   try {
-    await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
-      memberId: activeMemberId,
-      contactMemberId: activeContactMemberId
-    });
+await postJson(MS_REMOVE_CONTACT_ENDPOINT, {
+  memberId: activeMemberId,
+  contactMemberId: contactIdToRemove
+});
 
     resetActiveChat();
     await loadMSPending({ silent: true });
@@ -2107,10 +2110,14 @@ async function deleteActiveConversation() {
       scrollMessagesToBottom();
     }
 async function blockActiveContact() {
-  if (!activeContactMemberId) {
-    msHint.textContent = "Selecciona una conversación primero.";
-    return;
-  }
+let contactIdToBlock = activeContactMemberId || msContactSelect.value || "";
+
+if (!contactIdToBlock) {
+  msHint.textContent = "Selecciona una conversación primero.";
+  return;
+}
+
+activeContactMemberId = contactIdToBlock;
 
   if (!window.confirm("¿Quieres bloquear a este usuario? Se eliminará el historial y no podrá enviarte mensajes.")) {
     return;
@@ -2120,10 +2127,10 @@ async function blockActiveContact() {
   msHint.textContent = "Bloqueando usuario...";
 
   try {
-    await postJson(MS_BLOCK_CONTACT_ENDPOINT, {
-      memberId: activeMemberId,
-      contactMemberId: activeContactMemberId
-    });
+await postJson(MS_BLOCK_CONTACT_ENDPOINT, {
+  memberId: activeMemberId,
+  contactMemberId: contactIdToBlock
+});
 
     resetActiveChat();
     await loadMSPending({ silent: true });
