@@ -1037,8 +1037,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.3-ui-topbar-selectores";
-    const APP_VERSION_SHORT = "v0.7.3";
+    const APP_VERSION = "PWA MS v0.7.4-busqueda-contactos";
+    const APP_VERSION_SHORT = "v0.7.4";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1359,19 +1359,22 @@ function showMSAuthRequired(){
         .toUpperCase();
     }
 
-    function normalizeContactSearchQuery(value) {
-      const raw = String(value || "")
-        .trim()
-        .toUpperCase()
-        .replace(/[–—]/g, "-")
-        .replace(/\s+/g, "");
+function normalizeContactSearchQuery(value) {
+  const original = String(value || "").trim();
 
-      if (/^[A-Z0-9]{6}$/.test(raw)) {
-        return `SCAD-${raw}`;
-      }
+  if (!original) return "";
 
-      return raw;
-    }
+  const compact = original
+    .toUpperCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, "");
+
+  if (/^[A-Z0-9]{6}$/.test(compact)) {
+    return `SCAD-${compact}`;
+  }
+
+  return original;
+}
 
     function getContactLabel(contact, index) {
       return (
@@ -1759,102 +1762,153 @@ if (shouldOpen) {
       return localStorage.getItem("scad_myScadCode") || "";
     }
 
-    async function loadMyContactCode() {
-      const stored = getMyStoredScadCode();
-      if (stored) {
-        myContactCode.textContent = cleanContactCode(stored);
-        return;
-      }
-
-      if (!activeMemberId) {
-        myContactCode.textContent = "No disponible";
-        return;
-      }
-
-      try {
-        const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
-        const data = await res.json();
-        const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
-
-        if (data.ok && code) {
-          localStorage.setItem("scad_myScadCode", code);
-          myContactCode.textContent = cleanContactCode(code);
-        } else {
-          myContactCode.textContent = "No disponible";
-        }
-      } catch (err) {
-        console.warn(err);
-        myContactCode.textContent = "No disponible";
-      }
-    }
-
-    async function searchMSMember() {
-      const q = contactSearchInput.value.trim();
-      selectedSearchMember = null;
+async function loadMyContactCode() {
   if (!activeMemberId) {
-  contactSearchResult.innerHTML = `<div class="hint">Sesión requerida.</div>`;
-  openPWAAccess();
-  return;
-}
-      if (!q) { contactSearchResult.innerHTML = `<div class="hint">Escribe un código SCaD o nombre.</div>`; return; }
-      contactSearchBtn.disabled = true;
-      contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
-      try {
-        const normalizedQ = normalizeContactSearchQuery(q);
-        const res = await fetch(`${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(normalizedQ)}`);
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || "No se pudo buscar contacto.");
-        const user = data.user || (Array.isArray(data.users) ? data.users[0] : null);
-        if (!user) {
-  contactSearchResult.innerHTML = `
-    <div class="hint">
-      <strong>Contacto no disponible en Mensajería SCaD.</strong>
-      <br>
-      El usuario requiere entrar primero a la App SCaD para activar su mensajería.
-    </div>
-  `;
-  return;
-}
-        selectedSearchMember = user;
-
-contactSearchResult.innerHTML = `
-          <div class="miniCard">
-            <div class="miniCardText">
-              <strong>${escapeHtml(user.displayName || "Usuario SCaD")}</strong>
-              <span>${escapeHtml(cleanContactCode(user.scadCode || "") || user.email || user.memberId || "")}</span>
-              <span>Disponible en Mensajería SCaD.</span>
-            </div>
-            <div class="miniCardActions">
-              <button class="btn btnPrimary btnSmall" id="sendRequestBtn" type="button">Iniciar chat</button>
-            </div>
-          </div>`;
-        
-        document.getElementById("sendRequestBtn").addEventListener("click", sendContactRequest);
-      } catch (err) {
-        console.warn(err);
-        contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "Error buscando contacto.")}</div>`;
-      } finally {
-        contactSearchBtn.disabled = false;
-      }
-    }
-
-async function sendContactRequest() {
-  if (!selectedSearchMember?.memberId) return;
-
-  const btn = document.getElementById("sendRequestBtn");
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Abriendo chat...";
+    myContactCode.textContent = "No disponible";
+    localStorage.removeItem("scad_myScadCode");
+    return;
   }
 
+  myContactCode.textContent = "Cargando...";
+
   try {
-    const data = await postJson(MS_SEND_REQUEST_ENDPOINT, {
-      memberId: activeMemberId,
-      toMemberId: selectedSearchMember.memberId
+    const res = await fetch(`${MS_MY_PROFILE_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}`);
+    const data = await res.json();
+
+    const code = data?.profile?.scadCode || data?.member?.scadCode || data?.scadCode || "";
+
+    if (data.ok && code) {
+      localStorage.setItem("scad_myScadCode", code);
+      myContactCode.textContent = cleanContactCode(code);
+      return;
+    }
+
+    localStorage.removeItem("scad_myScadCode");
+    myContactCode.textContent = "No disponible";
+
+  } catch (err) {
+    console.warn(err);
+    myContactCode.textContent = "No disponible";
+  }
+}
+
+    async function searchMSMember() {
+  const q = contactSearchInput.value.trim();
+
+  selectedSearchMember = null;
+
+  if (!activeMemberId) {
+    contactSearchResult.innerHTML = `<div class="hint">Sesión requerida.</div>`;
+    openPWAAccess();
+    return;
+  }
+
+  if (!q) {
+    contactSearchResult.innerHTML = `<div class="hint">Escribe nombre, correo o código.</div>`;
+    return;
+  }
+
+  if (q.length < 2) {
+    contactSearchResult.innerHTML = `<div class="hint">Escribe al menos 2 caracteres.</div>`;
+    return;
+  }
+
+  contactSearchBtn.disabled = true;
+  contactSearchResult.innerHTML = `<div class="hint">Buscando contacto...</div>`;
+
+  try {
+    const normalizedQ = normalizeContactSearchQuery(q);
+
+    const res = await fetch(
+      `${MS_SEARCH_MEMBER_ENDPOINT}?memberId=${encodeURIComponent(activeMemberId)}&q=${encodeURIComponent(normalizedQ)}`
+    );
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || "No se pudo buscar contacto.");
+    }
+
+    const users = Array.isArray(data.users)
+      ? data.users
+      : (data.user ? [data.user] : []);
+
+    if (!users.length) {
+      contactSearchResult.innerHTML = `
+        <div class="hint">
+          <strong>Contacto no disponible en Mensajería SCaD.</strong>
+          <br>
+          El usuario requiere entrar primero a la App SCaD para activar su mensajería.
+        </div>
+      `;
+      return;
+    }
+
+    contactSearchResult.innerHTML = users.map((user, index) => {
+      const displayName = user.displayName || "Usuario SCaD";
+      const visibleCode = cleanContactCode(user.scadCode || "") || "SIN-CÓDIGO";
+
+      return `
+        <div class="miniCard">
+          <div class="miniCardText">
+            <strong>${escapeHtml(visibleCode)} · ${escapeHtml(displayName)}</strong>
+            <span>Disponible en Mensajería SCaD.</span>
+          </div>
+          <div class="miniCardActions">
+            <button 
+              class="btn btnPrimary btnSmall sendSearchRequestBtn" 
+              type="button" 
+              data-index="${index}">
+              Iniciar chat
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".sendSearchRequestBtn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.getAttribute("data-index"));
+        const user = users[index];
+
+        if (!user) return;
+
+        selectedSearchMember = user;
+        sendContactRequest();
+      });
     });
 
-    const targetMemberId = data.contactMemberId || selectedSearchMember.memberId;
+  } catch (err) {
+    console.warn(err);
+    contactSearchResult.innerHTML = `<div class="hint">${escapeHtml(err.message || "Error buscando contacto.")}</div>`;
+  } finally {
+    contactSearchBtn.disabled = false;
+  }
+}
+
+async function sendContactRequest() {
+  const selectedMemberID = selectedSearchMember?.memberID || selectedSearchMember?.memberId;
+
+  if (!selectedMemberID) return;
+
+  const btn = document.querySelector(".sendSearchRequestBtn");
+
+document.querySelectorAll(".sendSearchRequestBtn").forEach((item) => {
+  item.disabled = true;
+});
+
+if (btn) {
+  btn.textContent = "Abriendo chat...";
+}
+
+  try {
+
+    const data = await postJson(MS_SEND_REQUEST_ENDPOINT, {
+  memberId: activeMemberId,
+  toMemberId: selectedMemberID
+});
+
+const targetMemberId = data.contactMemberId || selectedMemberID;
     const label = selectedSearchMember.displayName || "Usuario SCaD";
     const conversation = data.conversation || null;
 
@@ -1904,10 +1958,10 @@ async function sendContactRequest() {
     msHint.textContent = message;
 
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Iniciar chat";
-    }
+document.querySelectorAll(".sendSearchRequestBtn").forEach((item) => {
+  item.disabled = false;
+  item.textContent = "Iniciar chat";
+});
   }
 }
 
