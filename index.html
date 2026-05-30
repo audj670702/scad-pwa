@@ -1215,6 +1215,8 @@ const deleteConversationBtn = document.getElementById("deleteConversationBtn");
     let notificationAudio = null;
     let selectedSearchMember = null;
     let incomingRequests = [];
+    let contactSearchTimer = null;
+let lastContactSearchValue = "";
 
     function openUrl(url){
       if (isStandalone) {
@@ -1791,7 +1793,11 @@ async function loadMyContactCode() {
     myContactCode.textContent = "No disponible";
   }
 }
-
+function clearContactSearchResults() {
+  selectedSearchMember = null;
+  contactSearchResult.innerHTML = "";
+}
+    
     async function searchMSMember() {
   const q = contactSearchInput.value.trim();
 
@@ -2400,6 +2406,32 @@ linkSessionBtn.addEventListener("click", () => {
 
     contactSearchBtn.addEventListener("click", searchMSMember);
     contactSearchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") searchMSMember(); });
+contactSearchInput.addEventListener("input", () => {
+  const value = contactSearchInput.value.trim();
+
+  window.clearTimeout(contactSearchTimer);
+
+  if (!value) {
+    lastContactSearchValue = "";
+    clearContactSearchResults();
+    return;
+  }
+
+  if (value.length < 2) {
+    lastContactSearchValue = value;
+    contactSearchResult.innerHTML = `<div class="hint">Escribe al menos 2 caracteres.</div>`;
+    selectedSearchMember = null;
+    return;
+  }
+
+  contactSearchTimer = window.setTimeout(() => {
+    if (value === lastContactSearchValue) return;
+
+    lastContactSearchValue = value;
+    searchMSMember();
+  }, 350);
+});
+    
     deleteConversationBtn.addEventListener("click", deleteActiveConversation);
     removeContactBtn.addEventListener("click", removeActiveContact);
 blockContactBtn.addEventListener("click", blockActiveContact);
