@@ -875,15 +875,15 @@
   <h1>SCaD</h1>
   <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
 
-  <button
-    class="loginMiniLink hidden"
-    id="loginPWABtn"
-    type="button"
-    title="Iniciar sesión"
-    aria-label="Iniciar sesión"
-  >
-    Iniciar sesión
-  </button>
+<button
+  class="loginMiniLink"
+  id="loginPWABtn"
+  type="button"
+  title="Iniciar sesión"
+  aria-label="Iniciar sesión"
+>
+  Iniciar sesión
+</button>
 </div>
         </div>
 
@@ -1076,8 +1076,8 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.6-busqueda-contactos";
-    const APP_VERSION_SHORT = "v0.7.6";
+    const APP_VERSION = "PWA MS v0.7.7-busqueda-contactos";
+    const APP_VERSION_SHORT = "v0.7.7";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1325,11 +1325,11 @@ function openPWAAccess(extraParams = {}){
   }));
 }
 
-    function updateTopbarSessionState(){
+function updateTopbarSessionState(){
   const hasSession = Boolean(activeMemberId);
 
   if (loginPWABtn) {
-    loginPWABtn.classList.toggle("hidden", hasSession);
+    loginPWABtn.classList.remove("hidden");
   }
 
   if (logoutPWABtn) {
