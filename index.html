@@ -167,6 +167,24 @@
       letter-spacing:.01em;
     }
 
+    .loginMiniLink{
+  margin-top:4px;
+  padding:0;
+  border:none;
+  background:transparent;
+  color:var(--accent);
+  font-size:11px;
+  font-weight:850;
+  line-height:1.1;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+
+.loginMiniLink:hover{
+  color:var(--accent2);
+}
+
     .versionPill{
       display:none!important;
     }
@@ -853,10 +871,20 @@
           <div class="logo">
             <img src="/icons/icon-192.png" alt="">
           </div>
-          <div class="brandText">
-            <h1>SCaD</h1>
-            <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
-          </div>
+<div class="brandText">
+  <h1>SCaD</h1>
+  <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
+
+  <button
+    class="loginMiniLink hidden"
+    id="loginPWABtn"
+    type="button"
+    title="Iniciar sesión"
+    aria-label="Iniciar sesión"
+  >
+    Iniciar sesión
+  </button>
+</div>
         </div>
 
 <div class="topActions">
@@ -1048,7 +1076,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.5-busqueda-contactos";
+    const APP_VERSION = "PWA MS v0.7.6-busqueda-contactos";
     const APP_VERSION_SHORT = "v0.7.5";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
@@ -1100,7 +1128,8 @@ const installBtn = document.getElementById("installBtn");
 const installNote = document.getElementById("installNote");
 const iosInstallBtn = document.getElementById("iosInstallBtn");
 const enterBtn = document.getElementById("enterBtn");
-    const logoutPWABtn = document.getElementById("logoutPWABtn");
+const logoutPWABtn = document.getElementById("logoutPWABtn");
+const loginPWABtn = document.getElementById("loginPWABtn");
 const helpVideo = document.getElementById("helpVideo");
 
     let deferredPrompt = null;
@@ -1296,6 +1325,18 @@ function openPWAAccess(extraParams = {}){
   }));
 }
 
+    function updateTopbarSessionState(){
+  const hasSession = Boolean(activeMemberId);
+
+  if (loginPWABtn) {
+    loginPWABtn.classList.toggle("hidden", hasSession);
+  }
+
+  if (logoutPWABtn) {
+    logoutPWABtn.classList.toggle("hidden", !hasSession);
+  }
+}
+
 function logoutPWA(){
   const confirmed = window.confirm("Se cerrará tu sesión de SCaD en este dispositivo. ¿Deseas continuar?");
 
@@ -1307,6 +1348,7 @@ function logoutPWA(){
   localStorage.removeItem("scad_myScadCode");
 
   activeMemberId = null;
+  updateTopbarSessionState();
   activeContactMemberId = null;
   activeContactLabel = "";
   activeConversationId = null;
@@ -1348,17 +1390,22 @@ function showMSAuthRequired(){
       msContent.classList.remove("hidden");
     }
 
-    function getMemberIdFromUrlOrStorage() {
-      const params = new URLSearchParams(window.location.search);
-      const urlMemberId = params.get("memberId");
+function getMemberIdFromUrlOrStorage() {
+  const params = new URLSearchParams(window.location.search);
+  const urlMemberId = params.get("memberId");
 
-      if (urlMemberId) {
-        localStorage.setItem("scad_memberId", urlMemberId);
-        return urlMemberId;
-      }
+  if (urlMemberId) {
+    localStorage.setItem("scad_memberId", urlMemberId);
+    activeMemberId = urlMemberId;
+    updateTopbarSessionState();
+    return urlMemberId;
+  }
 
-      return localStorage.getItem("scad_memberId");
-    }
+  activeMemberId = localStorage.getItem("scad_memberId");
+  updateTopbarSessionState();
+
+  return activeMemberId;
+}
 
     function shortId(value) {
       if (!value) return "";
@@ -2453,6 +2500,12 @@ await loadMSPending({ silent: true });
 
   logoutPWABtn.addEventListener("click", logoutPWA);
 
+    if (loginPWABtn) {
+  loginPWABtn.addEventListener("click", () => {
+    openPWAAccess();
+  });
+}
+
     iosInstallBtn.addEventListener("click", () => {
   openUrl(IOS_TUTORIAL_URL);
 });
@@ -2703,9 +2756,12 @@ if (isStandalone) {
       if (splashScreen) splashScreen.classList.add("hide");
     }, 1800);
 
-    loadMSContacts();
-    startActiveChatAutoRefresh();
-    startPendingAutoRefresh();
+activeMemberId = getMemberIdFromUrlOrStorage();
+updateTopbarSessionState();
+
+loadMSContacts();
+startActiveChatAutoRefresh();
+startPendingAutoRefresh();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", async () => {
