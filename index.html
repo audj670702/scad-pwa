@@ -876,7 +876,7 @@
   <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
 
 <button
-  class="loginMiniLink hidden"
+  class="loginMiniLink"
   id="loginPWABtn"
   type="button"
   title="Iniciar sesión"
@@ -889,7 +889,7 @@
 
 <div class="topActions">
   <div class="statusLogoutRow">
-    <span class="pill versionPill hidden" id="versionPill">v---</span>
+
     <span class="statusText" id="pill">Estado</span>
     <button class="btn btnGhost btnTop logoutMiniBtn" id="logoutPWABtn" type="button" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
   </div>
@@ -1076,7 +1076,6 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.8-busqueda-contactos";
     const APP_VERSION_SHORT = "v0.7.8";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
@@ -1120,7 +1119,6 @@ const MS_ACTIVATE_PROFILE_ENDPOINT = "https://www.scad.mx/_functions/msactivatep
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
       window.navigator.standalone === true;
 
-    const versionPill = document.getElementById("versionPill");
     const brandMeta = document.getElementById("brandMeta");
     const splashScreen = document.getElementById("splashScreen");
 const pill = document.getElementById("pill");
@@ -1319,13 +1317,13 @@ async function postJson(url, payload) {
     }
 
 function openPWAAccess(extraParams = {}){
-  openUrl(withFreshParam(PWA_ACCESS_URL, {
+  window.location.href = withFreshParam(PWA_ACCESS_URL, {
     target: "pwa-access",
     ...extraParams
-  }));
+  });
 }
 
-    function loginPWA(){
+function loginPWA(){
   localStorage.removeItem("scad_memberId");
   localStorage.removeItem("scad_myScadCode");
 
@@ -1334,7 +1332,9 @@ function openPWAAccess(extraParams = {}){
   activeContactLabel = "";
   activeConversationId = null;
 
-  window.location.href = withFreshParam(PWA_ACCESS_URL, {
+  updateTopbarSessionState();
+
+  openPWAAccess({
     target: "pwa-login",
     login: "1"
   });
@@ -1344,7 +1344,7 @@ function updateTopbarSessionState(){
   const hasSession = Boolean(activeMemberId);
 
   if (loginPWABtn) {
-    loginPWABtn.classList.toggle("hidden", hasSession);
+    loginPWABtn.classList.remove("hidden");
   }
 
   if (logoutPWABtn) {
@@ -2762,7 +2762,6 @@ if (isStandalone) {
   }
 }
 
-    if (versionPill) versionPill.textContent = APP_VERSION;
     if (brandMeta) brandMeta.textContent = `HUB ${APP_VERSION_SHORT}`;
 
     window.setTimeout(() => {
