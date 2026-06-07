@@ -876,7 +876,7 @@
   <p class="brandMeta" id="brandMeta">HUB v0.5.4</p>
 
 <button
-  class="loginMiniLink"
+  class="loginMiniLink hidden"
   id="loginPWABtn"
   type="button"
   title="Iniciar sesión"
@@ -1076,7 +1076,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "PWA MS v0.7.7-busqueda-contactos";
+    const APP_VERSION = "PWA MS v0.7.8-busqueda-contactos";
     const APP_VERSION_SHORT = "v0.7.7";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
@@ -1325,11 +1325,26 @@ function openPWAAccess(extraParams = {}){
   }));
 }
 
+    function loginPWA(){
+  localStorage.removeItem("scad_memberId");
+  localStorage.removeItem("scad_myScadCode");
+
+  activeMemberId = null;
+  activeContactMemberId = null;
+  activeContactLabel = "";
+  activeConversationId = null;
+
+  window.location.href = withFreshParam(PWA_ACCESS_URL, {
+    target: "pwa-login",
+    login: "1"
+  });
+}
+
 function updateTopbarSessionState(){
   const hasSession = Boolean(activeMemberId);
 
   if (loginPWABtn) {
-    loginPWABtn.classList.remove("hidden");
+    loginPWABtn.classList.toggle("hidden", hasSession);
   }
 
   if (logoutPWABtn) {
@@ -2500,10 +2515,8 @@ await loadMSPending({ silent: true });
 
   logoutPWABtn.addEventListener("click", logoutPWA);
 
-    if (loginPWABtn) {
-  loginPWABtn.addEventListener("click", () => {
-    openPWAAccess();
-  });
+if (loginPWABtn) {
+  loginPWABtn.addEventListener("click", loginPWA);
 }
 
     iosInstallBtn.addEventListener("click", () => {
