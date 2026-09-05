@@ -1166,6 +1166,15 @@
           <span>Centro Privado de Capacitación</span>
         </div>
 
+        <div class="quickLink" id="tileEmprendimiento" role="button" tabindex="0">
+          <img
+            src="https://static.wixstatic.com/media/0492f8_f6249dcefa264a99b88453c568a60c47~mv2.png"
+            alt="SCaD Emprendimiento"
+            style="width:46px;height:34px;object-fit:contain;display:block;flex:0 0 auto;"
+          >
+          <span>SCaD Emprendimiento</span>
+        </div>
+
         <div class="quickLink" id="tileNovedades" role="button" tabindex="0">
           <span class="quickIcon">✨</span>
           <span>Novedades</span>
@@ -1216,7 +1225,7 @@
   </div>
 
   <script>
-    const APP_VERSION_SHORT = "v0.8.1";
+    const APP_VERSION_SHORT = "v0.8.2";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1227,6 +1236,7 @@
     const URL_NOVEDADES = "https://www.scad.mx/novedades";
     const URL_PRICING = "https://www.scad.mx/pricing-plans/list";
     const URL_CPC = "https://www.scad.mx/cpc";
+    const URL_EMPRENDIMIENTO = "https://www.scad.mx/emp-plan-inicial";
     const URL_FACT_GESTION = "https://www.scad.mx/fact";
     const URL_MIPLAN = "https://www.scad.mx/gym-inicio-sesion";
     const URL_PDE = "https://www.scad.mx/panel-de-entrenador";
@@ -1370,6 +1380,7 @@ const saveContactAliasBtn = document.getElementById("saveContactAliasBtn");
     const tileCursos = document.getElementById("tileCursos");
     const tileMiPlan = document.getElementById("tileMiPlan");
     const tileCPC = document.getElementById("tileCPC");
+    const tileEmprendimiento = document.getElementById("tileEmprendimiento");
     const tileNovedades = document.getElementById("tileNovedades");
     const tilePricing = document.getElementById("tilePricing");
     const tileSoporte = document.getElementById("tileSoporte");
@@ -3063,6 +3074,7 @@ chatStatus.textContent = "En espera de respuesta";
     });
 
     tileCPC.addEventListener("click", () => openUrl(URL_CPC));
+    tileEmprendimiento.addEventListener("click", () => openUrl(URL_EMPRENDIMIENTO));
     tileNovedades.addEventListener("click", () => openUrl(URL_NOVEDADES));
     tilePricing.addEventListener("click", () => openUrl(URL_PRICING));
     tileSoporte.addEventListener("click", () => openUrl(URL_CONTACT));
