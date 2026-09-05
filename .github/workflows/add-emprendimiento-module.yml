@@ -1,0 +1,82 @@
+name: Add SCaD Emprendimiento module
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-emprendimiento-module.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add Emprendimiento module
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          s = path.read_text(encoding='utf-8')
+
+          if 'id="tileEmprendimiento"' not in s:
+              anchor = '''        <div class="quickLink" id="tileCPC" role="button" tabindex="0">
+          <span class="quickIcon">🧑‍🏫</span>
+          <span>Centro Privado de Capacitación</span>
+        </div>
+'''
+              module = '''
+        <div class="quickLink" id="tileEmprendimiento" role="button" tabindex="0">
+          <img
+            src="https://static.wixstatic.com/media/0492f8_f6249dcefa264a99b88453c568a60c47~mv2.png"
+            alt="SCaD Emprendimiento"
+            style="width:46px;height:34px;object-fit:contain;display:block;flex:0 0 auto;"
+          >
+          <span>SCaD Emprendimiento</span>
+        </div>
+'''
+              if anchor not in s:
+                  raise SystemExit('No se encontró el bloque tileCPC para insertar el módulo.')
+              s = s.replace(anchor, anchor + module, 1)
+
+          if 'const URL_EMPRENDIMIENTO' not in s:
+              anchor = '    const URL_CPC = "https://www.scad.mx/cpc";\n'
+              replacement = anchor + '    const URL_EMPRENDIMIENTO = "https://www.scad.mx/emp-plan-inicial";\n'
+              if anchor not in s:
+                  raise SystemExit('No se encontró URL_CPC.')
+              s = s.replace(anchor, replacement, 1)
+
+          if 'const tileEmprendimiento' not in s:
+              anchor = '    const tileCPC = document.getElementById("tileCPC");\n'
+              replacement = anchor + '    const tileEmprendimiento = document.getElementById("tileEmprendimiento");\n'
+              if anchor not in s:
+                  raise SystemExit('No se encontró la referencia tileCPC.')
+              s = s.replace(anchor, replacement, 1)
+
+          listener = '    tileEmprendimiento.addEventListener("click", () => openUrl(URL_EMPRENDIMIENTO));\n'
+          if listener not in s:
+              anchor = '    tileCPC.addEventListener("click", () => openUrl(URL_CPC));\n'
+              if anchor not in s:
+                  raise SystemExit('No se encontró el listener tileCPC.')
+              s = s.replace(anchor, anchor + listener, 1)
+
+          s = s.replace('const APP_VERSION_SHORT = "v0.8.1";', 'const APP_VERSION_SHORT = "v0.8.2";', 1)
+
+          path.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit update and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "SCaD automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/add-emprendimiento-module.yml
+          git commit -m "Add SCaD Emprendimiento module"
+          git push
