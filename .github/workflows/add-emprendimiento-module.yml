@@ -1,7 +1,7 @@
 name: Add SCaD Emprendimiento module
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   push:
     paths:
       - '.github/workflows/add-emprendimiento-module.yml'
@@ -26,21 +26,23 @@ jobs:
           s = path.read_text(encoding='utf-8')
 
           if 'id="tileEmprendimiento"' not in s:
-              anchor = '''        <div class="quickLink" id="tileCPC" role="button" tabindex="0">
-          <span class="quickIcon">🧑‍🏫</span>
-          <span>Centro Privado de Capacitación</span>
-        </div>
-'''
-              module = '''
-        <div class="quickLink" id="tileEmprendimiento" role="button" tabindex="0">
-          <img
-            src="https://static.wixstatic.com/media/0492f8_f6249dcefa264a99b88453c568a60c47~mv2.png"
-            alt="SCaD Emprendimiento"
-            style="width:46px;height:34px;object-fit:contain;display:block;flex:0 0 auto;"
-          >
-          <span>SCaD Emprendimiento</span>
-        </div>
-'''
+              anchor = (
+                  '        <div class="quickLink" id="tileCPC" role="button" tabindex="0">\n'
+                  '          <span class="quickIcon">🧑‍🏫</span>\n'
+                  '          <span>Centro Privado de Capacitación</span>\n'
+                  '        </div>\n'
+              )
+              module = (
+                  '\n'
+                  '        <div class="quickLink" id="tileEmprendimiento" role="button" tabindex="0">\n'
+                  '          <img\n'
+                  '            src="https://static.wixstatic.com/media/0492f8_f6249dcefa264a99b88453c568a60c47~mv2.png"\n'
+                  '            alt="SCaD Emprendimiento"\n'
+                  '            style="width:46px;height:34px;object-fit:contain;display:block;flex:0 0 auto;"\n'
+                  '          >\n'
+                  '          <span>SCaD Emprendimiento</span>\n'
+                  '        </div>\n'
+              )
               if anchor not in s:
                   raise SystemExit('No se encontró el bloque tileCPC para insertar el módulo.')
               s = s.replace(anchor, anchor + module, 1)
