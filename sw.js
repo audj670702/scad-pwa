@@ -3,7 +3,7 @@
    Importante: NO cachea HTML ni navegaciones para evitar estados viejos en iOS/PWA.
 */
 
-const CACHE_NAME = "scad-pwa-v2";
+const CACHE_NAME = "scad-pwa-v3";
 
 const ASSETS = [
   "/manifest.webmanifest",
