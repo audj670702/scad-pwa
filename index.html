@@ -1225,7 +1225,7 @@
   </div>
 
   <script>
-    const APP_VERSION_SHORT = "v0.8.2";
+    const APP_VERSION_SHORT = "v0.8.3";
     const MS_SOUND_URL = "/Mensaje.mp3";
     const MS_REFRESH_MS = 5000;
 
@@ -1412,7 +1412,19 @@ const saveContactAliasBtn = document.getElementById("saveContactAliasBtn");
     let contactSearchTimer = null;
 let lastContactSearchValue = "";
 
-    function openUrl(url){
+    function withWixReturnUrl(rawUrl) {
+      const url = new URL(rawUrl, window.location.href);
+
+      if (url.hostname === "www.scad.mx") {
+        url.searchParams.set("mensaje", window.location.href);
+      }
+
+      return url.toString();
+    }
+
+    function openUrl(rawUrl){
+      const url = withWixReturnUrl(rawUrl);
+
       if (isStandalone) {
         window.location.href = url;
         return;
@@ -1450,7 +1462,7 @@ async function postJson(url, payload) {
       u.searchParams.set("from", "pwa");
       u.searchParams.set("t", String(Date.now()));
 
-      return u.toString();
+      return withWixReturnUrl(u.toString());
     }
 
     function openMS(extraParams = {}) {
